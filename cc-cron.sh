@@ -23,6 +23,11 @@ LOG_DIR="${SCRIPT_DIR}/logs"
 CRON_COMMENT_PREFIX="CC-CRON:"
 CLAUDE_CMD="claude -p"  # Non-interactive mode
 
+# Environment configuration (can be overridden)
+CC_WORKDIR="${CC_WORKDIR:-$SCRIPT_DIR}"
+CC_PERMISSION_MODE="${CC_PERMISSION_MODE:-acceptEdits}"
+CC_MODEL="${CC_MODEL:-}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -71,9 +76,12 @@ cmd_add() {
 
     ensure_log_dir
 
-    # Build the command
-    # Claude Code command with logging
-    local claude_full_cmd="cd ${SCRIPT_DIR} && ${CLAUDE_CMD} \"${prompt}\" >> \"${log_file}\" 2>&1"
+    # Build the command with environment options
+    local claude_opts="-p"
+    [[ -n "$CC_MODEL" ]] && claude_opts="$claude_opts --model $CC_MODEL"
+    [[ "$CC_PERMISSION_MODE" != "default" ]] && claude_opts="$claude_opts --permission-mode $CC_PERMISSION_MODE"
+
+    local claude_full_cmd="cd ${CC_WORKDIR} && claude ${claude_opts} \"${prompt}\" >> \"${log_file}\" 2>&1"
 
     # Create the cron entry with marker comment for identification
     local cron_entry="${cron_expr} ${claude_full_cmd}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
@@ -185,6 +193,40 @@ cmd_logs() {
     fi
 }
 
+# Show status of all jobs and recent executions
+cmd_status() {
+    info "CC-Cron Status Report"
+    echo "======================"
+    echo
+
+    # Check if crontab exists
+    if ! crontab -l &>/dev/null; then
+        warn "No crontab configured for current user"
+        return
+    fi
+
+    # Count jobs
+    local job_count
+    job_count=$(crontab -l 2>/dev/null | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
+    echo "Total scheduled jobs: ${job_count}"
+    echo
+
+    # Show recent logs
+    echo "Recent log activity:"
+    echo "--------------------"
+    for meta_file in "${LOG_DIR}"/*.meta; do
+        [[ -f "$meta_file" ]] || continue
+        source "$meta_file"
+        local log_file="${LOG_DIR}/${id}.log"
+        if [[ -f "$log_file" ]]; then
+            local lines last_run
+            lines=$(wc -l < "$log_file")
+            last_run=$(stat -c %y "$log_file" 2>/dev/null | cut -d. -f1)
+            echo "  ${id}: ${lines} log lines, last run: ${last_run}"
+        fi
+    done
+}
+
 # Show help
 cmd_help() {
     cat << 'HELP'
@@ -200,9 +242,15 @@ COMMANDS:
         --once   - Create a one-shot job (default is recurring)
 
     list                            List all scheduled jobs
+    status                          Show status overview and log activity
     remove <job-id>                 Remove a scheduled job
     logs <job-id>                   Show logs for a job
     help                            Show this help message
+
+ENVIRONMENT VARIABLES:
+    CC_WORKDIR        Working directory for Claude Code (default: script directory)
+    CC_PERMISSION_MODE Permission mode: acceptEdits, auto, default (default: acceptEdits)
+    CC_MODEL          Model to use: sonnet, opus, etc. (default: unset)
 
 CRON EXPRESSION FORMAT:
     ┌───────────── minute (0 - 59)
@@ -225,6 +273,9 @@ EXAMPLES:
 
     # List all jobs
     cc-cron list
+
+    # Check status
+    cc-cron status
 
     # Remove a job
     cc-cron remove abc123
@@ -276,6 +327,9 @@ main() {
                 error "Usage: cc-cron logs <job-id>"
             fi
             cmd_logs "$1"
+            ;;
+        status)
+            cmd_status
             ;;
         help|--help|-h)
             cmd_help
