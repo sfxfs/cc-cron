@@ -22,6 +22,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="${HOME}/.cc-cron"
 LOG_DIR="${DATA_DIR}/logs"
+LOCK_DIR="${DATA_DIR}/locks"
 CRON_COMMENT_PREFIX="CC-CRON:"
 
 # Environment configuration (can be overridden)
@@ -59,7 +60,15 @@ validate_cron() {
 
 # Ensure data directory exists
 ensure_data_dir() {
-    mkdir -p "$LOG_DIR"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+}
+
+# Generate lock file path from directory path
+get_lock_file() {
+    local dir="$1"
+    local dir_hash
+    dir_hash=$(echo -n "$dir" | md5sum | cut -d' ' -f1)
+    echo "${LOCK_DIR}/${dir_hash}.lock"
 }
 
 # Add a new cron job
@@ -76,6 +85,9 @@ cmd_add() {
     local job_id
     job_id=$(generate_job_id)
     local log_file="${LOG_DIR}/${job_id}.log"
+    local status_file="${LOG_DIR}/${job_id}.status"
+    local lock_file
+    lock_file=$(get_lock_file "$job_workdir")
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
     ensure_data_dir
@@ -85,11 +97,54 @@ cmd_add() {
     [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
     [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
 
-    # Source shell config to get API keys, then run claude
-    local claude_full_cmd="source ~/.bashrc 2>/dev/null || true; source ~/.bash_profile 2>/dev/null || true; cd ${job_workdir} && claude ${claude_opts} \"${prompt}\" >> \"${log_file}\" 2>&1"
+    # Create wrapper script that handles locking and status tracking
+    local run_script="${DATA_DIR}/run-${job_id}.sh"
+    cat > "$run_script" << RUNEOF
+#!/bin/bash
+# Auto-generated job runner for ${job_id}
+set -e
 
-    # Create the cron entry with marker comment for identification
-    local cron_entry="${cron_expr} ${claude_full_cmd}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
+LOG_FILE="${log_file}"
+STATUS_FILE="${status_file}"
+LOCK_FILE="${lock_file}"
+WORKDIR="${job_workdir}"
+
+# Acquire lock for this directory (non-blocking)
+exec 9>"\$LOCK_FILE"
+if ! flock -n 9; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] SKIPPED: Another job is running in \$WORKDIR" >> "\$LOG_FILE"
+    exit 0
+fi
+
+# Record start time
+echo "start_time=\"$(date '+%Y-%m-%d %H:%M:%S')\"" > "\$STATUS_FILE"
+
+# Source shell config for API keys
+source ~/.bashrc 2>/dev/null || true
+source ~/.bash_profile 2>/dev/null || true
+
+# Run the job
+cd "\$WORKDIR"
+claude ${claude_opts} "${prompt}" >> "\$LOG_FILE" 2>&1
+EXIT_CODE=\$?
+
+# Record end time and status
+echo "end_time=\"$(date '+%Y-%m-%d %H:%M:%S')\"" >> "\$STATUS_FILE"
+echo "exit_code=\"\${EXIT_CODE}\"" >> "\$STATUS_FILE"
+
+if [[ \$EXIT_CODE -eq 0 ]]; then
+    echo "status=\"success\"" >> "\$STATUS_FILE"
+else
+    echo "status=\"failed\"" >> "\$STATUS_FILE"
+fi
+
+# Release lock
+exec 9>&-
+RUNEOF
+    chmod +x "$run_script"
+
+    # Create the cron entry
+    local cron_entry="${cron_expr} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
 
     # Add to crontab (grep -v returns 1 when no matches, so we need || true)
     (crontab -l 2>/dev/null | { grep -v "${CRON_COMMENT_PREFIX}${job_id}" || true; }; echo "$cron_entry") | crontab -
@@ -104,6 +159,7 @@ prompt="${prompt}"
 workdir="${job_workdir}"
 model="${job_model}"
 permission_mode="${job_permission}"
+run_script="${run_script}"
 EOF
 
     success "Created cron job: ${job_id}"
@@ -174,9 +230,11 @@ cmd_remove() {
         success "Removed cron job: ${job_id}"
     fi
 
-    # Remove metadata and log files
+    # Remove metadata, logs, status, and run script
     local meta_file="${LOG_DIR}/${job_id}.meta"
     local log_file="${LOG_DIR}/${job_id}.log"
+    local status_file="${LOG_DIR}/${job_id}.status"
+    local run_script="${DATA_DIR}/run-${job_id}.sh"
 
     if [[ -f "$meta_file" ]]; then
         rm "$meta_file"
@@ -186,6 +244,16 @@ cmd_remove() {
     if [[ -f "$log_file" ]]; then
         rm "$log_file"
         info "Removed log file: ${log_file}"
+    fi
+
+    if [[ -f "$status_file" ]]; then
+        rm "$status_file"
+        info "Removed status file: ${status_file}"
+    fi
+
+    if [[ -f "$run_script" ]]; then
+        rm "$run_script"
+        info "Removed run script: ${run_script}"
     fi
 
     if [[ "$found" -eq 0 ]]; then
@@ -225,20 +293,54 @@ cmd_status() {
     echo "Total scheduled jobs: ${job_count}"
     echo
 
-    # Show recent logs
-    echo "Recent log activity:"
-    echo "--------------------"
+    # Show recent executions with status
+    echo "Recent executions:"
+    echo "------------------"
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue
         source "$meta_file"
+
+        local status_file="${LOG_DIR}/${id}.status"
         local log_file="${LOG_DIR}/${id}.log"
-        if [[ -f "$log_file" ]]; then
-            local lines last_run
-            lines=$(wc -l < "$log_file")
+
+        if [[ -f "$status_file" ]]; then
+            source "$status_file"
+            local status_icon
+            case "${status:-}" in
+                success) status_icon="${GREEN}✓ SUCCESS${NC}" ;;
+                failed)  status_icon="${RED}✗ FAILED${NC}" ;;
+                *)       status_icon="${YELLOW}? UNKNOWN${NC}" ;;
+            esac
+            echo -e "  ${id}: ${status_icon}"
+            echo "    Start: ${start_time:-unknown}"
+            echo "    End:   ${end_time:-unknown}"
+            [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}"
+            echo "    Workdir: ${workdir}"
+            echo
+        elif [[ -f "$log_file" ]]; then
+            # Has log but no status (old format or running)
+            local last_run
             last_run=$(stat -c %y "$log_file" 2>/dev/null | cut -d. -f1)
-            echo "  ${id}: ${lines} log lines, last run: ${last_run}"
+            echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})"
+            echo "    Workdir: ${workdir}"
+            echo
         fi
     done
+
+    # Summary
+    local success_count=0
+    local failed_count=0
+    local unknown_count=0
+    for status_file in "${LOG_DIR}"/*.status; do
+        [[ -f "$status_file" ]] || continue
+        source "$status_file"
+        case "${status:-}" in
+            success) ((success_count++)) || true ;;
+            failed)  ((failed_count++)) || true ;;
+            *)       ((unknown_count++)) || true ;;
+        esac
+    done
+    echo "Summary: ${GREEN}${success_count} succeeded${NC}, ${RED}${failed_count} failed${NC}, ${YELLOW}${unknown_count} unknown${NC}"
 }
 
 # Show help
@@ -306,7 +408,8 @@ NOTES:
     - Jobs run in non-interactive mode using 'claude -p'
     - Jobs automatically source ~/.bashrc and ~/.bash_profile to load API keys
     - Default permission mode is bypassPermissions (no permission prompts)
-    - Data stored in: ~/.cc-cron/ (logs, metadata)
+    - Data stored in: ~/.cc-cron/ (logs, metadata, locks)
+    - Directory locking prevents concurrent Claude executions in the same directory
     - Per-job settings override environment variable defaults
 HELP
 }
