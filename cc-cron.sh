@@ -20,12 +20,12 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_DIR="${SCRIPT_DIR}/logs"
+DATA_DIR="${HOME}/.cc-cron"
+LOG_DIR="${DATA_DIR}/logs"
 CRON_COMMENT_PREFIX="CC-CRON:"
-CLAUDE_CMD="claude -p"  # Non-interactive mode
 
 # Environment configuration (can be overridden)
-CC_WORKDIR="${CC_WORKDIR:-$SCRIPT_DIR}"
+CC_WORKDIR="${CC_WORKDIR:-$HOME}"
 CC_PERMISSION_MODE="${CC_PERMISSION_MODE:-bypassPermissions}"
 CC_MODEL="${CC_MODEL:-}"
 
@@ -57,8 +57,8 @@ validate_cron() {
     fi
 }
 
-# Ensure log directory exists
-ensure_log_dir() {
+# Ensure data directory exists
+ensure_data_dir() {
     mkdir -p "$LOG_DIR"
 }
 
@@ -78,7 +78,7 @@ cmd_add() {
     local log_file="${LOG_DIR}/${job_id}.log"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
-    ensure_log_dir
+    ensure_data_dir
 
     # Build the command with per-job or environment options
     local claude_opts="-p"
@@ -267,7 +267,7 @@ COMMANDS:
     help                            Show this help message
 
 ENVIRONMENT VARIABLES (used as defaults when not specified per-job):
-    CC_WORKDIR          Working directory (default: script directory)
+    CC_WORKDIR          Working directory (default: $HOME)
     CC_PERMISSION_MODE  Permission mode (default: bypassPermissions)
     CC_MODEL            Model to use (default: unset, uses Claude's default)
 
@@ -306,14 +306,14 @@ NOTES:
     - Jobs run in non-interactive mode using 'claude -p'
     - Jobs automatically source ~/.bashrc and ~/.bash_profile to load API keys
     - Default permission mode is bypassPermissions (no permission prompts)
-    - Logs are stored in: ./logs/<job-id>.log
+    - Data stored in: ~/.cc-cron/ (logs, metadata)
     - Per-job settings override environment variable defaults
 HELP
 }
 
 # Main entry point
 main() {
-    ensure_log_dir
+    ensure_data_dir
 
     local command="${1:-help}"
     shift || true
@@ -325,7 +325,7 @@ main() {
 
 Options:
   --once                      Create a one-shot job (default: recurring)
-  --workdir <path>            Working directory (default: \$CC_WORKDIR or script dir)
+  --workdir <path>            Working directory (default: \$CC_WORKDIR or \$HOME)
   --model <name>              Model to use: sonnet, opus, etc. (default: \$CC_MODEL)
   --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or bypassPermissions)"
             fi
