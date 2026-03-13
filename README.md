@@ -74,7 +74,7 @@ Each job can have its own settings specified via command-line options. When not 
 |---------|----------------|---------------------|---------|
 | Working directory | `--workdir` | `CC_WORKDIR` | Script directory |
 | Model | `--model` | `CC_MODEL` | Claude's default |
-| Permission mode | `--permission-mode` | `CC_PERMISSION_MODE` | `acceptEdits` |
+| Permission mode | `--permission-mode` | `CC_PERMISSION_MODE` | `bypassPermissions` |
 
 **Priority:** Per-job option > Environment variable > Built-in default
 
@@ -118,7 +118,8 @@ Each job can have its own settings specified via command-line options. When not 
 ## Notes
 
 - Jobs run non-interactively using `claude -p`
-- Use absolute paths in prompts for file operations
+- Jobs automatically source `~/.bashrc` and `~/.bash_profile` to load API keys
+- Default permission mode is `bypassPermissions` (no permission prompts)
 - Logs are stored in `./logs/<job-id>.log`
 - Per-job settings are saved and persist across restarts
 - One-shot jobs require manual cleanup after execution
