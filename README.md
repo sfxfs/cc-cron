@@ -66,6 +66,8 @@ ln -s $(pwd)/cc-cron.sh ~/.local/bin/cc-cron
 ./cc-cron.sh status
 ```
 
+Shows execution status (success/failure), timestamps, and a summary of recent job results.
+
 ## Per-Job vs Global Configuration
 
 Each job can have its own settings specified via command-line options. When not specified, jobs fall back to environment variable defaults.
@@ -120,6 +122,10 @@ Each job can have its own settings specified via command-line options. When not 
 - Jobs run non-interactively using `claude -p`
 - Jobs automatically source `~/.bashrc` and `~/.bash_profile` to load API keys
 - Default permission mode is `bypassPermissions` (no permission prompts)
-- Data (logs, metadata) stored in `~/.cc-cron/`
+- Data stored in `~/.cc-cron/`:
+  - `logs/` - Job logs and status files
+  - `locks/` - Directory lock files
+  - `run-*.sh` - Generated job runner scripts
+- Directory locking prevents concurrent Claude executions in the same directory
 - Per-job settings are saved and persist across restarts
 - One-shot jobs require manual cleanup after execution
