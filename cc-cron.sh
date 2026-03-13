@@ -26,7 +26,7 @@ CLAUDE_CMD="claude -p"  # Non-interactive mode
 
 # Environment configuration (can be overridden)
 CC_WORKDIR="${CC_WORKDIR:-$SCRIPT_DIR}"
-CC_PERMISSION_MODE="${CC_PERMISSION_MODE:-acceptEdits}"
+CC_PERMISSION_MODE="${CC_PERMISSION_MODE:-bypassPermissions}"
 CC_MODEL="${CC_MODEL:-}"
 
 # Colors for output
@@ -85,7 +85,8 @@ cmd_add() {
     [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
     [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
 
-    local claude_full_cmd="cd ${job_workdir} && claude ${claude_opts} \"${prompt}\" >> \"${log_file}\" 2>&1"
+    # Source shell config to get API keys, then run claude
+    local claude_full_cmd="source ~/.bashrc 2>/dev/null || true; source ~/.bash_profile 2>/dev/null || true; cd ${job_workdir} && claude ${claude_opts} \"${prompt}\" >> \"${log_file}\" 2>&1"
 
     # Create the cron entry with marker comment for identification
     local cron_entry="${cron_expr} ${claude_full_cmd}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
@@ -257,7 +258,7 @@ COMMANDS:
           --once                      Create a one-shot job (default: recurring)
           --workdir <path>            Working directory for this job
           --model <name>              Model to use: sonnet, opus, etc.
-          --permission-mode <mode>    Permission mode (acceptEdits, auto, default)
+          --permission-mode <mode>    Permission mode (bypassPermissions, acceptEdits, auto, default)
 
     list                            List all scheduled jobs
     status                          Show status overview and log activity
@@ -267,7 +268,7 @@ COMMANDS:
 
 ENVIRONMENT VARIABLES (used as defaults when not specified per-job):
     CC_WORKDIR          Working directory (default: script directory)
-    CC_PERMISSION_MODE  Permission mode (default: acceptEdits)
+    CC_PERMISSION_MODE  Permission mode (default: bypassPermissions)
     CC_MODEL            Model to use (default: unset, uses Claude's default)
 
 CRON EXPRESSION FORMAT:
@@ -303,10 +304,10 @@ EXAMPLES:
 
 NOTES:
     - Jobs run in non-interactive mode using 'claude -p'
+    - Jobs automatically source ~/.bashrc and ~/.bash_profile to load API keys
+    - Default permission mode is bypassPermissions (no permission prompts)
     - Logs are stored in: ./logs/<job-id>.log
     - Per-job settings override environment variable defaults
-    - Cron jobs run with a limited environment; ensure Claude Code
-      is in PATH or specify the full path
 HELP
 }
 
@@ -326,7 +327,7 @@ Options:
   --once                      Create a one-shot job (default: recurring)
   --workdir <path>            Working directory (default: \$CC_WORKDIR or script dir)
   --model <name>              Model to use: sonnet, opus, etc. (default: \$CC_MODEL)
-  --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or acceptEdits)"
+  --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or bypassPermissions)"
             fi
             local cron_expr="$1"
             local prompt="$2"
