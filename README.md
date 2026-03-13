@@ -17,11 +17,29 @@ ln -s $(pwd)/cc-cron.sh ~/.local/bin/cc-cron
 ### Add a Scheduled Job
 
 ```bash
-# Run every weekday at 9am
+./cc-cron.sh add <cron-expression> <prompt> [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--once` | Create a one-shot job (default: recurring) |
+| `--workdir <path>` | Working directory for this job |
+| `--model <name>` | Model to use: sonnet, opus, haiku, etc. |
+| `--permission-mode <mode>` | Permission mode: acceptEdits, auto, default |
+
+**Examples:**
+
+```bash
+# Run every weekday at 9am with default settings
 ./cc-cron.sh add "0 9 * * 1-5" "Run daily tests and report results"
 
-# One-time execution
-./cc-cron.sh add "30 14 28 2 *" "Quarterly review reminder" --once
+# Run with specific model and working directory
+./cc-cron.sh add "0 * * * *" "Check for issues" --model sonnet --workdir /home/user/myproject
+
+# One-time reminder with custom permission mode
+./cc-cron.sh add "30 14 28 2 *" "Quarterly review reminder" --once --permission-mode auto
 ```
 
 ### List Jobs
@@ -48,13 +66,17 @@ ln -s $(pwd)/cc-cron.sh ~/.local/bin/cc-cron
 ./cc-cron.sh status
 ```
 
-## Environment Variables
+## Per-Job vs Global Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CC_WORKDIR` | Script directory | Working directory for Claude Code |
-| `CC_PERMISSION_MODE` | `acceptEdits` | Permission mode (acceptEdits, auto, default) |
-| `CC_MODEL` | (unset) | Model to use (sonnet, opus, etc.) |
+Each job can have its own settings specified via command-line options. When not specified, jobs fall back to environment variable defaults.
+
+| Setting | Per-Job Option | Environment Variable | Default |
+|---------|----------------|---------------------|---------|
+| Working directory | `--workdir` | `CC_WORKDIR` | Script directory |
+| Model | `--model` | `CC_MODEL` | Claude's default |
+| Permission mode | `--permission-mode` | `CC_PERMISSION_MODE` | `acceptEdits` |
+
+**Priority:** Per-job option > Environment variable > Built-in default
 
 ## Cron Expression Format
 
@@ -75,14 +97,22 @@ ln -s $(pwd)/cc-cron.sh ~/.local/bin/cc-cron
 ./cc-cron.sh add "0 17 * * *" "Review today's commits in the main branch"
 ```
 
-### Hourly Status Check
+### Hourly Status Check with Specific Model
 ```bash
-./cc-cron.sh add "7 * * * *" "Check system status and report any issues"
+./cc-cron.sh add "7 * * * *" "Check system status and report any issues" --model sonnet
 ```
 
-### Weekly Report Every Monday
+### Weekly Report Every Monday with Custom Workdir
 ```bash
-./cc-cron.sh add "0 9 * * 1" "Generate weekly summary report"
+./cc-cron.sh add "0 9 * * 1" "Generate weekly summary report" --workdir /home/user/reports
+```
+
+### Project-Specific Task
+```bash
+./cc-cron.sh add "0 12 * * *" "Run tests in the backend project" \
+  --workdir /home/user/backend \
+  --model opus \
+  --permission-mode auto
 ```
 
 ## Notes
@@ -90,4 +120,5 @@ ln -s $(pwd)/cc-cron.sh ~/.local/bin/cc-cron
 - Jobs run non-interactively using `claude -p`
 - Use absolute paths in prompts for file operations
 - Logs are stored in `./logs/<job-id>.log`
+- Per-job settings are saved and persist across restarts
 - One-shot jobs require manual cleanup after execution
