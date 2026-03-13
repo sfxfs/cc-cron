@@ -3,14 +3,15 @@
 # cc-cron - Schedule Claude Code commands as cron jobs
 #
 # Usage:
-#   cc-cron add <cron-expression> <prompt> [--recurring]
+#   cc-cron add <cron-expression> <prompt> [options]
 #   cc-cron list
 #   cc-cron remove <job-id>
 #   cc-cron logs <job-id>
 #
 # Examples:
-#   cc-cron add "0 9 * * 1-5" "Run daily tests" --recurring
-#   cc-cron add "30 14 28 2 *" "One-time reminder"  # one-shot
+#   cc-cron add "0 9 * * 1-5" "Run daily tests"
+#   cc-cron add "0 * * * *" "Check issues" --model sonnet --workdir /path/to/project
+#   cc-cron add "30 14 28 2 *" "One-time reminder" --once
 #   cc-cron list
 #   cc-cron remove abc123
 #
@@ -65,7 +66,10 @@ ensure_log_dir() {
 cmd_add() {
     local cron_expr="$1"
     local prompt="$2"
-    local recurring="${3:-true}"  # Default to recurring
+    local recurring="${3:-true}"
+    local job_workdir="${4:-$CC_WORKDIR}"
+    local job_model="${5:-$CC_MODEL}"
+    local job_permission="${6:-$CC_PERMISSION_MODE}"
 
     validate_cron "$cron_expr"
 
@@ -76,12 +80,12 @@ cmd_add() {
 
     ensure_log_dir
 
-    # Build the command with environment options
+    # Build the command with per-job or environment options
     local claude_opts="-p"
-    [[ -n "$CC_MODEL" ]] && claude_opts="$claude_opts --model $CC_MODEL"
-    [[ "$CC_PERMISSION_MODE" != "default" ]] && claude_opts="$claude_opts --permission-mode $CC_PERMISSION_MODE"
+    [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
+    [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
 
-    local claude_full_cmd="cd ${CC_WORKDIR} && claude ${claude_opts} \"${prompt}\" >> \"${log_file}\" 2>&1"
+    local claude_full_cmd="cd ${job_workdir} && claude ${claude_opts} \"${prompt}\" >> \"${log_file}\" 2>&1"
 
     # Create the cron entry with marker comment for identification
     local cron_entry="${cron_expr} ${claude_full_cmd}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
@@ -96,11 +100,17 @@ created="${timestamp}"
 cron="${cron_expr}"
 recurring="${recurring}"
 prompt="${prompt}"
+workdir="${job_workdir}"
+model="${job_model}"
+permission_mode="${job_permission}"
 EOF
 
     success "Created cron job: ${job_id}"
     info "Schedule: ${cron_expr}"
     info "Recurring: ${recurring}"
+    info "Workdir: ${job_workdir}"
+    [[ -n "$job_model" ]] && info "Model: ${job_model}"
+    info "Permission: ${job_permission}"
     info "Prompt: ${prompt}"
     info "Log file: ${log_file}"
 
@@ -133,6 +143,9 @@ cmd_list() {
                 echo "  Created: ${created}"
                 echo "  Schedule: ${cron}"
                 echo "  Recurring: ${recurring}"
+                echo "  Workdir: ${workdir:-$CC_WORKDIR}"
+                [[ -n "${model:-}" ]] && echo "  Model: ${model}"
+                echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
                 echo "  Prompt: ${prompt}"
                 echo
             else
@@ -236,10 +249,15 @@ USAGE:
     cc-cron <command> [options]
 
 COMMANDS:
-    add <cron> <prompt> [--once]    Add a scheduled job
+    add <cron> <prompt> [options]    Add a scheduled job
         <cron>   - Standard 5-field cron expression (minute hour day month weekday)
         <prompt> - The prompt to send to Claude Code
-        --once   - Create a one-shot job (default is recurring)
+
+        Options:
+          --once                      Create a one-shot job (default: recurring)
+          --workdir <path>            Working directory for this job
+          --model <name>              Model to use: sonnet, opus, etc.
+          --permission-mode <mode>    Permission mode (acceptEdits, auto, default)
 
     list                            List all scheduled jobs
     status                          Show status overview and log activity
@@ -247,10 +265,10 @@ COMMANDS:
     logs <job-id>                   Show logs for a job
     help                            Show this help message
 
-ENVIRONMENT VARIABLES:
-    CC_WORKDIR        Working directory for Claude Code (default: script directory)
-    CC_PERMISSION_MODE Permission mode: acceptEdits, auto, default (default: acceptEdits)
-    CC_MODEL          Model to use: sonnet, opus, etc. (default: unset)
+ENVIRONMENT VARIABLES (used as defaults when not specified per-job):
+    CC_WORKDIR          Working directory (default: script directory)
+    CC_PERMISSION_MODE  Permission mode (default: acceptEdits)
+    CC_MODEL            Model to use (default: unset, uses Claude's default)
 
 CRON EXPRESSION FORMAT:
     ┌───────────── minute (0 - 59)
@@ -262,14 +280,14 @@ CRON EXPRESSION FORMAT:
     * * * * *
 
 EXAMPLES:
-    # Run every weekday at 9am
+    # Run every weekday at 9am with default settings
     cc-cron add "0 9 * * 1-5" "Run the daily build and send a summary"
 
-    # Run every hour
-    cc-cron add "0 * * * *" "Check for new issues and report"
+    # Run with specific model and working directory
+    cc-cron add "0 * * * *" "Check for issues" --model sonnet --workdir /home/user/myproject
 
-    # One-time reminder at specific time
-    cc-cron add "30 14 15 3 *" "Review the quarterly report" --once
+    # One-time reminder with custom permission mode
+    cc-cron add "30 14 15 3 *" "Review the report" --once --permission-mode auto
 
     # List all jobs
     cc-cron list
@@ -286,7 +304,7 @@ EXAMPLES:
 NOTES:
     - Jobs run in non-interactive mode using 'claude -p'
     - Logs are stored in: ./logs/<job-id>.log
-    - Use absolute paths in prompts for file operations
+    - Per-job settings override environment variable defaults
     - Cron jobs run with a limited environment; ensure Claude Code
       is in PATH or specify the full path
 HELP
@@ -302,16 +320,52 @@ main() {
     case "$command" in
         add)
             if [[ $# -lt 2 ]]; then
-                error "Usage: cc-cron add <cron-expression> <prompt> [--once]"
+                error "Usage: cc-cron add <cron-expression> <prompt> [options]
+
+Options:
+  --once                      Create a one-shot job (default: recurring)
+  --workdir <path>            Working directory (default: \$CC_WORKDIR or script dir)
+  --model <name>              Model to use: sonnet, opus, etc. (default: \$CC_MODEL)
+  --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or acceptEdits)"
             fi
             local cron_expr="$1"
             local prompt="$2"
             shift 2
+
+            # Parse optional flags
             local recurring="true"
-            if [[ "${1:-}" == "--once" ]]; then
-                recurring="false"
-            fi
-            cmd_add "$cron_expr" "$prompt" "$recurring"
+            local job_workdir="$CC_WORKDIR"
+            local job_model="$CC_MODEL"
+            local job_permission="$CC_PERMISSION_MODE"
+
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    --once)
+                        recurring="false"
+                        shift
+                        ;;
+                    --workdir)
+                        [[ -z "${2:-}" ]] && error "--workdir requires a path"
+                        job_workdir="$2"
+                        shift 2
+                        ;;
+                    --model)
+                        [[ -z "${2:-}" ]] && error "--model requires a model name"
+                        job_model="$2"
+                        shift 2
+                        ;;
+                    --permission-mode)
+                        [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
+                        job_permission="$2"
+                        shift 2
+                        ;;
+                    *)
+                        error "Unknown option: $1"
+                        ;;
+                esac
+            done
+
+            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission"
             ;;
         list)
             cmd_list
