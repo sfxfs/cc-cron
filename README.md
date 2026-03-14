@@ -31,6 +31,7 @@ eval "$(cc-cron completion)"
 | `--workdir <path>` | Working directory for this job |
 | `--model <name>` | Model to use: sonnet, opus, haiku, etc. |
 | `--permission-mode <mode>` | Permission mode: acceptEdits, auto, default |
+| `--timeout <seconds>` | Timeout for job execution (0 = no timeout, default) |
 
 **Examples:**
 
@@ -103,6 +104,7 @@ Each job can have its own settings specified via command-line options. When not 
 | Working directory | `--workdir` | `CC_WORKDIR` | `$HOME` |
 | Model | `--model` | `CC_MODEL` | Claude's default |
 | Permission mode | `--permission-mode` | `CC_PERMISSION_MODE` | `bypassPermissions` |
+| Timeout | `--timeout` | `CC_TIMEOUT` | `0` (no timeout) |
 
 **Priority:** Per-job option > Environment variable > Built-in default
 
@@ -155,3 +157,29 @@ Each job can have its own settings specified via command-line options. When not 
 - Directory locking prevents concurrent Claude executions in the same directory
 - Per-job settings are saved and persist across restarts
 - One-shot jobs (`--once`) auto-remove after successful execution; on failure, they remain for debugging/retry
+
+## Development
+
+### Running Tests
+
+```bash
+make test
+```
+
+### Linting
+
+```bash
+make lint
+```
+
+### Running All Checks
+
+```bash
+make check
+```
+
+### Installation
+
+```bash
+make install
+```
