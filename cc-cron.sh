@@ -556,39 +556,6 @@ CRON EXPRESSION FORMAT:
     │ │ │ │ ┌───────────── day of week (0 - 6, 0 = Sunday)
     │ │ │ │ │
     * * * * *
-
-EXAMPLES:
-    # Run every weekday at 9am with default settings
-    cc-cron add "0 9 * * 1-5" "Run the daily build and send a summary"
-
-    # Run with specific model and working directory
-    cc-cron add "0 * * * *" "Check for issues" --model sonnet --workdir /home/user/myproject
-
-    # One-time reminder with custom permission mode
-    cc-cron add "30 14 15 3 *" "Review the report" --once --permission-mode auto
-
-    # List all jobs
-    cc-cron list
-
-    # Check status
-    cc-cron status
-
-    # Remove a job
-    cc-cron remove abc123
-
-    # View job logs
-    cc-cron logs abc123
-
-    # Install bash completion (add to ~/.bashrc)
-    eval "$(cc-cron completion)"
-
-NOTES:
-    - Jobs run in non-interactive mode using 'claude -p'
-    - Jobs automatically source ~/.bashrc and ~/.bash_profile to load API keys
-    - Default permission mode is bypassPermissions (no permission prompts)
-    - Data stored in: ~/.cc-cron/ (logs, metadata, locks)
-    - Directory locking prevents concurrent Claude executions in the same directory
-    - Per-job settings override environment variable defaults
 HELP
 }
 
