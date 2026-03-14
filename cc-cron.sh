@@ -89,8 +89,8 @@ generate_job_id() {
     local random_bytes
 
     # Pre-generate random bytes for better performance
-    local attempt
-    for attempt in {1..10}; do
+    local _
+    for _ in {1..10}; do
         # Read more bytes at once for efficiency
         random_bytes=$(head -c 100 /dev/urandom | tr -dc 'a-z0-9')
         job_id="${random_bytes:0:8}"
@@ -369,7 +369,7 @@ cmd_list() {
             found=1
             # Extract job ID from comment using bash parameter expansion
             local job_id temp
-            temp="${line#*${CRON_COMMENT_PREFIX}}"
+            temp="${line#*"${CRON_COMMENT_PREFIX}"}"
             job_id="${temp%%:*}"
 
             # Read metadata if exists
