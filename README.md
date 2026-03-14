@@ -1,5 +1,7 @@
 # cc-cron
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 Schedule Claude Code commands as cron jobs.
 
 ## Installation
