@@ -18,6 +18,12 @@
 
 set -euo pipefail
 
+# Exit codes
+readonly EXIT_SUCCESS=0
+readonly EXIT_ERROR=1
+readonly EXIT_NOT_FOUND=2
+readonly EXIT_INVALID_ARGS=3
+
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="${HOME}/.cc-cron"
@@ -44,7 +50,14 @@ NC='\033[0m' # No Color
 info() { echo -e "${BLUE}[INFO]${NC} $*"; }
 success() { echo -e "${GREEN}[SUCCESS]${NC} $*"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
-error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
+
+# Error with configurable exit code
+error() {
+    local message="$1"
+    local exit_code="${2:-$EXIT_ERROR}"
+    echo -e "${RED}[ERROR]${NC} ${message}" >&2
+    exit "$exit_code"
+}
 
 # Ensure data directory exists
 ensure_data_dir() {
@@ -210,6 +223,7 @@ cmd_add() {
     local job_workdir="${4:-$CC_WORKDIR}"
     local job_model="${5:-$CC_MODEL}"
     local job_permission="${6:-$CC_PERMISSION_MODE}"
+    local job_timeout="${7:-${CC_TIMEOUT:-0}}"
 
     validate_cron "$cron_expr"
     validate_workdir "$job_workdir"
@@ -228,6 +242,9 @@ cmd_add() {
     local claude_opts="-p"
     [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
     [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
+
+    # Sanitize prompt for safe shell embedding
+    local safe_prompt="${prompt//\'/\'\\\'\'}"
 
     # Create wrapper script that handles locking and status tracking
     local run_script; run_script=$(get_run_script "$job_id")
@@ -249,6 +266,7 @@ LOCK_FILE="${lock_file}"
 WORKDIR="${job_workdir}"
 JOB_ID="${job_id}"
 RECURRING="${recurring}"
+TIMEOUT="${job_timeout}"
 
 # Cleanup function to release lock
 cleanup() {
@@ -269,7 +287,11 @@ echo "status=\"running\"" >> "\$STATUS_FILE"
 
 # Run the job
 cd "\$WORKDIR"
-claude ${claude_opts} "${prompt}" >> "\$LOG_FILE" 2>&1
+if [[ "\${TIMEOUT:-0}" -gt 0 ]]; then
+    timeout "\${TIMEOUT}" claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
+else
+    claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
+fi
 EXIT_CODE=\$?
 
 # Record end time and status
@@ -311,6 +333,7 @@ prompt="${prompt}"
 workdir="${job_workdir}"
 model="${job_model}"
 permission_mode="${job_permission}"
+timeout="${job_timeout}"
 run_script="${run_script}"
 EOF
 
@@ -320,6 +343,7 @@ EOF
     info "Workdir: ${job_workdir}"
     [[ -n "$job_model" ]] && info "Model: ${job_model}"
     info "Permission: ${job_permission}"
+    [[ "$job_timeout" -gt 0 ]] && info "Timeout: ${job_timeout}s"
     info "Prompt: ${prompt}"
     info "Log file: ${log_file}"
 
@@ -511,6 +535,7 @@ COMMANDS:
           --workdir <path>            Working directory for this job
           --model <name>              Model to use: sonnet, opus, etc.
           --permission-mode <mode>    Permission mode (bypassPermissions, acceptEdits, auto, default)
+          --timeout <seconds>         Timeout for job execution (0 = no timeout)
 
     list                            List all scheduled jobs
     status                          Show status overview and log activity
@@ -523,6 +548,7 @@ ENVIRONMENT VARIABLES (used as defaults when not specified per-job):
     CC_WORKDIR          Working directory (default: $HOME)
     CC_PERMISSION_MODE  Permission mode (default: bypassPermissions)
     CC_MODEL            Model to use (default: unset, uses Claude's default)
+    CC_TIMEOUT          Job timeout in seconds (default: 0, no timeout)
 
 CRON EXPRESSION FORMAT:
     ┌───────────── minute (0 - 59)
@@ -636,7 +662,8 @@ Options:
   --once                      Create a one-shot job (auto-removes after success)
   --workdir <path>            Working directory (default: \$CC_WORKDIR or \$HOME)
   --model <name>              Model to use: sonnet, opus, etc. (default: \$CC_MODEL)
-  --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or bypassPermissions)"
+  --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or bypassPermissions)
+  --timeout <seconds>         Timeout for job execution (default: \$CC_TIMEOUT or 0, no timeout)"
             fi
             local cron_expr="$1"
             local prompt="$2"
@@ -647,6 +674,7 @@ Options:
             local job_workdir="$CC_WORKDIR"
             local job_model="$CC_MODEL"
             local job_permission="$CC_PERMISSION_MODE"
+            local job_timeout="${CC_TIMEOUT:-0}"
 
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -669,13 +697,18 @@ Options:
                         job_permission="$2"
                         shift 2
                         ;;
+                    --timeout)
+                        [[ -z "${2:-}" ]] && error "--timeout requires seconds"
+                        job_timeout="$2"
+                        shift 2
+                        ;;
                     *)
                         error "Unknown option: $1"
                         ;;
                 esac
             done
 
-            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission"
+            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout"
             ;;
         list)
             cmd_list
