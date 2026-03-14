@@ -5,6 +5,8 @@ load 'test_helper'
 
 setup() {
     setup_test_env
+    # Source the script to load functions (CC_CRON_TEST_MODE prevents main from running)
+    source "${BATS_TEST_DIRNAME}/../cc-cron.sh"
 }
 
 teardown() {
@@ -12,7 +14,6 @@ teardown() {
 }
 
 @test "validate_cron_field accepts wildcard" {
-    source "${BATS_TEST_DIRNAME}/../cc-cron.sh" --source-only 2>/dev/null || true
     run validate_cron_field "*" 0 59 "minute"
     [ "$status" -eq 0 ]
 }

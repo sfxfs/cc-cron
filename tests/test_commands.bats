@@ -5,6 +5,8 @@ load 'test_helper'
 
 setup() {
     setup_test_env
+    # Source the script to load functions (CC_CRON_TEST_MODE prevents main from running)
+    source "${BATS_TEST_DIRNAME}/../cc-cron.sh"
 }
 
 teardown() {
@@ -12,7 +14,6 @@ teardown() {
 }
 
 @test "get_meta_file returns correct path" {
-    source "${BATS_TEST_DIRNAME}/../cc-cron.sh" --source-only 2>/dev/null || true
     run get_meta_file "abc123"
     [ "$output" == "${LOG_DIR}/abc123.meta" ]
 }
@@ -41,7 +42,8 @@ teardown() {
 }
 
 @test "ensure_data_dir creates directories" {
-    ensure_data_dir
+    run ensure_data_dir
+    [ "$status" -eq 0 ]
     [ -d "$LOG_DIR" ]
     [ -d "$LOCK_DIR" ]
 }

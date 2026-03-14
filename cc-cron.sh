@@ -26,9 +26,9 @@ readonly EXIT_INVALID_ARGS=3
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DATA_DIR="${HOME}/.cc-cron"
-LOG_DIR="${DATA_DIR}/logs"
-LOCK_DIR="${DATA_DIR}/locks"
+DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
+LOG_DIR="${LOG_DIR:-${DATA_DIR}/logs}"
+LOCK_DIR="${LOCK_DIR:-${DATA_DIR}/locks}"
 CRON_COMMENT_PREFIX="CC-CRON:"
 
 # Environment configuration (can be overridden)
@@ -743,4 +743,7 @@ Options:
     esac
 }
 
-main "$@"
+# Only run main if not being sourced for testing
+if [[ "${CC_CRON_TEST_MODE:-0}" != "1" ]]; then
+    main "$@"
+fi
