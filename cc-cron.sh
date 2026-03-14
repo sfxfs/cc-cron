@@ -25,7 +25,6 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
 LOG_DIR="${LOG_DIR:-${DATA_DIR}/logs}"
 LOCK_DIR="${LOCK_DIR:-${DATA_DIR}/locks}"
@@ -323,7 +322,6 @@ RUNEOF
     crontab_add_entry "$cron_entry"
 
     # Save job metadata
-    local meta_file; meta_file=$(get_meta_file "$job_id")
     cat > "$meta_file" << EOF
 id="${job_id}"
 created="${timestamp}"
