@@ -10,6 +10,9 @@ chmod +x cc-cron.sh
 
 # Optional: Add to PATH
 ln -s $(pwd)/cc-cron.sh ~/.local/bin/cc-cron
+
+# Optional: Enable bash completion (add to ~/.bashrc)
+eval "$(cc-cron completion)"
 ```
 
 ## Usage
@@ -24,7 +27,7 @@ ln -s $(pwd)/cc-cron.sh ~/.local/bin/cc-cron
 
 | Option | Description |
 |--------|-------------|
-| `--once` | Create a one-shot job (default: recurring) |
+| `--once` | Create a one-shot job (auto-removes after successful execution) |
 | `--workdir <path>` | Working directory for this job |
 | `--model <name>` | Model to use: sonnet, opus, haiku, etc. |
 | `--permission-mode <mode>` | Permission mode: acceptEdits, auto, default |
@@ -60,13 +63,36 @@ ln -s $(pwd)/cc-cron.sh ~/.local/bin/cc-cron
 ./cc-cron.sh remove <job-id>
 ```
 
+### Bash Completion
+
+Enable tab completion for commands and job IDs:
+
+```bash
+# Add to ~/.bashrc
+eval "$(cc-cron completion)"
+```
+
+**Features:**
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `completion`
+- Job ID completion for `remove` and `logs` commands
+- Model names: `sonnet`, `opus`, `haiku`
+- Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`
+- Directory completion for `--workdir`
+- Common cron expression suggestions for `add`
+
 ### Check Status
 
 ```bash
 ./cc-cron.sh status
 ```
 
-Shows execution status (success/failure), timestamps, and a summary of recent job results.
+Shows execution status (running/success/failure), timestamps, and a summary of recent job results.
+
+**Status values:**
+- `RUNNING` - Job is currently executing
+- `SUCCESS` - Job completed successfully
+- `FAILED` - Job exited with non-zero code
+- `UNKNOWN` - No status information available
 
 ## Per-Job vs Global Configuration
 
@@ -128,4 +154,4 @@ Each job can have its own settings specified via command-line options. When not 
   - `run-*.sh` - Generated job runner scripts
 - Directory locking prevents concurrent Claude executions in the same directory
 - Per-job settings are saved and persist across restarts
-- One-shot jobs require manual cleanup after execution
+- One-shot jobs (`--once`) auto-remove after successful execution; on failure, they remain for debugging/retry
