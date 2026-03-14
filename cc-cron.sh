@@ -323,7 +323,6 @@ RUNEOF
     crontab_add_entry "$cron_entry"
 
     # Save job metadata
-    local meta_file; meta_file=$(get_meta_file "$job_id")
     cat > "$meta_file" << EOF
 id="${job_id}"
 created="${timestamp}"
