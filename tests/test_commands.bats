@@ -47,3 +47,10 @@ teardown() {
     [ -d "$LOG_DIR" ]
     [ -d "$LOCK_DIR" ]
 }
+
+@test "script stays under 500 lines" {
+    run wc -l "${BATS_TEST_DIRNAME}/../cc-cron.sh"
+    [ "$status" -eq 0 ]
+    local line_count="${output%% *}"
+    [ "$line_count" -lt 500 ]
+}
