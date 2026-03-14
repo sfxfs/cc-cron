@@ -160,6 +160,7 @@ cmd_add() {
     local run_script; run_script=$(get_run_script "$job_id")
     local current_path="$PATH"
     cat > "$run_script" << RUNEOF
+#!/usr/bin/env bash
 set -e
 export PATH="${current_path}"
 LOG_FILE="${log_file}"
@@ -365,7 +366,9 @@ cmd_help() {
 cc-cron - Schedule Claude Code commands as cron jobs
 Usage: cc-cron <command> [options]
 Commands:
-  add <cron> <prompt> [--once] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]
+  add <cron> <prompt>
+      [--once] [--workdir <path>] [--model <name>]
+      [--permission-mode <mode>] [--timeout <seconds>]
   list | status | remove <job-id> | logs <job-id> | completion | help
 Defaults from environment: CC_WORKDIR, CC_PERMISSION_MODE, CC_MODEL, CC_TIMEOUT
 Cron format: minute hour day month weekday (5 fields)
@@ -378,7 +381,7 @@ _cc_cron_completion() {
     _init_completion || return
     local commands="add list remove logs status completion help"
     local opts="--once --workdir --model --permission-mode --timeout"
-    _get_job_ids() { for meta_file in ~/.cc-cron/logs/*.meta; do [[ -f "$meta_file" ]] && basename "$meta_file" .meta; done; }
+    _get_job_ids() { for meta_file in ${LOG_DIR:-${HOME}/.cc-cron/logs}/*.meta; do [[ -f "$meta_file" ]] && basename "$meta_file" .meta; done; }
     case ${prev} in
         cc-cron) COMPREPLY=($(compgen -W "${commands}" -- "${cur}"));;
         remove|logs) COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"));;
@@ -402,7 +405,7 @@ main() {
         add)
             ensure_data_dir
             if [[ $# -lt 2 ]]; then
-                error "Usage: cc-cron add <cron-expression> <prompt> [--once] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]"
+                error "Usage: cc-cron add <cron-expression> <prompt> [--once] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]. Run 'cc-cron help' for option details."
             fi
             local cron_expr="$1"
             local prompt="$2"
