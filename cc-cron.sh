@@ -2,19 +2,6 @@
 #
 # cc-cron - Schedule Claude Code commands as cron jobs
 #
-# Usage:
-#   cc-cron add <cron-expression> <prompt> [options]
-#   cc-cron list
-#   cc-cron remove <job-id>
-#   cc-cron logs <job-id>
-#
-# Examples:
-#   cc-cron add "0 9 * * 1-5" "Run daily tests"
-#   cc-cron add "0 * * * *" "Check issues" --model sonnet --workdir /path/to/project
-#   cc-cron add "30 14 28 2 *" "One-time reminder" --once
-#   cc-cron list
-#   cc-cron remove abc123
-#
 
 set -euo pipefail
 
@@ -252,7 +239,7 @@ cmd_add() {
     local current_path="$PATH"
 
     cat > "$run_script" << RUNEOF
-#!/bin/bash
+#!/usr/bin/env bash
 # Auto-generated job runner for ${job_id}
 set -e
 
@@ -539,7 +526,7 @@ COMMANDS:
     status                          Show status overview and log activity
     remove <job-id>                 Remove a scheduled job
     logs <job-id>                   Show logs for a job
-    completion                     Output bash completion script
+    completion                      Output bash completion script
     help                            Show this help message
 
 ENVIRONMENT VARIABLES (used as defaults when not specified per-job):
