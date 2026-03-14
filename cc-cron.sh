@@ -30,6 +30,9 @@ CC_WORKDIR="${CC_WORKDIR:-$HOME}"
 CC_PERMISSION_MODE="${CC_PERMISSION_MODE:-bypassPermissions}"
 CC_MODEL="${CC_MODEL:-}"
 
+# Crontab cache (performance optimization)
+_CRONTAB_CACHE=""
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -67,11 +70,17 @@ remove_file() {
     [[ -f "$1" ]] && { rm "$1"; info "Removed $2: ${1}"; }
 }
 
-# Generate unique job ID with collision detection
+# Generate unique job ID with collision detection (optimized)
 generate_job_id() {
     local job_id
-    for i in {1..10}; do
-        job_id=$(head /dev/urandom | tr -dc 'a-z0-9' | head -c 8)
+    local random_bytes
+
+    # Pre-generate random bytes for better performance
+    local attempt
+    for attempt in {1..10}; do
+        # Read more bytes at once for efficiency
+        random_bytes=$(head -c 100 /dev/urandom | tr -dc 'a-z0-9')
+        job_id="${random_bytes:0:8}"
         [[ ! -f "$(get_meta_file "$job_id")" ]] && echo "$job_id" && return
     done
     error "Failed to generate unique job ID after 10 attempts"
@@ -152,10 +161,37 @@ validate_workdir() {
     [[ -d "$1" ]] || error "Directory not found: $1"
 }
 
-# Crontab helper function
+# Crontab helper functions
 crontab_add_entry() {
     local entry="$1"
     (crontab -l 2>/dev/null; echo "$entry") | crontab -
+    invalidate_crontab_cache
+}
+
+# Get crontab content with caching
+get_crontab() {
+    if [[ -z "${_CRONTAB_CACHE:-}" ]]; then
+        _CRONTAB_CACHE=$(crontab -l 2>/dev/null) || _CRONTAB_CACHE=""
+    fi
+    printf '%s\n' "$_CRONTAB_CACHE"
+}
+
+# Invalidate crontab cache
+invalidate_crontab_cache() {
+    _CRONTAB_CACHE=""
+}
+
+# Check if crontab has entry matching pattern
+crontab_has_entry() {
+    local pattern="$1"
+    get_crontab | grep -q "$pattern"
+}
+
+# Remove entry from crontab matching pattern
+crontab_remove_entry() {
+    local pattern="$1"
+    crontab -l 2>/dev/null | { grep -v "$pattern" || true; } | crontab -
+    invalidate_crontab_cache
 }
 
 # Generate lock file path from directory path
@@ -292,13 +328,17 @@ EOF
     fi
 }
 
-# List all cc-cron jobs
+# List all cc-cron jobs (optimized: single crontab read)
 cmd_list() {
     local found=0
 
     echo "Scheduled Claude Code Cron Jobs:"
     echo "================================="
     echo
+
+    # Single crontab read with caching
+    local crontab_content
+    crontab_content=$(get_crontab) || return 0
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
@@ -327,24 +367,22 @@ cmd_list() {
                 echo
             fi
         fi
-    done < <(crontab -l 2>/dev/null)
+    done <<< "$crontab_content"
 
     if [[ "$found" -eq 0 ]]; then
         info "No scheduled jobs found."
     fi
 }
 
-# Remove a cron job by ID
+# Remove a cron job by ID (optimized)
 cmd_remove() {
     local job_id="$1"
     local found=0
 
-    # Remove from crontab (single read)
-    local crontab_content
-    crontab_content=$(crontab -l 2>/dev/null) || true
-    if echo "$crontab_content" | grep -q "${CRON_COMMENT_PREFIX}${job_id}"; then
+    # Remove from crontab using helper function
+    if crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
         found=1
-        echo "$crontab_content" | { grep -v "${CRON_COMMENT_PREFIX}${job_id}" || true; } | crontab -
+        crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
         success "Removed cron job: ${job_id}"
     fi
 
