@@ -25,7 +25,6 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Configuration
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
 LOG_DIR="${LOG_DIR:-${DATA_DIR}/logs}"
 LOCK_DIR="${LOCK_DIR:-${DATA_DIR}/locks}"
@@ -249,16 +248,13 @@ cmd_add() {
     # Create wrapper script that handles locking and status tracking
     local run_script; run_script=$(get_run_script "$job_id")
 
-    # Capture current PATH for cron environment
-    local current_path="$PATH"
-
     cat > "$run_script" << RUNEOF
 #!/bin/bash
 # Auto-generated job runner for ${job_id}
 set -e
 
 # Set PATH for cron environment (captured at job creation time)
-export PATH="${current_path}"
+export PATH="${PATH}"
 
 LOG_FILE="${log_file}"
 STATUS_FILE="${status_file}"
