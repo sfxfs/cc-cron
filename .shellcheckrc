@@ -1,0 +1,12 @@
+# .shellcheckrc
+# ShellCheck configuration for cc-cron
+
+# Use bash as the shell
+shell=bash
+
+# Disable warnings that don't apply
+disable=SC1090  # Don't warn about dynamic source
+disable=SC1091  # Don't warn about missing source files
+
+# External sources
+external-sources=true
