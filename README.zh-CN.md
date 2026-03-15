@@ -147,6 +147,34 @@ eval "$(cc-cron completion)"
 ./cc-cron.sh edit myjob --prompt "新的提示文本"
 ```
 
+### 克隆任务
+
+复制已有任务创建新任务：
+
+```bash
+./cc-cron.sh clone <job-id> [options]
+```
+
+**选项：**
+
+| 选项 | 说明 |
+|--------|-------------|
+| `--cron <表达式>` | 覆盖调度时间 |
+| `--prompt <文本>` | 覆盖提示文本 |
+| `--workdir <路径>` | 覆盖工作目录 |
+| `--model <名称>` | 覆盖模型 |
+| `--permission-mode <模式>` | 覆盖权限模式 |
+| `--timeout <秒数>` | 覆盖超时时间 |
+
+**示例：**
+```bash
+# 使用相同设置克隆任务
+./cc-cron.sh clone myjob
+
+# 使用不同的调度时间克隆
+./cc-cron.sh clone myjob --cron "0 12 * * *"
+```
+
 ### 导出任务
 
 将任务导出为 JSON 格式，用于备份或迁移：

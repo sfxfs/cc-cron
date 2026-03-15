@@ -147,6 +147,34 @@ Modify an existing job's settings:
 ./cc-cron.sh edit myjob --prompt "New prompt text"
 ```
 
+### Clone a Job
+
+Create a copy of an existing job with a new ID:
+
+```bash
+./cc-cron.sh clone <job-id> [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--cron <expr>` | Override cron schedule |
+| `--prompt <text>` | Override prompt |
+| `--workdir <path>` | Override working directory |
+| `--model <name>` | Override model |
+| `--permission-mode <mode>` | Override permission mode |
+| `--timeout <seconds>` | Override timeout |
+
+**Example:**
+```bash
+# Clone a job with the same settings
+./cc-cron.sh clone myjob
+
+# Clone with a different schedule
+./cc-cron.sh clone myjob --cron "0 12 * * *"
+```
+
 ### Export Jobs
 
 Export jobs to JSON format for backup or migration:
