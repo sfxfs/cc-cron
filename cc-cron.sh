@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.6.0"
+readonly VERSION="1.7.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1387,6 +1387,186 @@ cmd_config() {
     esac
 }
 
+# Diagnose common issues
+cmd_doctor() {
+    local issues=0
+    local warnings=0
+
+    echo "CC-Cron Health Check"
+    echo "===================="
+    echo
+
+    # Check 1: Data directory
+    echo "1. Checking data directory..."
+    if [[ -d "$DATA_DIR" ]]; then
+        echo "   ✓ Data directory exists: ${DATA_DIR}"
+    else
+        echo "   ✗ Data directory not found: ${DATA_DIR}"
+        echo "     Fix: Run 'cc-cron add' to create it automatically"
+        ((issues++)) || true
+    fi
+
+    # Check 2: Crontab access
+    echo
+    echo "2. Checking crontab access..."
+    if crontab -l &>/dev/null; then
+        echo "   ✓ Crontab is accessible"
+    else
+        echo "   ! No crontab configured (this is OK if no jobs are scheduled)"
+        ((warnings++)) || true
+    fi
+
+    # Check 3: Claude CLI
+    echo
+    echo "3. Checking Claude CLI..."
+    if command -v claude &>/dev/null; then
+        echo "   ✓ Claude CLI found: $(command -v claude)"
+        # Check version if possible
+        if claude --version &>/dev/null; then
+            echo "     Version: $(claude --version 2>&1 | head -1)"
+        fi
+    else
+        echo "   ✗ Claude CLI not found in PATH"
+        echo "     Fix: Install Claude CLI from https://claude.ai/code"
+        ((issues++)) || true
+    fi
+
+    # Check 4: Required tools
+    echo
+    echo "4. Checking required tools..."
+    local missing_tools=()
+    for tool in flock md5sum; do
+        if command -v "$tool" &>/dev/null; then
+            echo "   ✓ ${tool} available"
+        else
+            echo "   ✗ ${tool} not found"
+            missing_tools+=("$tool")
+            ((issues++)) || true
+        fi
+    done
+    if [[ ${#missing_tools[@]} -gt 0 ]]; then
+        echo "     Fix: Install missing tools with your package manager"
+    fi
+
+    # Check 5: Optional tools
+    echo
+    echo "5. Checking optional tools..."
+    if command -v jq &>/dev/null; then
+        echo "   ✓ jq available (for import/export)"
+    else
+        echo "   ! jq not found (needed for import command)"
+        echo "     Install: apt-get install jq or brew install jq"
+        ((warnings++)) || true
+    fi
+
+    # Check 6: Lock files
+    echo
+    echo "6. Checking lock files..."
+    local lock_count
+    lock_count=$(find "$LOCK_DIR" -name "*.lock" 2>/dev/null | wc -l)
+    echo "   Active lock files: ${lock_count}"
+    if [[ "$lock_count" -gt 0 ]]; then
+        echo "   ! Some jobs may be stuck or running"
+        for lock_file in "$LOCK_DIR"/*.lock; do
+            [[ -f "$lock_file" ]] || continue
+            local lock_age
+            lock_age=$(stat -c %Y "$lock_file" 2>/dev/null)
+            local current_time
+            current_time=$(date +%s)
+            local age_minutes=$(( (current_time - lock_age) / 60 ))
+            if [[ $age_minutes -gt 60 ]]; then
+                echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)"
+                ((warnings++)) || true
+            fi
+        done
+    fi
+
+    # Check 7: Job consistency
+    echo
+    echo "7. Checking job consistency..."
+    local crontab_jobs=0
+    local meta_files=0
+    local orphaned=0
+
+    # Count jobs in crontab
+    while IFS= read -r line; do
+        if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
+            ((crontab_jobs++)) || true
+            local job_id temp
+            temp="${line#*"${CRON_COMMENT_PREFIX}"}"
+            job_id="${temp%%:*}"
+            local meta_file
+            meta_file=$(get_meta_file "$job_id")
+            if [[ ! -f "$meta_file" ]]; then
+                echo "   ! Missing metadata for job: ${job_id}"
+                ((orphaned++)) || true
+            fi
+        fi
+    done < <(get_crontab)
+
+    # Count meta files
+    for meta_file in "${LOG_DIR}"/*.meta; do
+        [[ -f "$meta_file" ]] || continue
+        ((meta_files++)) || true
+    done
+
+    echo "   Jobs in crontab: ${crontab_jobs}"
+    echo "   Metadata files:  ${meta_files}"
+
+    if [[ $orphaned -gt 0 ]]; then
+        echo "   ! ${orphaned} orphaned crontab entries found"
+        echo "     Fix: Run 'cc-cron purge' or manually clean crontab"
+        ((issues++)) || true
+    fi
+
+    # Check 8: Disk space
+    echo
+    echo "8. Checking disk space..."
+    local data_size
+    data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0")
+    echo "   Data directory size: ${data_size}"
+
+    local available_space
+    available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
+    echo "   Available space: ${available_space}"
+
+    # Check 9: Permission issues
+    echo
+    echo "9. Checking permissions..."
+    local perm_issues=0
+    for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
+        if [[ -d "$dir" ]]; then
+            if [[ ! -w "$dir" ]]; then
+                echo "   ✗ No write permission: ${dir}"
+                ((perm_issues++)) || true
+            fi
+        fi
+    done
+    if [[ $perm_issues -eq 0 ]]; then
+        echo "   ✓ All directories are writable"
+    else
+        ((issues++)) || true
+    fi
+
+    # Summary
+    echo
+    echo "================================"
+    if [[ $issues -eq 0 && $warnings -eq 0 ]]; then
+        echo -e "${GREEN}All checks passed!${NC}"
+    else
+        if [[ $issues -gt 0 ]]; then
+            echo -e "${RED}Found ${issues} issue(s) that need attention${NC}"
+        fi
+        if [[ $warnings -gt 0 ]]; then
+            echo -e "${YELLOW}Found ${warnings} warning(s)${NC}"
+        fi
+    fi
+    echo
+
+    # Return non-zero if there are issues
+    [[ $issues -eq 0 ]]
+}
+
 # Show version
 cmd_version() {
     echo "cc-cron version ${VERSION}"
@@ -1437,6 +1617,7 @@ COMMANDS:
         set <key> <value>           Set a configuration value
         unset <key>                 Remove a configuration value
         Valid keys: workdir, model, permission_mode, timeout
+    doctor                          Diagnose common issues
     completion                      Output bash completion script
     version                         Show version information
     help                            Show this help message
@@ -1476,7 +1657,7 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit export import purge config version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit export import purge config doctor version completion help" -- "${cur}"))
             ;;
         remove|logs|pause|resume|show|history|run)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
@@ -1689,6 +1870,10 @@ Options:
             ensure_data_dir
             load_config
             cmd_config "${1:-list}" "${2:-}" "${3:-}"
+            ;;
+        doctor)
+            ensure_data_dir
+            cmd_doctor
             ;;
         version|--version|-v)
             cmd_version

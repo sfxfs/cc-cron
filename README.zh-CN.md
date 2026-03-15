@@ -223,6 +223,25 @@ purge 命令会删除：
 
 **优先级：** 命令行选项 > 配置文件 > 环境变量 > 内置默认值
 
+### 诊断问题
+
+运行诊断检查常见问题：
+
+```bash
+./cc-cron.sh doctor
+```
+
+doctor 命令会检查：
+- 数据目录是否存在
+- crontab 访问权限
+- Claude CLI 是否可用
+- 必需工具（flock、md5sum）
+- 可选工具（jq 用于导入）
+- 锁文件状态
+- 任务一致性
+- 磁盘空间
+- 目录权限
+
 ### 查看版本
 
 ```bash
@@ -239,7 +258,7 @@ eval "$(cc-cron completion)"
 ```
 
 **功能：**
-- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export`、`import`、`purge`、`config`、`version`、`completion`
+- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export`、`import`、`purge`、`config`、`doctor`、`version`、`completion`
 - `remove`、`logs`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export` 的任务 ID 补全
 - 模型名：`sonnet`、`opus`、`haiku`
 - 权限模式：`bypassPermissions`、`acceptEdits`、`auto`、`default`

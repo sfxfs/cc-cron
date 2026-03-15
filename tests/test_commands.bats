@@ -222,3 +222,19 @@ teardown() {
     run cmd_config set invalid_key value
     [ "$status" -ne 0 ]
 }
+
+@test "cmd_doctor runs without error" {
+    run cmd_doctor
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Health Check"* ]]
+}
+
+@test "cmd_doctor checks claude CLI" {
+    run cmd_doctor
+    [[ "$output" == *"Claude CLI"* ]]
+}
+
+@test "cmd_doctor checks required tools" {
+    run cmd_doctor
+    [[ "$output" == *"flock"* ]]
+}

@@ -223,6 +223,25 @@ Configuration is stored in `~/.cc-cron/config`. Valid keys:
 
 **Priority:** Command-line options > Config file > Environment variables > Built-in defaults
 
+### Diagnose Issues
+
+Run diagnostics to check for common problems:
+
+```bash
+./cc-cron.sh doctor
+```
+
+The doctor command checks:
+- Data directory existence
+- Crontab access
+- Claude CLI availability
+- Required tools (flock, md5sum)
+- Optional tools (jq for import)
+- Lock file status
+- Job consistency
+- Disk space
+- Directory permissions
+
 ### Check Version
 
 ```bash
@@ -239,7 +258,7 @@ eval "$(cc-cron completion)"
 ```
 
 **Features:**
-- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `export`, `import`, `purge`, `config`, `version`, `completion`
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `export`, `import`, `purge`, `config`, `doctor`, `version`, `completion`
 - Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, `history`, `run`, `edit`, and `export` commands
 - Model names: `sonnet`, `opus`, `haiku`
 - Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`
