@@ -222,6 +222,45 @@ teardown() {
     [[ "$output" == *"Job not found"* ]]
 }
 
+@test "cmd_next shows next run for existing job" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create a job with hourly schedule
+    cmd_add "30 * * * *" "hourly test job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    local job_id="$LAST_CREATED_JOB_ID"
+
+    run cmd_next "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"${job_id}"* ]]
+    [[ "$output" == *"Next run"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")"
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+}
+
+@test "cmd_next shows all jobs when no job_id specified" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create two jobs
+    cmd_add "0 * * * *" "job1" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    local job1="$LAST_CREATED_JOB_ID"
+
+    cmd_add "30 * * * *" "job2" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    local job2="$LAST_CREATED_JOB_ID"
+
+    run cmd_next
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"${job1}"* ]]
+    [[ "$output" == *"${job2}"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$job1")" "$(get_run_script "$job1")"
+    rm -f "$(get_meta_file "$job2")" "$(get_run_script "$job2")"
+    crontab_remove_entry "CC-CRON:${job1}" 2>/dev/null || true
+    crontab_remove_entry "CC-CRON:${job2}" 2>/dev/null || true
+}
+
 @test "cmd_help next shows detailed help" {
     run cmd_help "next"
     [ "$status" -eq 0 ]
