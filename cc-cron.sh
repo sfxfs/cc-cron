@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.10"
+readonly VERSION="2.4.11"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -330,8 +330,7 @@ validate_permission_mode() {
             return 0
             ;;
         *)
-            error "Invalid permission mode: $1. " \
-                "Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
+            error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
             ;;
     esac
 }
@@ -1936,8 +1935,7 @@ cmd_config() {
                     # Valid keys
                     ;;
                 *)
-                    error "Invalid config key: ${key}. Valid keys: workdir, model, " \
-                        "permission_mode, timeout" "$EXIT_INVALID_ARGS"
+                    error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout" "$EXIT_INVALID_ARGS"
                     ;;
             esac
 
@@ -3064,9 +3062,7 @@ Options:
         edit)
             ensure_data_dir
             if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron edit <job-id> [--cron <expr>] [--prompt <text>] " \
-                    "[--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]" \
-                    "$EXIT_INVALID_ARGS"
+                error "Usage: cc-cron edit <job-id> [--cron <expr>] [--prompt <text>] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]" "$EXIT_INVALID_ARGS"
             fi
             local edit_job_id="$1"
             shift

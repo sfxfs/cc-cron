@@ -2312,6 +2312,21 @@ EOF
     rm -f "$(get_meta_file "$job_id")" "$status_file"
 }
 
+@test "cmd_status handles paused jobs" {
+    local job_id="pausedstatus"
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+    create_test_meta "$job_id"
+
+    # Create paused file
+    mkdir -p "$DATA_DIR"
+    touch "$paused_file"
+
+    run cmd_status
+    [ "$status" -eq 0 ]
+
+    rm -f "$(get_meta_file "$job_id")" "$paused_file"
+}
+
 @test "cmd_purge handles orphaned run scripts" {
     local job_id="orphanscript"
     local run_script; run_script=$(get_run_script "$job_id")

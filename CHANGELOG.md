@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.11] - 2025-03-16
+
+### Fixed
+- Revert error message line splits that broke function call arguments
+- Error messages with line continuation were passing exit code incorrectly
+
+### Tests
+- Add test for `cmd_status` with paused jobs
+
 ## [2.4.10] - 2025-03-16
 
 ### Refactor
