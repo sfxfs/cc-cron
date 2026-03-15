@@ -386,6 +386,31 @@ teardown() {
     [ "$status" -ne 0 ]
 }
 
+@test "cmd_config unset removes key" {
+    local config_file="${DATA_DIR}/config"
+    echo 'workdir="/tmp/test"' > "$config_file"
+
+    run cmd_config unset workdir
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Unset"* ]]
+
+    # Verify key is removed
+    ! grep -q "^workdir=" "$config_file"
+
+    rm -f "$config_file"
+}
+
+@test "cmd_config unset handles missing key" {
+    local config_file="${DATA_DIR}/config"
+    echo 'model="sonnet"' > "$config_file"
+
+    # unset should succeed even if key doesn't exist
+    run cmd_config unset workdir
+    [ "$status" -eq 0 ]
+
+    rm -f "$config_file"
+}
+
 @test "cmd_doctor runs without error" {
     run cmd_doctor
     # Doctor returns non-zero if issues found, but should still produce output
