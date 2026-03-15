@@ -114,6 +114,33 @@ Show execution history for a job:
 
 Default is 20 lines. Each entry shows start time, end time, and status.
 
+### View Execution Statistics
+
+Show execution statistics for jobs:
+
+```bash
+./cc-cron.sh stats [job-id]
+```
+
+Displays:
+- Total runs
+- Success/failure counts
+- Success rate
+- Average duration
+- Last success/failure times
+
+Omit `job-id` to show stats for all jobs.
+
+### Show Upcoming Runs
+
+Display next scheduled run times:
+
+```bash
+./cc-cron.sh next [job-id]
+```
+
+Omit `job-id` to show upcoming runs for all jobs.
+
 ### Run a Job Immediately
 
 Execute a job right now (useful for testing):
@@ -294,8 +321,8 @@ eval "$(cc-cron completion)"
 ```
 
 **Features:**
-- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `export`, `import`, `purge`, `config`, `doctor`, `version`, `completion`
-- Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, `history`, `run`, `edit`, and `export` commands
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `stats`, `next`, `run`, `edit`, `export`, `import`, `purge`, `config`, `doctor`, `version`, `completion`
+- Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, `history`, `stats`, `next`, `run`, `edit`, and `export` commands
 - Model names: `sonnet`, `opus`, `haiku`
 - Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`
 - Directory completion for `--workdir`

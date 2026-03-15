@@ -114,6 +114,33 @@ echo "Created job: $JOB_ID"
 
 默认显示 20 行。每条记录显示开始时间、结束时间和状态。
 
+### 查看执行统计
+
+显示任务的执行统计信息：
+
+```bash
+./cc-cron.sh stats [job-id]
+```
+
+显示内容包括：
+- 总运行次数
+- 成功/失败次数
+- 成功率
+- 平均执行时间
+- 最近成功/失败时间
+
+省略 `job-id` 显示所有任务的统计。
+
+### 查看下次运行时间
+
+显示任务的下次计划运行时间：
+
+```bash
+./cc-cron.sh next [job-id]
+```
+
+省略 `job-id` 显示所有任务的下次运行时间。
+
 ### 立即运行任务
 
 立即执行一次任务（用于测试）：
@@ -294,8 +321,8 @@ eval "$(cc-cron completion)"
 ```
 
 **功能：**
-- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export`、`import`、`purge`、`config`、`doctor`、`version`、`completion`
-- `remove`、`logs`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export` 的任务 ID 补全
+- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`stats`、`next`、`run`、`edit`、`export`、`import`、`purge`、`config`、`doctor`、`version`、`completion`
+- `remove`、`logs`、`pause`、`resume`、`show`、`history`、`stats`、`next`、`run`、`edit`、`export` 的任务 ID 补全
 - 模型名：`sonnet`、`opus`、`haiku`
 - 权限模式：`bypassPermissions`、`acceptEdits`、`auto`、`default`
 - `--workdir` 的目录补全
