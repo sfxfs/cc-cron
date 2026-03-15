@@ -639,11 +639,12 @@ cmd_history() {
         echo "Recent executions:"
         echo "------------------"
         tail -n "$lines" "$history_file" | while IFS= read -r line; do
+            # Parse using bash parameter expansion (more portable than grep -oP)
             local h_start h_end h_status h_exit
-            h_start=$(echo "$line" | grep -oP 'start="\K[^"]+' || echo "unknown")
-            h_end=$(echo "$line" | grep -oP 'end="\K[^"]+' || echo "unknown")
-            h_status=$(echo "$line" | grep -oP 'status="\K[^"]+' || echo "unknown")
-            h_exit=$(echo "$line" | grep -oP 'exit_code="\K[^"]+' || echo "")
+            h_start="${line#*start=\"}" && h_start="${h_start%%\"*}"
+            h_end="${line#*end=\"}" && h_end="${h_end%%\"*}"
+            h_status="${line#*status=\"}" && h_status="${h_status%%\"*}"
+            h_exit="${line#*exit_code=\"}" && h_exit="${h_exit%%\"*}"
 
             case "$h_status" in
                 success) echo -e "  ${GREEN}✓${NC} ${h_start} - ${h_end}" ;;
