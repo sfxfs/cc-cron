@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.9.5"
+readonly VERSION="2.0.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -735,6 +735,169 @@ cmd_resume() {
 
     success "Resumed job: ${job_id}"
     info "Schedule: ${cron}"
+}
+
+# Calculate next run time from cron expression
+# Supports: hourly (0 * * * *), daily (0 H * * *), weekly (0 H * * D)
+calculate_next_run() {
+    local cron="$1"
+    local now
+    now=$(date +%s)
+
+    # Parse cron fields
+    local -a fields
+    read -ra fields <<< "$cron"
+    local minute="${fields[0]}"
+    local hour="${fields[1]}"
+    local day="${fields[2]}"
+    local month="${fields[3]}"
+    local weekday="${fields[4]}"
+
+    local next_time=""
+    local schedule_desc=""
+
+    # Handle common patterns
+    if [[ "$minute" == "*" && "$hour" == "*" ]]; then
+        # Every minute
+        next_time=$((now + 60))
+        schedule_desc="every minute"
+    elif [[ "$hour" == "*" && "$minute" != "*" ]]; then
+        # Every hour at specific minute
+        local current_minute
+        current_minute=$(date +%M)
+        current_minute=$((10#$current_minute))
+        local target_minute=$((10#$minute))
+
+        local minutes_until=$(( (target_minute - current_minute + 60) % 60 ))
+        if [[ $minutes_until -eq 0 ]]; then
+            minutes_until=60
+        fi
+        next_time=$((now + minutes_until * 60))
+        schedule_desc="hourly at minute $minute"
+    elif [[ "$day" == "*" && "$month" == "*" && "$weekday" == "*" ]]; then
+        # Daily at specific time
+        local current_hour current_minute
+        current_hour=$(date +%H)
+        current_minute=$(date +%M)
+        current_hour=$((10#$current_hour))
+        current_minute=$((10#$current_minute))
+
+        local target_hour=$((10#$hour))
+        local target_minute=$((10#$minute))
+
+        local minutes_today=$((target_hour * 60 + target_minute))
+        local minutes_now=$((current_hour * 60 + current_minute))
+
+        local minutes_until=$((minutes_today - minutes_now))
+        if [[ $minutes_until -le 0 ]]; then
+            minutes_until=$((minutes_until + 1440))  # Add 24 hours
+        fi
+        next_time=$((now + minutes_until * 60))
+        schedule_desc="daily at ${hour}:${minute}"
+    elif [[ "$weekday" != "*" && "$weekday" != "*" ]]; then
+        # Weekly
+        local current_weekday
+        current_weekday=$(date +%u)  # 1-7, Monday is 1
+        current_weekday=$((current_weekday % 7))  # Convert to 0-6, Sunday is 0
+
+        local target_weekday=$((10#$weekday))
+
+        local current_hour current_minute
+        current_hour=$(date +%H)
+        current_minute=$(date +%M)
+        current_hour=$((10#$current_hour))
+        current_minute=$((10#$current_minute))
+
+        local target_hour=$((10#$hour))
+        local target_minute=$((10#$minute))
+
+        local days_until=$(( (target_weekday - current_weekday + 7) % 7 ))
+        if [[ $days_until -eq 0 ]]; then
+            # Same day, check if time has passed
+            local minutes_target=$((target_hour * 60 + target_minute))
+            local minutes_now=$((current_hour * 60 + current_minute))
+            if [[ $minutes_target -le $minutes_now ]]; then
+                days_until=7
+            fi
+        fi
+
+        local minutes_until=$((days_until * 1440 + target_hour * 60 + target_minute - current_hour * 60 - current_minute))
+        next_time=$((now + minutes_until * 60))
+
+        local day_names=("Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday")
+        schedule_desc="weekly on ${day_names[$target_weekday]} at ${hour}:${minute}"
+    else
+        # Complex schedule - show cron expression
+        schedule_desc="custom schedule (${cron})"
+        next_time=0
+    fi
+
+    if [[ $next_time -gt 0 ]]; then
+        date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null
+    fi
+}
+
+# Show next scheduled run times
+cmd_next() {
+    local job_id="${1:-}"
+    local count="${2:-5}"
+
+    echo "Upcoming Scheduled Runs:"
+    echo "========================="
+    echo
+
+    local crontab_content
+    crontab_content=$(get_crontab) || { info "No crontab configured"; return 0; }
+
+    local found=0
+
+    while IFS= read -r line; do
+        if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
+            local id
+            id=$(extract_job_id "$line")
+
+            # Filter by job_id if specified
+            if [[ -n "$job_id" && "$id" != "$job_id" ]]; then
+                continue
+            fi
+
+            local meta_file
+            meta_file=$(get_meta_file "$id")
+            if [[ ! -f "$meta_file" ]]; then
+                continue
+            fi
+
+            source "$meta_file"
+
+            # Check if paused
+            local paused_file="${DATA_DIR}/${id}.paused"
+            local paused_status=""
+            if [[ -f "$paused_file" ]]; then
+                paused_status=" (PAUSED)"
+            fi
+
+            local next_run
+            next_run=$(calculate_next_run "$cron")
+
+            echo -e "  ${GREEN}${id}${NC}${paused_status}"
+            echo "    Schedule: ${cron}"
+            if [[ -n "$next_run" ]]; then
+                echo "    Next run: ${next_run}"
+            fi
+            echo "    Prompt:   ${prompt:0:50}${prompt:50:+...}"
+            echo
+
+            found=$((found + 1))
+        fi
+    done <<< "$crontab_content"
+
+    if [[ $found -eq 0 ]]; then
+        if [[ -n "$job_id" ]]; then
+            info "Job not found: ${job_id}"
+        else
+            info "No scheduled jobs found."
+        fi
+    fi
 }
 
 # Show detailed information for a specific job
@@ -1833,6 +1996,29 @@ EXAMPLES:
 HELP
 }
 
+help_next() {
+    cat << 'HELP'
+cc-cron next - Show upcoming scheduled runs
+
+USAGE:
+    cc-cron next [job-id]
+
+ARGUMENTS:
+    [job-id]   Optional job ID to show specific job
+
+DESCRIPTION:
+    Displays the next scheduled run time for all jobs
+    or a specific job. Supports common cron patterns:
+    - Hourly:  "N * * * *" (at minute N)
+    - Daily:   "N H * * *" (at hour H, minute N)
+    - Weekly:  "N H * * D" (on weekday D at H:N)
+
+EXAMPLES:
+    cc-cron next              # Show all upcoming runs
+    cc-cron next abc123       # Show next run for specific job
+HELP
+}
+
 # Show help
 cmd_help() {
     local topic="${1:-}"
@@ -1875,6 +2061,10 @@ cmd_help() {
             help_history
             return 0
             ;;
+        next)
+            help_next
+            return 0
+            ;;
         "")
             # No argument - show general help
             ;;
@@ -1903,6 +2093,7 @@ COMMANDS:
     show <job-id>           Show job details
     history <job-id>        Show execution history
     run <job-id>            Run a job immediately
+    next [job-id]           Show upcoming scheduled runs
     edit <job-id>           Edit a job
     clone <job-id>          Clone a job
     export [job-id]         Export jobs to JSON
@@ -1959,9 +2150,9 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history run edit clone export import purge config doctor version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history run next edit clone export import purge config doctor version completion help" -- "${cur}"))
             ;;
-        remove|pause|resume|enable|disable|show|history|run|clone)
+        remove|pause|resume|enable|disable|show|history|run|clone|next)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         logs)
@@ -2115,6 +2306,10 @@ Options:
         status)
             ensure_data_dir
             cmd_status
+            ;;
+        next)
+            ensure_data_dir
+            cmd_next "${1:-}" "${2:-}"
             ;;
         pause|disable)
             ensure_data_dir
