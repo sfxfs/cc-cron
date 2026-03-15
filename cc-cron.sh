@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.8"
+readonly VERSION="2.4.9"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -621,7 +621,8 @@ cmd_add() {
     crontab_add_entry "$(build_cron_entry "$job_id" "$cron_expr" "$run_script" "$recurring" "$prompt")"
 
     # Save job metadata using helper
-    write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script" "" "$job_tags"
+    write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" \
+        "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script" "" "$job_tags"
 
     # Store job ID for programmatic use (e.g., import)
     LAST_CREATED_JOB_ID="$job_id"
@@ -706,7 +707,14 @@ cmd_list() {
                     local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt")
                     local escaped_workdir; escaped_workdir=$(escape_json_string "${workdir:-$CC_WORKDIR}")
                     local escaped_permission; escaped_permission=$(escape_json_string "${permission_mode:-$CC_PERMISSION_MODE}")
-                    local job_json="{\"id\":\"${id}\",\"created\":\"${created}\",\"cron\":\"${cron}\",\"recurring\":${recurring},\"workdir\":\"${escaped_workdir}\",\"permission\":\"${escaped_permission}\",\"prompt\":\"${escaped_prompt}\""
+                    local job_json="{"
+                    job_json+="\"id\":\"${id}\""
+                    job_json+=",\"created\":\"${created}\""
+                    job_json+=",\"cron\":\"${cron}\""
+                    job_json+=",\"recurring\":${recurring}"
+                    job_json+=",\"workdir\":\"${escaped_workdir}\""
+                    job_json+=",\"permission\":\"${escaped_permission}\""
+                    job_json+=",\"prompt\":\"${escaped_prompt}\""
                     if [[ -n "${model:-}" ]]; then
                         job_json+=",\"model\":\"$(escape_json_string "$model")\""
                     fi
@@ -1008,7 +1016,8 @@ calculate_next_run() {
                 fi
             fi
 
-            local minutes_until=$((days_until * 1440 + target_hour * 60 + target_minute - current_hour * 60 - current_minute))
+            local minutes_until=$((days_until * 1440 + target_hour * 60 + target_minute
+                - current_hour * 60 - current_minute))
             next_time=$((now + minutes_until * 60))
 
             local day_names=("Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday")
@@ -1301,10 +1310,12 @@ cmd_edit() {
     # Update metadata file using helper
     local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local new_run_script; new_run_script=$(get_run_script "$job_id")
-    write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp" "$new_tags"
+    write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" \
+        "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp" "$new_tags"
 
     # Generate new run script using helper
-    generate_run_script "$job_id" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$recurring" "$new_prompt" > /dev/null
+    generate_run_script "$job_id" "$new_workdir" "$new_model" "$new_permission" \
+        "$new_timeout" "$recurring" "$new_prompt" > /dev/null
 
     # Re-add to crontab if not paused
     if [[ "$was_paused" -eq 0 ]]; then
@@ -1359,7 +1370,8 @@ cmd_clone() {
     fi
 
     # Create new job with copied settings
-    cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "false" "$new_tags"
+    cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" \
+        "$new_model" "$new_permission" "$new_timeout" "false" "$new_tags"
 
     success "Cloned job ${source_id} → ${LAST_CREATED_JOB_ID}"
 }
@@ -1446,7 +1458,8 @@ cmd_status() {
         fi
     done
 
-    echo -e "Summary: ${GREEN}${success_count} succeeded${NC}, ${RED}${failed_count} failed${NC}, ${YELLOW}${running_count} running${NC}, ${unknown_count} unknown${NC}"
+    echo -e "Summary: ${GREEN}${success_count} succeeded${NC}, ${RED}${failed_count} failed${NC}, "
+    echo -e "  ${YELLOW}${running_count} running${NC}, ${unknown_count} unknown${NC}"
 }
 
 # Show execution statistics for jobs
