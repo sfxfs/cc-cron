@@ -126,6 +126,20 @@ teardown() {
     rm -f "$meta_file"
 }
 
+@test "extract_job_id parses crontab comment" {
+    local line='0 9 * * * /home/user/run.sh  # CC-CRON:abc123:recurring=true:prompt=test'
+    run extract_job_id "$line"
+    [ "$status" -eq 0 ]
+    [ "$output" == "abc123" ]
+}
+
+@test "extract_job_id handles short job id" {
+    local line='0 9 * * * /home/user/run.sh  # CC-CRON:xyz789:recurring=false:prompt=hello'
+    run extract_job_id "$line"
+    [ "$status" -eq 0 ]
+    [ "$output" == "xyz789" ]
+}
+
 @test "cmd_run fails for non-existent job" {
     run cmd_run "nonexistent"
     [ "$status" -ne 0 ]

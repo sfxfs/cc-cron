@@ -121,6 +121,14 @@ load_job_meta() {
     source "$meta_file"
 }
 
+# Extract job ID from a crontab line containing CC-CRON comment
+# Usage: extract_job_id <crontab_line>
+extract_job_id() {
+    local line="$1"
+    local temp="${line#*"${CRON_COMMENT_PREFIX}"}"
+    echo "${temp%%:*}"
+}
+
 # Helper to validate a number is within range
 validate_range() {
     local value="$1" min="$2" max="$3" context="$4"
@@ -468,10 +476,8 @@ cmd_list() {
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
             found=1
-            # Extract job ID from comment using bash parameter expansion
-            local job_id temp
-            temp="${line#*"${CRON_COMMENT_PREFIX}"}"
-            job_id="${temp%%:*}"
+            # Extract job ID from comment using helper
+            local job_id; job_id=$(extract_job_id "$line")
 
             # Read metadata if exists
             local meta_file; meta_file=$(get_meta_file "$job_id")
@@ -1097,9 +1103,7 @@ cmd_purge() {
     local -A active_jobs
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            local job_id temp
-            temp="${line#*"${CRON_COMMENT_PREFIX}"}"
-            job_id="${temp%%:*}"
+            local job_id; job_id=$(extract_job_id "$line")
             active_jobs["$job_id"]=1
         fi
     done < <(get_crontab)
@@ -1454,9 +1458,7 @@ cmd_doctor() {
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
             ((crontab_jobs++)) || true
-            local job_id temp
-            temp="${line#*"${CRON_COMMENT_PREFIX}"}"
-            job_id="${temp%%:*}"
+            local job_id; job_id=$(extract_job_id "$line")
             local meta_file
             meta_file=$(get_meta_file "$job_id")
             if [[ ! -f "$meta_file" ]]; then
