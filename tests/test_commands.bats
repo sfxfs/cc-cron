@@ -1672,17 +1672,8 @@ EOF
 @test "cmd_export includes tags in JSON output" {
     local job_id="exportags"
     local meta_file; meta_file=$(get_meta_file "$job_id")
-    echo 'id="exportags"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 0 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="test job"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'tags="prod,backup"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     run cmd_export "$job_id"
     [ "$status" -eq 0 ]
@@ -2018,15 +2009,7 @@ EOF
     local meta_file; meta_file=$(get_meta_file "$job_id")
     local paused_file="${DATA_DIR}/${job_id}.paused"
 
-    # Create minimal meta file
-    echo 'id="alreadypaused"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="test"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
+    create_test_meta "$job_id" "/tmp"
 
     # Create paused file
     touch "$paused_file"
