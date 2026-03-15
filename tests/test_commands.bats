@@ -2826,3 +2826,166 @@ EOF
     crontab_remove_entry "CC-CRON:${tagged_job}" 2>/dev/null || true
     crontab_remove_entry "CC-CRON:${untagged_job}" 2>/dev/null || true
 }
+
+# Integration tests for main() argument parsing
+# These tests run the script directly to test command-line argument handling
+
+@test "main add --model without argument returns error" {
+    # Unset test mode to allow main() to run
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --model
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"--model requires"* ]]
+}
+
+@test "main add --tags without argument returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --tags
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"--tags requires"* ]]
+}
+
+@test "main add --model with empty string is allowed" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --model ""
+    [ "$status" -eq 0 ]
+    # Output includes ANSI color codes, so check for key text
+    [[ "$output" == *"Created cron job"* ]]
+}
+
+@test "main add --tags with empty string is allowed" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --tags ""
+    [ "$status" -eq 0 ]
+    # Output includes ANSI color codes, so check for key text
+    [[ "$output" == *"Created cron job"* ]]
+}
+
+# Tests for write_meta_file special character escaping
+@test "write_meta_file escapes double quotes in prompt" {
+    local job_id="escquote"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local prompt='He said "hello world" to me'
+
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
+
+    # Source the meta file and verify prompt is correctly preserved
+    source "$meta_file"
+    [ "$prompt" == 'He said "hello world" to me' ]
+
+    rm -f "$meta_file"
+}
+
+@test "write_meta_file escapes backslashes in prompt" {
+    local job_id="escslash"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local prompt='Path: C:\Users\test\node_modules'
+
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
+
+    # Source the meta file and verify prompt is correctly preserved
+    source "$meta_file"
+    [ "$prompt" == 'Path: C:\Users\test\node_modules' ]
+
+    rm -f "$meta_file"
+}
+
+@test "write_meta_file escapes both quotes and backslashes in prompt" {
+    local job_id="escboth"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local prompt='Test "path" C:\test\folder and "more"'
+
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
+
+    # Source the meta file and verify prompt is correctly preserved
+    source "$meta_file"
+    [ "$prompt" == 'Test "path" C:\test\folder and "more"' ]
+
+    rm -f "$meta_file"
+}
+
+@test "write_meta_file escapes special characters in workdir" {
+    local job_id="escwork"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local workdir='/path/with "quotes"/and\backslashes'
+
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "$workdir" "" "auto" "0" "/tmp/run.sh"
+
+    # Source the meta file and verify workdir is correctly preserved
+    source "$meta_file"
+    [ "$workdir" == '/path/with "quotes"/and\backslashes' ]
+
+    rm -f "$meta_file"
+}
+
+@test "write_meta_file escapes special characters in tags" {
+    local job_id="esctags"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local tags='tag"with"quotes,and\backslash'
+
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "/tmp" "" "auto" "0" "/tmp/run.sh" "" "$tags"
+
+    # Source the meta file and verify tags are correctly preserved
+    source "$meta_file"
+    [ "$tags" == 'tag"with"quotes,and\backslash' ]
+
+    rm -f "$meta_file"
+}
+
+@test "write_meta_file preserves JSON-like prompt" {
+    local job_id="escjson"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local prompt='{"key": "value", "nested": {"data": "test"}}'
+
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
+
+    # Source the meta file and verify prompt is correctly preserved
+    source "$meta_file"
+    [ "$prompt" == '{"key": "value", "nested": {"data": "test"}}' ]
+
+    rm -f "$meta_file"
+}
+
+@test "write_meta_file handles consecutive backslashes" {
+    local job_id="escmultislash"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local prompt='UNC path: \\server\share\folder'
+
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
+
+    # Source the meta file and verify prompt is correctly preserved
+    source "$meta_file"
+    [ "$prompt" == 'UNC path: \\server\share\folder' ]
+
+    rm -f "$meta_file"
+}
+
+@test "write_meta_file escapes special characters in model name" {
+    local job_id="escmodel"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local model='model"with"quotes'
+
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "/tmp" "$model" "auto" "0" "/tmp/run.sh"
+
+    # Source the meta file and verify model is correctly preserved
+    source "$meta_file"
+    [ "$model" == 'model"with"quotes' ]
+
+    rm -f "$meta_file"
+}

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.2] - 2025-03-16
+
+### Fixed
+- Escape double quotes and backslashes in metadata files to preserve special characters in prompts, workdirs, tags, and model names
+
+### Tests
+- Add tests for metadata escaping with double quotes, backslashes, and JSON-like content
+- Add tests for escaping special characters in workdir, tags, and model name fields
+
+## [2.4.1] - 2025-03-16
+
+### Fixed
+- Fix argument validation for `--model` in add command to properly check for argument presence
+- Fix argument validation for `--tags` in add command to prevent silent failure when argument is missing
+- Allow empty strings for `--model` and `--tags` in add command (consistency with edit/clone)
+
+### Tests
+- Add integration tests for main() argument parsing
+- Add tests for --model and --tags without arguments (should error)
+- Add tests for --model and --tags with empty strings (should succeed)
+
 ## [2.4.0] - 2025-03-16
 
 ### Added

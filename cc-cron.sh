@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.0"
+readonly VERSION="2.4.2"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -543,23 +543,47 @@ write_meta_file() {
 
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
+    # Escape double quotes and backslashes in string values for proper shell sourcing
+    local safe_prompt="${prompt//\\/\\\\}"  # Escape backslashes first
+    safe_prompt="${safe_prompt//\"/\\\"}"    # Then escape double quotes
+
+    local safe_workdir="${workdir//\\/\\\\}"
+    safe_workdir="${safe_workdir//\"/\\\"}"
+
+    local safe_model="${model//\\/\\\\}"
+    safe_model="${safe_model//\"/\\\"}"
+
+    local safe_permission="${permission//\\/\\\\}"
+    safe_permission="${safe_permission//\"/\\\"}"
+
+    local safe_tags=""
+    if [[ -n "$tags" ]]; then
+        safe_tags="${tags//\\/\\\\}"
+        safe_tags="${safe_tags//\"/\\\"}"
+    fi
+
+    local safe_run_script="${run_script//\\/\\\\}"
+    safe_run_script="${safe_run_script//\"/\\\"}"
+
     {
         echo "id=\"${job_id}\""
         echo "created=\"${created}\""
         if [[ -n "$modified" ]]; then
-            echo "modified=\"${modified}\""
+            local safe_modified="${modified//\\/\\\\}"
+            safe_modified="${safe_modified//\"/\\\"}"
+            echo "modified=\"${safe_modified}\""
         fi
         echo "cron=\"${cron}\""
         echo "recurring=\"${recurring}\""
-        echo "prompt=\"${prompt}\""
-        echo "workdir=\"${workdir}\""
-        echo "model=\"${model}\""
-        echo "permission_mode=\"${permission}\""
+        echo "prompt=\"${safe_prompt}\""
+        echo "workdir=\"${safe_workdir}\""
+        echo "model=\"${safe_model}\""
+        echo "permission_mode=\"${safe_permission}\""
         echo "timeout=\"${timeout}\""
         if [[ -n "$tags" ]]; then
-            echo "tags=\"${tags}\""
+            echo "tags=\"${safe_tags}\""
         fi
-        echo "run_script=\"${run_script}\""
+        echo "run_script=\"${safe_run_script}\""
     } > "$meta_file"
 }
 
@@ -2888,7 +2912,9 @@ Options:
                         shift 2
                         ;;
                     --model)
-                        [[ -z "${2:-}" ]] && error "--model requires a model name" "$EXIT_INVALID_ARGS"
+                        if [[ $# -lt 2 ]]; then
+                            error "--model requires a model name (use empty string to set none)" "$EXIT_INVALID_ARGS"
+                        fi
                         job_model="$2"
                         shift 2
                         ;;
@@ -2905,7 +2931,10 @@ Options:
                         shift 2
                         ;;
                     --tags)
-                        job_tags="${2:-}"
+                        if [[ $# -lt 2 ]]; then
+                            error "--tags requires a value (use empty string to set none)" "$EXIT_INVALID_ARGS"
+                        fi
+                        job_tags="$2"
                         shift 2
                         ;;
                     --quiet|-q)
