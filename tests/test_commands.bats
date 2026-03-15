@@ -140,6 +140,20 @@ teardown() {
     [ "$output" == "xyz789" ]
 }
 
+@test "extract_job_id extracts from complex crontab line" {
+    local line='*/5 * * * * /path/to/run.sh  # CC-CRON:ab12cd34:recurring=true:prompt=Test prompt with spaces'
+    run extract_job_id "$line"
+    [ "$status" -eq 0 ]
+    [ "$output" == "ab12cd34" ]
+}
+
+@test "extract_job_id handles line with no colon after id" {
+    local line='0 9 * * * /home/user/run.sh  # CC-CRON:onlyid'
+    run extract_job_id "$line"
+    [ "$status" -eq 0 ]
+    [ "$output" == "onlyid" ]
+}
+
 @test "cmd_run fails for non-existent job" {
     run cmd_run "nonexistent"
     [ "$status" -ne 0 ]
@@ -354,6 +368,15 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
+@test "remove_file outputs message when removing" {
+    local test_file="${BATS_TEST_TMPDIR}/remove_msg_test"
+    touch "$test_file"
+
+    run remove_file "$test_file" "test label"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Removed test label"* ]]
+}
+
 @test "cmd_history parses structured history" {
     local job_id="histtest"
     local log_file; log_file=$(get_log_file "$job_id")
@@ -407,4 +430,22 @@ teardown() {
     run safe_numeric "0" "10"
     [ "$status" -eq 0 ]
     [ "$output" == "0" ]
+}
+
+@test "safe_numeric handles negative as non-numeric" {
+    run safe_numeric "-5" "10"
+    [ "$status" -eq 0 ]
+    [ "$output" == "10" ]
+}
+
+@test "safe_numeric handles floating point as non-numeric" {
+    run safe_numeric "1.5" "10"
+    [ "$status" -eq 0 ]
+    [ "$output" == "10" ]
+}
+
+@test "safe_numeric handles large numbers" {
+    run safe_numeric "999999999" "0"
+    [ "$status" -eq 0 ]
+    [ "$output" == "999999999" ]
 }
