@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.3.7"
+readonly VERSION="2.3.8"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2156,13 +2156,16 @@ OPTIONS:
     --cron <expr>               Update cron schedule
     --prompt <text>             Update prompt
     --workdir <path>            Update working directory
-    --model <name>              Update model
+    --model <name>              Update model (use "" to clear)
     --permission-mode <mode>    Update permission mode
     --timeout <seconds>         Update timeout
+    --tags <tags>               Update tags (use "" to clear)
 
 EXAMPLES:
     cc-cron edit myjob --cron "0 12 * * *"
     cc-cron edit myjob --prompt "New prompt" --model opus
+    cc-cron edit myjob --tags "prod,backup"
+    cc-cron edit myjob --model ""  # Clear model setting
 HELP
 }
 
@@ -2177,13 +2180,15 @@ OPTIONS:
     --cron <expr>               Override cron schedule
     --prompt <text>             Override prompt
     --workdir <path>            Override working directory
-    --model <name>              Override model
+    --model <name>              Override model (use "" to clear)
     --permission-mode <mode>    Override permission mode
     --timeout <seconds>         Override timeout
+    --tags <tags>               Override tags (use "" to clear)
 
 EXAMPLES:
     cc-cron clone myjob
     cc-cron clone myjob --cron "0 0 * * *"
+    cc-cron clone myjob --model haiku --tags "dev"
 HELP
 }
 
