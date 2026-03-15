@@ -114,7 +114,7 @@ load_job_meta() {
     local job_id="$1"
     local meta_file; meta_file=$(get_meta_file "$job_id")
     if [[ ! -f "$meta_file" ]]; then
-        error "Job not found: ${job_id}"
+        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     fi
     source "$meta_file"
 }
@@ -720,7 +720,7 @@ cmd_remove() {
     remove_file "$(get_run_script "$job_id")" "run script"
 
     if [[ "$found" -eq 0 ]]; then
-        error "Job not found: ${job_id}"
+        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     fi
 }
 
@@ -751,7 +751,7 @@ cmd_pause() {
 
     # Check if job exists
     if ! crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
-        error "Job not found: ${job_id}"
+        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     fi
 
     # Check if already paused
@@ -1369,7 +1369,7 @@ _show_job_stats() {
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
     if [[ ! -f "$meta_file" ]]; then
-        error "Job not found: ${job_id}"
+        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     fi
 
     # Reset optional fields to avoid persistence from previous iterations
@@ -1475,7 +1475,7 @@ cmd_export() {
     if [[ -n "$job_id" ]]; then
         # Export specific job - validate existence
         if [[ ! -f "$(get_meta_file "$job_id")" ]]; then
-            error "Job not found: ${job_id}"
+            error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
         fi
         jobs+=("$job_id")
     else
