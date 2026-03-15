@@ -581,18 +581,13 @@ cmd_pause() {
 cmd_resume() {
     local job_id="$1"
     local paused_file="${DATA_DIR}/${job_id}.paused"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
 
     if [[ ! -f "$paused_file" ]]; then
         error "Job ${job_id} is not paused"
     fi
 
-    if [[ ! -f "$meta_file" ]]; then
-        error "Job metadata not found: ${job_id}"
-    fi
-
-    # Load metadata
-    source "$meta_file"
+    # Load metadata (errors if not found)
+    load_job_meta "$job_id"
 
     # Recreate cron entry
     local run_script; run_script=$(get_run_script "$job_id")
