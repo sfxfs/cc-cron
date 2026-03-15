@@ -102,6 +102,11 @@ teardown() {
     [ "$status" -ne 0 ]
 }
 
+@test "cmd_remove fails for non-existent job" {
+    run cmd_remove "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
 @test "get_history_file returns correct path" {
     run get_history_file "testjob"
     [ "$output" == "${LOG_DIR}/testjob.history" ]
