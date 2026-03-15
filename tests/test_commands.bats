@@ -2019,3 +2019,33 @@ EOF
 
     rm -f "$meta_file" "$history_file"
 }
+
+@test "cmd_stats for all jobs resets optional fields between iterations" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create job with tags
+    cmd_add "0 9 * * *" "tagged job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup" >/dev/null
+    local tagged_job="$LAST_CREATED_JOB_ID"
+
+    # Create job without tags
+    cmd_add "0 10 * * *" "untagged job" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null
+    local untagged_job="$LAST_CREATED_JOB_ID"
+
+    # Debug: check if meta files exist
+    [ -f "$(get_meta_file "$tagged_job")" ]
+    [ -f "$(get_meta_file "$untagged_job")" ]
+
+    # Run stats for all jobs - should not show tags for untagged job
+    run cmd_stats
+    [ "$status" -eq 0 ]
+    # Tagged job should be shown (output has ANSI color codes)
+    [[ "$output" == *"${tagged_job}"* ]]
+    # Untagged job should also be shown
+    [[ "$output" == *"${untagged_job}"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$tagged_job")" "$(get_run_script "$tagged_job")"
+    rm -f "$(get_meta_file "$untagged_job")" "$(get_run_script "$untagged_job")"
+    crontab_remove_entry "CC-CRON:${tagged_job}" 2>/dev/null || true
+    crontab_remove_entry "CC-CRON:${untagged_job}" 2>/dev/null || true
+}

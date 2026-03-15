@@ -1316,6 +1316,10 @@ _show_job_stats() {
         error "Job not found: ${job_id}"
     fi
 
+    # Reset optional fields to avoid persistence from previous iterations
+    local tags=""
+    local model=""
+    local modified=""
     source "$meta_file"
 
     echo -e "Job: ${GREEN}${job_id}${NC}"
