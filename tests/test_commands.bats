@@ -270,7 +270,19 @@ teardown() {
 
 @test "cmd_import fails for non-existent file" {
     run cmd_import "/nonexistent/file.json"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+}
+
+@test "cmd_import fails for invalid JSON" {
+    local tmp_file="$BATS_TEST_TMPDIR/invalid.json"
+    echo "not valid json {" > "$tmp_file"
+
+    # Only run if jq is available
+    if command -v jq &>/dev/null; then
+        run cmd_import "$tmp_file"
+        [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+        [[ "$output" == *"Invalid JSON"* ]]
+    fi
 }
 
 @test "cmd_export creates valid JSON structure" {
@@ -293,7 +305,7 @@ teardown() {
 
 @test "cmd_purge rejects invalid days argument" {
     run cmd_purge "invalid"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_purge dry-run mode works" {
