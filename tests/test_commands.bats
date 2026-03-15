@@ -268,3 +268,86 @@ teardown() {
 
     rm -f "$log_file"
 }
+
+@test "get_stat returns file size" {
+    local test_file="${BATS_TEST_TMPDIR}/stat_test"
+    echo "test content" > "$test_file"
+
+    run get_stat "$test_file" size
+    [ "$status" -eq 0 ]
+    [[ "$output" -gt 0 ]]
+
+    rm -f "$test_file"
+}
+
+@test "get_stat returns mtime" {
+    local test_file="${BATS_TEST_TMPDIR}/stat_mtime_test"
+    touch "$test_file"
+
+    run get_stat "$test_file" mtime
+    [ "$status" -eq 0 ]
+    [[ -n "$output" ]]
+
+    rm -f "$test_file"
+}
+
+@test "get_stat returns mtime_unix" {
+    local test_file="${BATS_TEST_TMPDIR}/stat_unix_test"
+    touch "$test_file"
+
+    run get_stat "$test_file" mtime_unix
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]+$ ]]
+
+    rm -f "$test_file"
+}
+
+@test "get_stat fails for non-existent file" {
+    run get_stat "/nonexistent/file" size
+    [ "$status" -ne 0 ]
+}
+
+@test "remove_file removes existing file" {
+    local test_file="${BATS_TEST_TMPDIR}/remove_test"
+    touch "$test_file"
+
+    run remove_file "$test_file" "test file"
+    [ "$status" -eq 0 ]
+    [[ ! -f "$test_file" ]]
+}
+
+@test "remove_file handles non-existent file gracefully" {
+    run remove_file "/nonexistent/file" "test file"
+    [ "$status" -eq 0 ]
+}
+
+@test "cmd_history parses structured history" {
+    local job_id="histtest"
+    local log_file; log_file=$(get_log_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    echo "Some log entry" > "$log_file"
+    echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
+
+    run cmd_history "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"2024-01-01 10:00:00"* ]]
+    [[ "$output" == *"✓"* ]]
+
+    rm -f "$log_file" "$history_file"
+}
+
+@test "cmd_history shows failed status" {
+    local job_id="histfail"
+    local log_file; log_file=$(get_log_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    echo "Log entry" > "$log_file"
+    echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="failed" exit_code="1"' > "$history_file"
+
+    run cmd_history "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"exit: 1"* ]]
+
+    rm -f "$log_file" "$history_file"
+}

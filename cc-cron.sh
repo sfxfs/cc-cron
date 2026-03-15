@@ -112,6 +112,7 @@ validate_range() {
 # Helper to remove a file if it exists
 remove_file() {
     [[ -f "$1" ]] && { rm "$1"; info "Removed $2: ${1}"; }
+    return 0
 }
 
 # Portable stat helper (supports both Linux and macOS)
