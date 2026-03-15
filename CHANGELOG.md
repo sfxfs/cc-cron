@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.4] - 2025-03-16
+
+### Fixed
+- Escape backslashes in JSON output for `cmd_list --json` and `cmd_export` (previously only quotes were escaped)
+
+### Refactor
+- Add `escape_json_string` helper function for proper JSON string escaping (handles quotes, backslashes, newlines, tabs)
+- Use `escape_json_string` in `cmd_list` and `cmd_export` for consistent JSON output
+
+### Tests
+- Add tests for `escape_json_string` helper function
+- Add tests for JSON output with backslashes in prompts
+
 ## [2.4.3] - 2025-03-16
 
 ### Refactor

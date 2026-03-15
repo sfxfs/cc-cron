@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.3"
+readonly VERSION="2.4.4"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -209,6 +209,17 @@ get_stat() {
 escape_shell_string() {
     local s="${1//\\/\\\\}"  # Escape backslashes first
     s="${s//\"/\\\"}"        # Then escape double quotes
+    echo "$s"
+}
+
+# Escape string for JSON output
+# Escapes backslashes, double quotes, and control characters
+escape_json_string() {
+    local s="${1//\\/\\\\}"  # Escape backslashes first
+    s="${s//\"/\\\"}"        # Then escape double quotes
+    s="${s//$'\n'/\\n}"      # Escape newlines
+    s="${s//$'\r'/\\r}"      # Escape carriage returns
+    s="${s//$'\t'/\\t}"      # Escape tabs
     echo "$s"
 }
 
@@ -692,9 +703,16 @@ cmd_list() {
 
                 if [[ "$json_output" == "true" ]]; then
                     # Build JSON object for this job
-                    local job_json="{\"id\":\"${id}\",\"created\":\"${created}\",\"cron\":\"${cron}\",\"recurring\":${recurring},\"workdir\":\"${workdir:-$CC_WORKDIR}\",\"permission\":\"${permission_mode:-$CC_PERMISSION_MODE}\",\"prompt\":\"${prompt//\"/\\\"}\""
-                    [[ -n "${model:-}" ]] && job_json+=",\"model\":\"${model}\""
-                    [[ -n "${tags:-}" ]] && job_json+=",\"tags\":\"${tags}\""
+                    local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt")
+                    local escaped_workdir; escaped_workdir=$(escape_json_string "${workdir:-$CC_WORKDIR}")
+                    local escaped_permission; escaped_permission=$(escape_json_string "${permission_mode:-$CC_PERMISSION_MODE}")
+                    local job_json="{\"id\":\"${id}\",\"created\":\"${created}\",\"cron\":\"${cron}\",\"recurring\":${recurring},\"workdir\":\"${escaped_workdir}\",\"permission\":\"${escaped_permission}\",\"prompt\":\"${escaped_prompt}\""
+                    if [[ -n "${model:-}" ]]; then
+                        job_json+=",\"model\":\"$(escape_json_string "$model")\""
+                    fi
+                    if [[ -n "${tags:-}" ]]; then
+                        job_json+=",\"tags\":\"$(escape_json_string "$tags")\""
+                    fi
                     job_json+="}"
                     jobs+=("$job_json")
                 else
@@ -1615,14 +1633,12 @@ cmd_export() {
             json_output+=","
         fi
 
-        # Escape quotes in prompt for JSON
-        local escaped_prompt="${prompt//\"/\\\"}"
-        local escaped_workdir="${workdir//\"/\\\"}"
-        local escaped_model="${model:-}"
-        escaped_model="${escaped_model//\"/\\\"}"
-        local escaped_permission="${permission_mode//\"/\\\"}"
-        local escaped_tags="${tags:-}"
-        escaped_tags="${escaped_tags//\"/\\\"}"
+        # Escape values for JSON output
+        local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt")
+        local escaped_workdir; escaped_workdir=$(escape_json_string "$workdir")
+        local escaped_model; escaped_model=$(escape_json_string "${model:-}")
+        local escaped_permission; escaped_permission=$(escape_json_string "$permission_mode")
+        local escaped_tags; escaped_tags=$(escape_json_string "${tags:-}")
 
         json_output+='{'
         json_output+='"id":"'"${id}"'",'

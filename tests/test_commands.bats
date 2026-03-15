@@ -2908,6 +2908,37 @@ EOF
     [ "$output" == "normal string" ]
 }
 
+# Tests for escape_json_string helper function
+@test "escape_json_string escapes double quotes" {
+    run escape_json_string 'He said "hello"'
+    [ "$status" -eq 0 ]
+    [ "$output" == 'He said \"hello\"' ]
+}
+
+@test "escape_json_string escapes backslashes" {
+    run escape_json_string 'C:\Users\test'
+    [ "$status" -eq 0 ]
+    [ "$output" == 'C:\\Users\\test' ]
+}
+
+@test "escape_json_string escapes newlines" {
+    run escape_json_string $'line1\nline2'
+    [ "$status" -eq 0 ]
+    [ "$output" == 'line1\nline2' ]
+}
+
+@test "escape_json_string escapes tabs" {
+    run escape_json_string $'col1\tcol2'
+    [ "$status" -eq 0 ]
+    [ "$output" == 'col1\tcol2' ]
+}
+
+@test "escape_json_string handles empty string" {
+    run escape_json_string ""
+    [ "$status" -eq 0 ]
+    [ "$output" == "" ]
+}
+
 # Tests for write_meta_file special character escaping
 @test "write_meta_file escapes double quotes in prompt" {
     local job_id="escquote"
@@ -3017,6 +3048,39 @@ EOF
     # Source the meta file and verify model is correctly preserved
     source "$meta_file"
     [ "$model" == 'model"with"quotes' ]
+
+    rm -f "$meta_file"
+}
+
+# Tests for JSON output with special characters
+@test "cmd_list --json escapes backslashes in prompt" {
+    local job_id="jsonbackslash"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local prompt='Path: C:\Users\test'
+
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "" "$prompt"
+    echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
+
+    run cmd_list "" "true"
+    [ "$status" -eq 0 ]
+    # Check that backslash is escaped in JSON output
+    [[ "$output" == *'Path: C:\\\\Users\\\\test'* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "cmd_export escapes backslashes in prompt" {
+    local job_id="exportback"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local prompt='Path: C:\Users\test'
+
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "" "$prompt"
+    echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
+
+    run cmd_export "$job_id"
+    [ "$status" -eq 0 ]
+    # Check that backslash is escaped in JSON output
+    [[ "$output" == *'C:\\\\Users\\\\test'* ]]
 
     rm -f "$meta_file"
 }
