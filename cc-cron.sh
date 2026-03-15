@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.1.5"
+readonly VERSION="2.2.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -320,8 +320,8 @@ validate_timeout() {
     [[ "$1" =~ ^[0-9]+$ ]] || error "Timeout must be a non-negative number"
 }
 
-# Parse job modification options (--cron, --prompt, --workdir, --model, --permission-mode, --timeout)
-# Sets global variables: PARSED_CRON, PARSED_PROMPT, PARSED_WORKDIR, PARSED_MODEL, PARSED_PERMISSION, PARSED_TIMEOUT, PARSED_HAS_CHANGES
+# Parse job modification options (--cron, --prompt, --workdir, --model, --permission-mode, --timeout, --tags)
+# Sets global variables: PARSED_CRON, PARSED_PROMPT, PARSED_WORKDIR, PARSED_MODEL, PARSED_PERMISSION, PARSED_TIMEOUT, PARSED_TAGS, PARSED_HAS_CHANGES
 parse_job_options() {
     PARSED_CRON=""
     PARSED_PROMPT=""
@@ -329,6 +329,7 @@ parse_job_options() {
     PARSED_MODEL=""
     PARSED_PERMISSION=""
     PARSED_TIMEOUT=""
+    PARSED_TAGS=""
     PARSED_HAS_CHANGES=0
 
     while [[ $# -gt 0 ]]; do
@@ -369,6 +370,11 @@ parse_job_options() {
                 [[ -z "${2:-}" ]] && error "--timeout requires seconds"
                 validate_timeout "$2"
                 PARSED_TIMEOUT="$2"
+                PARSED_HAS_CHANGES=1
+                shift 2
+                ;;
+            --tags)
+                PARSED_TAGS="${2:-}"
                 PARSED_HAS_CHANGES=1
                 shift 2
                 ;;
@@ -529,6 +535,7 @@ write_meta_file() {
     local timeout="$9"
     local run_script="${10:-}"
     local modified="${11:-}"
+    local tags="${12:-}"
 
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
@@ -545,6 +552,9 @@ write_meta_file() {
         echo "model=\"${model}\""
         echo "permission_mode=\"${permission}\""
         echo "timeout=\"${timeout}\""
+        if [[ -n "$tags" ]]; then
+            echo "tags=\"${tags}\""
+        fi
         echo "run_script=\"${run_script}\""
     } > "$meta_file"
 }
@@ -559,6 +569,7 @@ cmd_add() {
     local job_permission="${6:-$CC_PERMISSION_MODE}"
     local job_timeout="${7:-${CC_TIMEOUT:-0}}"
     local quiet="${8:-false}"
+    local job_tags="${9:-}"
     # Ensure timeout is numeric
     job_timeout=$(safe_numeric "$job_timeout" "0")
 
@@ -580,7 +591,7 @@ cmd_add() {
     crontab_add_entry "$(build_cron_entry "$job_id" "$cron_expr" "$run_script" "$recurring" "$prompt")"
 
     # Save job metadata using helper
-    write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script"
+    write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script" "" "$job_tags"
 
     # Store job ID for programmatic use (e.g., import)
     LAST_CREATED_JOB_ID="$job_id"
@@ -600,6 +611,9 @@ cmd_add() {
         if [[ "$job_timeout" -gt 0 ]]; then
             info "Timeout: ${job_timeout}s"
         fi
+        if [[ -n "$job_tags" ]]; then
+            info "Tags: ${job_tags}"
+        fi
         info "Prompt: ${prompt}"
         info "Log file: $(get_log_file "$job_id")"
         if [[ "$recurring" == "false" ]]; then
@@ -610,6 +624,7 @@ cmd_add() {
 
 # List all cc-cron jobs (optimized: single crontab read)
 cmd_list() {
+    local filter_tag="${1:-}"
     local found=0
 
     echo "Scheduled Claude Code Cron Jobs:"
@@ -622,14 +637,35 @@ cmd_list() {
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            found=1
             # Extract job ID from comment using helper
             local job_id; job_id=$(extract_job_id "$line")
 
             # Read metadata if exists
             local meta_file; meta_file=$(get_meta_file "$job_id")
             if [[ -f "$meta_file" ]]; then
+                # Reset optional fields to avoid persistence from previous iterations
+                local tags=""
+                local model=""
+                local modified=""
                 source "$meta_file"
+
+                # Filter by tag if specified
+                if [[ -n "$filter_tag" ]]; then
+                    # Check if job has tags and if filter matches
+                    if [[ -z "${tags:-}" ]]; then
+                        continue
+                    fi
+                    # Check if filter_tag is in the comma-separated tags
+                    local tag_match=0
+                    local IFS=','
+                    local t
+                    for t in $tags; do
+                        [[ "$t" == "$filter_tag" ]] && tag_match=1 && break
+                    done
+                    [[ $tag_match -eq 0 ]] && continue
+                fi
+
+                found=1
                 echo "Job ID: ${id}"
                 echo "  Created: ${created}"
                 echo "  Schedule: ${cron}"
@@ -639,9 +675,15 @@ cmd_list() {
                     echo "  Model: ${model}"
                 fi
                 echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
+                if [[ -n "${tags:-}" ]]; then
+                    echo "  Tags: ${tags}"
+                fi
                 echo "  Prompt: ${prompt}"
                 echo
             else
+                # Skip jobs without metadata when filtering
+                [[ -n "$filter_tag" ]] && continue
+                found=1
                 echo "Job ID: ${job_id} (metadata missing)"
                 echo "  Raw: ${line}"
                 echo
@@ -650,7 +692,11 @@ cmd_list() {
     done <<< "$crontab_content"
 
     if [[ "$found" -eq 0 ]]; then
-        info "No scheduled jobs found."
+        if [[ -n "$filter_tag" ]]; then
+            info "No jobs found with tag: ${filter_tag}"
+        else
+            info "No scheduled jobs found."
+        fi
     fi
 }
 
@@ -875,6 +921,10 @@ cmd_next() {
                 continue
             fi
 
+            # Reset optional fields to avoid persistence from previous iterations
+            local tags=""
+            local model=""
+            local modified=""
             source "$meta_file"
 
             # Check if paused
@@ -929,6 +979,9 @@ cmd_show() {
     echo "  Permission:   ${permission_mode}"
     if [[ "${timeout:-0}" -gt 0 ]]; then
         echo "  Timeout:      ${timeout}s"
+    fi
+    if [[ -n "${tags:-}" ]]; then
+        echo "  Tags:         ${tags}"
     fi
     echo
     echo "  Prompt:"
@@ -1070,10 +1123,11 @@ cmd_edit() {
     local new_model="${PARSED_MODEL:-${model:-}}"
     local new_permission="${PARSED_PERMISSION:-$permission_mode}"
     local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
+    local new_tags="${PARSED_TAGS:-${tags:-}}"
     local has_changes="$PARSED_HAS_CHANGES"
 
     if [[ "$has_changes" -eq 0 ]]; then
-        warn "No changes specified. Use --cron, --prompt, --workdir, --model, --permission-mode, or --timeout"
+        warn "No changes specified. Use --cron, --prompt, --workdir, --model, --permission-mode, --timeout, or --tags"
         return 0
     fi
 
@@ -1092,7 +1146,7 @@ cmd_edit() {
     # Update metadata file using helper
     local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local new_run_script; new_run_script=$(get_run_script "$job_id")
-    write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp"
+    write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp" "$new_tags"
 
     # Generate new run script using helper
     generate_run_script "$job_id" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$recurring" "$new_prompt" > /dev/null
@@ -1111,6 +1165,9 @@ cmd_edit() {
     fi
     if [[ "$workdir" != "$new_workdir" ]]; then
         info "Workdir: ${workdir} → ${new_workdir}"
+    fi
+    if [[ "${tags:-}" != "$new_tags" ]]; then
+        info "Tags: ${tags:-none} → ${new_tags:-none}"
     fi
 }
 
@@ -1132,9 +1189,10 @@ cmd_clone() {
     local new_model="${PARSED_MODEL:-${model:-}}"
     local new_permission="${PARSED_PERMISSION:-$permission_mode}"
     local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
+    local new_tags="${PARSED_TAGS:-${tags:-}}"
 
     # Create new job with copied settings
-    cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout"
+    cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "false" "$new_tags"
 
     success "Cloned job ${source_id} → ${LAST_CREATED_JOB_ID}"
 }
@@ -1165,6 +1223,10 @@ cmd_status() {
 
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue
+        # Reset optional fields to avoid persistence from previous iterations
+        local tags=""
+        local model=""
+        local modified=""
         source "$meta_file"
 
         local status_file; status_file=$(get_status_file "$id")
@@ -1381,6 +1443,10 @@ cmd_export() {
     for job_id in "${jobs[@]}"; do
         local meta_file; meta_file=$(get_meta_file "$job_id")
         [[ -f "$meta_file" ]] || continue
+        # Reset optional fields to avoid persistence from previous iterations
+        local tags=""
+        local model=""
+        local modified=""
         source "$meta_file"
 
         # Check if paused
@@ -1402,6 +1468,8 @@ cmd_export() {
         local escaped_model="${model:-}"
         escaped_model="${escaped_model//\"/\\\"}"
         local escaped_permission="${permission_mode//\"/\\\"}"
+        local escaped_tags="${tags:-}"
+        escaped_tags="${escaped_tags//\"/\\\"}"
 
         json_output+='{'
         json_output+='"id":"'"${id}"'",'
@@ -1413,6 +1481,7 @@ cmd_export() {
         json_output+='"model":"'"${escaped_model}"'",'
         json_output+='"permission_mode":"'"${escaped_permission}"'",'
         json_output+='"timeout":'"${timeout:-0}"','
+        json_output+='"tags":"'"${escaped_tags}"'",'
         json_output+='"paused":'"${is_paused}"''
         json_output+='}'
 
@@ -1468,7 +1537,7 @@ cmd_import() {
         local job_json
         job_json=$(jq -c ".jobs[$i]" "$input_file")
 
-        local job_cron job_prompt job_recurring job_workdir job_model job_permission job_timeout job_paused
+        local job_cron job_prompt job_recurring job_workdir job_model job_permission job_timeout job_paused job_tags
         job_cron=$(jq -r '.cron' <<< "$job_json")
         job_prompt=$(jq -r '.prompt' <<< "$job_json")
         job_recurring=$(jq -r '.recurring' <<< "$job_json")
@@ -1477,6 +1546,7 @@ cmd_import() {
         job_permission=$(jq -r '.permission_mode' <<< "$job_json")
         job_timeout=$(jq -r '.timeout' <<< "$job_json")
         job_paused=$(jq -r '.paused' <<< "$job_json")
+        job_tags=$(jq -r '.tags // ""' <<< "$job_json")
 
         # Validate cron expression
         if ! is_valid_cron "$job_cron"; then
@@ -1493,7 +1563,7 @@ cmd_import() {
         fi
 
         # Create the job
-        cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout"
+        cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "false" "$job_tags"
 
         # Pause if needed (use job ID from LAST_CREATED_JOB_ID)
         if [[ "$job_paused" == "true" && -n "${LAST_CREATED_JOB_ID:-}" ]]; then
@@ -2347,7 +2417,7 @@ _cc_cron_completion() {
             if [[ ${#words[@]} -eq 3 ]]; then
                 COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             else
-                COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout" -- "${cur}"))
+                COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout --tags" -- "${cur}"))
             fi
             ;;
         --model)
@@ -2365,13 +2435,13 @@ _cc_cron_completion() {
                     COMPREPLY=($(compgen -W '"0 9 * * 1-5" "0 * * * *" "*/5 * * * *" "0 0 * * *"' -- "${cur}"))
                     ;;
                 *)
-                    COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --quiet -q" -- "${cur}"))
+                    COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}"))
                     ;;
             esac
             ;;
         *)
             if [[ " ${words[@]} " =~ " add " ]]; then
-                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --quiet -q" -- "${cur}"))
+                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}"))
             fi
             ;;
     esac
@@ -2397,6 +2467,7 @@ Options:
   --model <name>              Model to use: sonnet, opus, etc. (default: \$CC_MODEL)
   --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or bypassPermissions)
   --timeout <seconds>         Timeout for job execution (default: \$CC_TIMEOUT or 0, no timeout)
+  --tags <tags>               Comma-separated tags for organization (e.g., 'prod,backup')
   --quiet, -q                 Only output the job ID (useful for scripting)"
             fi
             local cron_expr="$1"
@@ -2411,6 +2482,7 @@ Options:
             local job_timeout
             job_timeout=$(safe_numeric "${CC_TIMEOUT:-0}" "0")
             local quiet="false"
+            local job_tags=""
 
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -2441,6 +2513,10 @@ Options:
                         job_timeout="$2"
                         shift 2
                         ;;
+                    --tags)
+                        job_tags="${2:-}"
+                        shift 2
+                        ;;
                     --quiet|-q)
                         quiet="true"
                         shift
@@ -2451,10 +2527,24 @@ Options:
                 esac
             done
 
-            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$quiet"
+            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$quiet" "$job_tags"
             ;;
         list)
-            cmd_list
+            ensure_data_dir
+            local filter_tag=""
+            # Parse optional --tag flag
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    --tag)
+                        filter_tag="${2:-}"
+                        shift 2
+                        ;;
+                    *)
+                        shift
+                        ;;
+                esac
+            done
+            cmd_list "$filter_tag"
             ;;
         remove)
             ensure_data_dir

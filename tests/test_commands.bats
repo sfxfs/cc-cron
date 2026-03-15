@@ -987,6 +987,105 @@ teardown() {
     crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
 }
 
+@test "cmd_add with tags" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    LAST_CREATED_JOB_ID=""
+    cmd_add "0 9 * * *" "tagged job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup" >/dev/null
+    [ -n "$LAST_CREATED_JOB_ID" ]
+
+    # Verify tags are stored in metadata
+    local meta_file; meta_file=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$meta_file" ]]
+    grep -q 'tags="prod,backup"' "$meta_file"
+
+    # Cleanup
+    rm -f "$meta_file"
+    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
+    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+}
+
+@test "cmd_show displays tags when set" {
+    local job_id="taggedjob"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local run_script; run_script=$(get_run_script "$job_id")
+
+    cat > "$meta_file" << EOF
+id="${job_id}"
+created="2024-01-01 10:00:00"
+cron="0 9 * * *"
+recurring="true"
+prompt="test prompt"
+workdir="/tmp"
+model=""
+permission_mode="bypassPermissions"
+timeout="0"
+tags="prod,backup"
+run_script="${run_script}"
+EOF
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Tags:         prod,backup"* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "cmd_list filters by tag" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create job with tag
+    cmd_add "0 9 * * *" "prod job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null
+    local prod_job="$LAST_CREATED_JOB_ID"
+
+    # Create job without tag
+    cmd_add "0 10 * * *" "untagged job" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null
+    local untagged_job="$LAST_CREATED_JOB_ID"
+
+    # List jobs with prod tag
+    run cmd_list "prod"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"${prod_job}"* ]]
+    [[ "$output" != *"${untagged_job}"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$prod_job")" "$(get_run_script "$prod_job")"
+    rm -f "$(get_meta_file "$untagged_job")" "$(get_run_script "$untagged_job")"
+    crontab_remove_entry "CC-CRON:${prod_job}" 2>/dev/null || true
+    crontab_remove_entry "CC-CRON:${untagged_job}" 2>/dev/null || true
+}
+
+@test "cmd_edit updates tags" {
+    local job_id="edittagjob"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Create initial metadata
+    cat > "$meta_file" << EOF
+id="${job_id}"
+created="2024-01-01 10:00:00"
+cron="0 9 * * *"
+recurring="true"
+prompt="test prompt"
+workdir="/tmp"
+model=""
+permission_mode="bypassPermissions"
+timeout="0"
+run_script="/tmp/run.sh"
+EOF
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --tags "newtag"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Tags: none"* ]]
+
+    # Verify tags updated
+    grep -q 'tags="newtag"' "$meta_file"
+
+    rm -f "$meta_file"
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+}
+
 @test "cmd_help shows command list" {
     run cmd_help
     [ "$status" -eq 0 ]
