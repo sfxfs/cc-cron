@@ -34,6 +34,7 @@ eval "$(cc-cron completion)"
 | `--model <name>` | Model to use: sonnet, opus, haiku, etc. |
 | `--permission-mode <mode>` | Permission mode: acceptEdits, auto, default |
 | `--timeout <seconds>` | Timeout for job execution (0 = no timeout, default) |
+| `--quiet, -q` | Only output the job ID (useful for scripting) |
 
 **Examples:**
 
@@ -46,6 +47,10 @@ eval "$(cc-cron completion)"
 
 # One-time reminder with custom permission mode
 ./cc-cron.sh add "30 14 28 2 *" "Quarterly review reminder" --once --permission-mode auto
+
+# Quiet mode for scripting
+JOB_ID=$(./cc-cron.sh add "0 0 * * *" "Daily backup" --quiet)
+echo "Created job: $JOB_ID"
 ```
 
 ### List Jobs
