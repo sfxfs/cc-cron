@@ -1791,6 +1791,7 @@ Options:
                         ;;
                     --workdir)
                         [[ -z "${2:-}" ]] && error "--workdir requires a path"
+                        validate_workdir "$2"
                         job_workdir="$2"
                         shift 2
                         ;;
@@ -1801,11 +1802,13 @@ Options:
                         ;;
                     --permission-mode)
                         [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
+                        validate_permission_mode "$2"
                         job_permission="$2"
                         shift 2
                         ;;
                     --timeout)
                         [[ -z "${2:-}" ]] && error "--timeout requires seconds"
+                        validate_timeout "$2"
                         job_timeout="$2"
                         shift 2
                         ;;
