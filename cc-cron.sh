@@ -165,6 +165,16 @@ remove_file() {
     return 0
 }
 
+# Helper to validate job-id argument presence
+# Arguments: command_name, args_count_expected, args...
+require_job_id() {
+    local command="$1"
+    shift
+    if [[ $# -lt 1 ]]; then
+        error "Usage: cc-cron ${command} <job-id>"
+    fi
+}
+
 # Portable stat helper (supports both Linux and macOS)
 # Usage: get_stat <file> <format>
 # Formats: size, mtime, mtime_unix
@@ -1757,16 +1767,12 @@ Options:
             ;;
         remove)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron remove <job-id>"
-            fi
+            require_job_id "$command" "$@"
             cmd_remove "$1"
             ;;
         logs)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron logs <job-id> [--tail]"
-            fi
+            require_job_id "$command" "$@"
             local logs_job_id="$1"
             shift
             local follow="false"
@@ -1781,37 +1787,27 @@ Options:
             ;;
         pause|disable)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron ${command} <job-id>"
-            fi
+            require_job_id "$command" "$@"
             cmd_pause "$1"
             ;;
         resume|enable)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron ${command} <job-id>"
-            fi
+            require_job_id "$command" "$@"
             cmd_resume "$1"
             ;;
         show)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron show <job-id>"
-            fi
+            require_job_id "$command" "$@"
             cmd_show "$1"
             ;;
         history)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron history <job-id> [lines]"
-            fi
+            require_job_id "$command" "$@"
             cmd_history "$1" "${2:-20}"
             ;;
         run)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron run <job-id>"
-            fi
+            require_job_id "$command" "$@"
             cmd_run "$1"
             ;;
         edit)
