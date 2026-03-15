@@ -1054,19 +1054,10 @@ EOF
 }
 
 @test "cmd_clone creates new job from existing" {
-    # Create source job
     local source_id="clonesrc"
     local meta_file; meta_file=$(get_meta_file "$source_id")
-    echo 'id="clonesrc"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="original prompt"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model="sonnet"' >> "$meta_file"
-    echo 'permission_mode="auto"' >> "$meta_file"
-    echo 'timeout="60"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    create_test_meta "$source_id" "/tmp" "sonnet" "auto" "60"
 
     run cmd_clone "$source_id"
     [ "$status" -eq 0 ]
@@ -1078,19 +1069,10 @@ EOF
 }
 
 @test "cmd_clone with options overrides source values" {
-    # Create source job
     local source_id="clonesrc2"
     local meta_file; meta_file=$(get_meta_file "$source_id")
-    echo 'id="clonesrc2"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="original prompt"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    create_test_meta "$source_id" "/tmp"
 
     # Clone with custom cron
     run cmd_clone "$source_id" --cron "0 12 * * *"
