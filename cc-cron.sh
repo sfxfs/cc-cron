@@ -1738,13 +1738,13 @@ _cc_cron_completion() {
                     COMPREPLY=($(compgen -W '"0 9 * * 1-5" "0 * * * *" "*/5 * * * *" "0 0 * * *"' -- "${cur}"))
                     ;;
                 *)
-                    COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode" -- "${cur}"))
+                    COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout" -- "${cur}"))
                     ;;
             esac
             ;;
         *)
             if [[ " ${words[@]} " =~ " add " ]]; then
-                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode" -- "${cur}"))
+                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout" -- "${cur}"))
             fi
             ;;
     esac
