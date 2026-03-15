@@ -2460,6 +2460,9 @@ MORE HELP:
     cc-cron help show      View job details
     cc-cron help history   View execution history
     cc-cron help stats     View execution statistics
+    cc-cron help list      List jobs with optional tag filter
+    cc-cron help next      Show upcoming runs
+    cc-cron help status    Show status overview
 
 CRON FORMAT:
     * * * * *
