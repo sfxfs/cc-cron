@@ -165,6 +165,14 @@ remove_file() {
     return 0
 }
 
+# Helper to remove a file and track purge stats (increments PURGE_COUNT, PURGE_BYTES)
+# Arguments: file, label, dry_run (optional, default: false)
+purge_single_file() {
+    remove_file "$1" "$2" "${3:-false}"
+    ((PURGE_COUNT++)) || true
+    ((PURGE_BYTES += REMOVE_FILE_SIZE)) || true
+}
+
 # Helper to validate job-id argument presence
 # Arguments: command_name, args_count_expected, args...
 require_job_id() {
@@ -1205,8 +1213,6 @@ cmd_purge() {
     [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"
     echo
 
-    local purged_orphans=0
-
     # Get list of active job IDs from crontab
     local -A active_jobs
     while IFS= read -r line; do
@@ -1235,6 +1241,9 @@ cmd_purge() {
     ((freed_bytes += PURGE_BYTES)) || true
 
     # Clean up orphaned files (files for jobs not in crontab)
+    # Reset counters for orphan tracking
+    PURGE_COUNT=0
+    PURGE_BYTES=0
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue
         local job_id
@@ -1243,21 +1252,12 @@ cmd_purge() {
         # Skip if job is active
         [[ -z "${active_jobs[$job_id]:-}" ]] || continue
 
-        # Remove all files for this orphaned job using helper
-        remove_file "$meta_file" "orphan" "$dry_run"
-        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
-
-        remove_file "$(get_log_file "$job_id")" "orphan" "$dry_run"
-        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
-
-        remove_file "$(get_status_file "$job_id")" "orphan" "$dry_run"
-        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
-
-        remove_file "$(get_history_file "$job_id")" "orphan" "$dry_run"
-        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
-
-        remove_file "$(get_run_script "$job_id")" "orphan" "$dry_run"
-        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
+        # Remove all files for this orphaned job
+        purge_single_file "$meta_file" "orphan" "$dry_run"
+        purge_single_file "$(get_log_file "$job_id")" "orphan" "$dry_run"
+        purge_single_file "$(get_status_file "$job_id")" "orphan" "$dry_run"
+        purge_single_file "$(get_history_file "$job_id")" "orphan" "$dry_run"
+        purge_single_file "$(get_run_script "$job_id")" "orphan" "$dry_run"
     done
 
     # Clean up old run scripts for removed jobs
@@ -1270,9 +1270,11 @@ cmd_purge() {
         # Skip if job is active
         [[ -z "${active_jobs[$job_id]:-}" ]] || continue
 
-        remove_file "$run_script" "orphan script" "$dry_run"
-        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
+        purge_single_file "$run_script" "orphan script" "$dry_run"
     done
+
+    local purged_orphans=$PURGE_COUNT
+    ((freed_bytes += PURGE_BYTES)) || true
 
     # Summary
     local freed_mb

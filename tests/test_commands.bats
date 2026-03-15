@@ -377,6 +377,27 @@ teardown() {
     [[ "$output" == *"Removed test label"* ]]
 }
 
+@test "purge_single_file updates counters" {
+    local test_file="${BATS_TEST_TMPDIR}/purge_test"
+    echo "test content for purge" > "$test_file"
+
+    PURGE_COUNT=0
+    PURGE_BYTES=0
+
+    purge_single_file "$test_file" "test file" >/dev/null
+    [ "$PURGE_COUNT" -eq 1 ]
+    [ "$PURGE_BYTES" -gt 0 ]
+}
+
+@test "purge_single_file handles non-existent file" {
+    PURGE_COUNT=0
+    PURGE_BYTES=0
+
+    purge_single_file "/nonexistent/file" "test" >/dev/null
+    [ "$PURGE_COUNT" -eq 1 ]
+    [ "$PURGE_BYTES" -eq 0 ]
+}
+
 @test "cmd_history parses structured history" {
     local job_id="histtest"
     local log_file; log_file=$(get_log_file "$job_id")
