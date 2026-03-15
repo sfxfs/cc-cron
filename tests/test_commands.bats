@@ -1034,3 +1034,87 @@ EOF
 
     rm -f "$(get_meta_file "$job_id")" "$history_file"
 }
+
+@test "cmd_show handles missing history gracefully" {
+    local job_id="showmissinghist"
+    create_test_meta "$job_id"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Job Details"* ]]
+    [[ "$output" != *"Statistics:"* ]]
+
+    rm -f "$(get_meta_file "$job_id")"
+}
+
+@test "cmd_show shows running status" {
+    local job_id="showrunning"
+    create_test_meta "$job_id"
+    local status_file; status_file=$(get_status_file "$job_id")
+
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
+    echo 'status="running"' >> "$status_file"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"RUNNING"* ]]
+
+    rm -f "$(get_meta_file "$job_id")" "$status_file"
+}
+
+@test "cmd_show shows success status" {
+    local job_id="showsuccess"
+    create_test_meta "$job_id"
+    local status_file; status_file=$(get_status_file "$job_id")
+
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
+    echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
+    echo 'status="success"' >> "$status_file"
+    echo 'exit_code="0"' >> "$status_file"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"SUCCESS"* ]]
+
+    rm -f "$(get_meta_file "$job_id")" "$status_file"
+}
+
+@test "cmd_show shows failed status with exit code" {
+    local job_id="showfailed"
+    create_test_meta "$job_id"
+    local status_file; status_file=$(get_status_file "$job_id")
+
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
+    echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
+    echo 'status="failed"' >> "$status_file"
+    echo 'exit_code="42"' >> "$status_file"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"FAILED"* ]]
+    [[ "$output" == *"42"* ]]
+
+    rm -f "$(get_meta_file "$job_id")" "$status_file"
+}
+
+@test "cmd_status handles no jobs gracefully" {
+    # Clear any existing jobs first
+    local crontab_content
+    crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
+
+    # Skip if there are existing cc-cron jobs
+    if [[ "$crontab_content" == *"CC-CRON:"* ]]; then
+        skip "crontab has existing cc-cron jobs"
+    fi
+
+    run cmd_status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Total scheduled jobs: 0"* ]]
+}
+
+@test "build_cron_entry handles special characters in prompt" {
+    local prompt="Test with 'single quotes' and \"double quotes\""
+    run build_cron_entry "abc123" "0 9 * * *" "/tmp/run.sh" "true" "$prompt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"CC-CRON:abc123"* ]]
+}
