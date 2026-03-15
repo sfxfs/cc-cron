@@ -1082,6 +1082,44 @@ cmd_import() {
     success "Imported ${imported} job(s), skipped ${skipped}"
 }
 
+# Helper to purge old files by extension (used by cmd_purge)
+# Arguments: directory, extension, days, dry_run, file_label
+# Returns: number of files purged (via global PURGE_COUNT)
+PURGE_COUNT=0
+PURGE_BYTES=0
+purge_old_files() {
+    local dir="$1"
+    local ext="$2"
+    local days="$3"
+    local dry_run="$4"
+    local label="$5"
+
+    PURGE_COUNT=0
+    PURGE_BYTES=0
+
+    # shellcheck disable=SC2231
+    for file in "${dir}"/*.${ext}; do
+        [[ -f "$file" ]] || continue
+
+        # Check if file is old enough
+        local file_age
+        file_age=$(find "$file" -mtime +"$days" 2>/dev/null)
+        [[ -n "$file_age" ]] || continue
+
+        local file_size
+        file_size=$(get_stat "$file" size || echo "0")
+
+        if [[ "$dry_run" == "true" ]]; then
+            echo "  [dry-run] Would remove ${label}: ${file}"
+        else
+            rm -f "$file"
+            echo "  Removed ${label}: ${file}"
+        fi
+        ((PURGE_COUNT++)) || true
+        ((PURGE_BYTES += file_size)) || true
+    done
+}
+
 # Purge old logs and orphaned files
 cmd_purge() {
     local days="${1:-7}"
@@ -1094,10 +1132,7 @@ cmd_purge() {
     [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"
     echo
 
-    local purged_logs=0
-    local purged_history=0
     local purged_orphans=0
-    local freed_bytes=0
 
     # Get list of active job IDs from crontab
     local -A active_jobs
@@ -1117,51 +1152,14 @@ cmd_purge() {
     done
 
     # Clean up log files
-    for log_file in "${LOG_DIR}"/*.log; do
-        [[ -f "$log_file" ]] || continue
-        local job_id
-        job_id=$(basename "$log_file" .log)
-
-        # Check if file is old enough
-        local file_age
-        file_age=$(find "$log_file" -mtime +"$days" 2>/dev/null)
-        [[ -n "$file_age" ]] || continue
-
-        local file_size
-        file_size=$(get_stat "$log_file" size || echo "0")
-
-        if [[ "$dry_run" == "true" ]]; then
-            echo "  [dry-run] Would remove: ${log_file}"
-        else
-            rm -f "$log_file"
-            echo "  Removed log: ${log_file}"
-        fi
-        ((purged_logs++)) || true
-        ((freed_bytes += file_size)) || true
-    done
+    purge_old_files "$LOG_DIR" "log" "$days" "$dry_run" "log"
+    local purged_logs=$PURGE_COUNT
+    local freed_bytes=$PURGE_BYTES
 
     # Clean up history files
-    for history_file in "${LOG_DIR}"/*.history; do
-        [[ -f "$history_file" ]] || continue
-        local job_id
-        job_id=$(basename "$history_file" .history)
-
-        local file_age
-        file_age=$(find "$history_file" -mtime +"$days" 2>/dev/null)
-        [[ -n "$file_age" ]] || continue
-
-        local file_size
-        file_size=$(get_stat "$history_file" size || echo "0")
-
-        if [[ "$dry_run" == "true" ]]; then
-            echo "  [dry-run] Would remove: ${history_file}"
-        else
-            rm -f "$history_file"
-            echo "  Removed history: ${history_file}"
-        fi
-        ((purged_history++)) || true
-        ((freed_bytes += file_size)) || true
-    done
+    purge_old_files "$LOG_DIR" "history" "$days" "$dry_run" "history"
+    local purged_history=$PURGE_COUNT
+    ((freed_bytes += PURGE_BYTES)) || true
 
     # Clean up orphaned files (files for jobs not in crontab)
     for meta_file in "${LOG_DIR}"/*.meta; do
