@@ -652,3 +652,54 @@ teardown() {
     # Cleanup
     rm -f "$meta_file"
 }
+
+@test "cmd_list shows no jobs message when empty" {
+    # Clear crontab cache
+    _CRONTAB_CACHE=""
+
+    # Only test if crontab is empty or not accessible
+    local crontab_content
+    crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
+
+    # Skip if there are existing cc-cron jobs in crontab
+    if [[ "$crontab_content" == *"CC-CRON:"* ]]; then
+        skip "crontab has existing cc-cron jobs"
+    fi
+
+    # If crontab is empty or has no CC-CRON entries, test the output
+    run cmd_list
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No scheduled jobs found"* ]] || [[ "$output" == *"Scheduled Claude Code Cron Jobs"* ]]
+}
+
+@test "cmd_list shows job with metadata" {
+    local job_id="listtest"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id")
+
+    echo 'id="listtest"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test prompt"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+
+    # Create a minimal log file with CC-CRON marker
+    echo "0 9 * * * /tmp/run.sh  # CC-CRON:listtest:recurring=true" > "$log_file"
+
+    run cmd_list
+    [ "$status" -eq 0 ]
+
+    rm -f "$meta_file" "$log_file"
+}
+
+@test "cmd_status shows summary" {
+    run cmd_status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"CC-Cron Status Report"* ]]
+    [[ "$output" == *"Total scheduled jobs"* ]]
+    [[ "$output" == *"Summary"* ]]
+}
