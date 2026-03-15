@@ -2640,6 +2640,9 @@ MORE HELP:
     cc-cron help add       Add a job with options
     cc-cron help edit      Edit job options
     cc-cron help clone     Clone job options
+    cc-cron help export    Export jobs to JSON
+    cc-cron help import    Import jobs from JSON
+    cc-cron help remove    Remove a job
     cc-cron help config    Configuration management
     cc-cron help purge     Cleanup options
     cc-cron help logs      View job logs
@@ -2650,6 +2653,10 @@ MORE HELP:
     cc-cron help list      List jobs with optional tag filter
     cc-cron help next      Show upcoming runs
     cc-cron help status    Show status overview
+    cc-cron help pause     Pause a job
+    cc-cron help resume    Resume a paused job
+    cc-cron help doctor    Diagnose issues
+    cc-cron help version   Show version
 
 CRON FORMAT:
     * * * * *
