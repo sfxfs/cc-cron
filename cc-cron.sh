@@ -731,7 +731,12 @@ cmd_logs() {
     local log_file; log_file=$(get_log_file "$job_id")
 
     if [[ ! -f "$log_file" ]]; then
-        error "No logs found for job: ${job_id}"
+        # Check if job exists to give better error message
+        if [[ -f "$(get_meta_file "$job_id")" ]]; then
+            error "No logs found for job: ${job_id}. The job may not have run yet."
+        else
+            error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
+        fi
     fi
 
     if [[ "$follow" == "true" ]]; then
@@ -1096,7 +1101,12 @@ cmd_history() {
     local log_file; log_file=$(get_log_file "$job_id")
 
     if [[ ! -f "$log_file" ]]; then
-        error "No logs found for job: ${job_id}"
+        # Check if job exists to give better error message
+        if [[ -f "$(get_meta_file "$job_id")" ]]; then
+            error "No logs found for job: ${job_id}. The job may not have run yet."
+        else
+            error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
+        fi
     fi
 
     echo "Execution History for ${job_id}:"
