@@ -114,6 +114,32 @@ remove_file() {
     [[ -f "$1" ]] && { rm "$1"; info "Removed $2: ${1}"; }
 }
 
+# Portable stat helper (supports both Linux and macOS)
+# Usage: get_stat <file> <format>
+# Formats: size, mtime, mtime_unix
+get_stat() {
+    local file="$1"
+    local format="$2"
+
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS stat
+        case "$format" in
+            size)   stat -f %z "$file" 2>/dev/null ;;
+            mtime)  stat -f %Sm "$file" 2>/dev/null ;;
+            mtime_unix) stat -f %m "$file" 2>/dev/null ;;
+            *) return 1 ;;
+        esac
+    else
+        # Linux stat
+        case "$format" in
+            size)   stat -c %s "$file" 2>/dev/null ;;
+            mtime)  stat -c %y "$file" 2>/dev/null ;;
+            mtime_unix) stat -c %Y "$file" 2>/dev/null ;;
+            *) return 1 ;;
+        esac
+    fi
+}
+
 # Generate unique job ID with collision detection (optimized)
 generate_job_id() {
     local job_id
@@ -871,7 +897,7 @@ cmd_status() {
         elif [[ -f "$log_file" ]]; then
             # Has log but no status (old format or running)
             local last_run
-            last_run=$(stat -c %y "$log_file" 2>/dev/null | cut -d. -f1)
+            last_run=$(get_stat "$log_file" mtime | cut -d. -f1)
             echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})"
             echo "    Workdir: ${workdir}"
             echo
@@ -1094,7 +1120,7 @@ cmd_purge() {
         [[ -n "$file_age" ]] || continue
 
         local file_size
-        file_size=$(stat -c %s "$log_file" 2>/dev/null || echo "0")
+        file_size=$(get_stat "$log_file" size || echo "0")
 
         if [[ "$dry_run" == "true" ]]; then
             echo "  [dry-run] Would remove: ${log_file}"
@@ -1117,7 +1143,7 @@ cmd_purge() {
         [[ -n "$file_age" ]] || continue
 
         local file_size
-        file_size=$(stat -c %s "$history_file" 2>/dev/null || echo "0")
+        file_size=$(get_stat "$history_file" size || echo "0")
 
         if [[ "$dry_run" == "true" ]]; then
             echo "  [dry-run] Would remove: ${history_file}"
@@ -1148,7 +1174,7 @@ cmd_purge() {
         for file in "$meta_file" "$log_file" "$status_file" "$history_file" "$run_script"; do
             [[ -f "$file" ]] || continue
             local file_size
-            file_size=$(stat -c %s "$file" 2>/dev/null || echo "0")
+            file_size=$(get_stat "$file" size || echo "0")
 
             if [[ "$dry_run" == "true" ]]; then
                 echo "  [dry-run] Would remove orphan: ${file}"
@@ -1172,7 +1198,7 @@ cmd_purge() {
         [[ -z "${active_jobs[$job_id]:-}" ]] || continue
 
         local file_size
-        file_size=$(stat -c %s "$run_script" 2>/dev/null || echo "0")
+        file_size=$(get_stat "$run_script" size || echo "0")
 
         if [[ "$dry_run" == "true" ]]; then
             echo "  [dry-run] Would remove orphan script: ${run_script}"
@@ -1402,7 +1428,7 @@ cmd_doctor() {
         for lock_file in "$LOCK_DIR"/*.lock; do
             [[ -f "$lock_file" ]] || continue
             local lock_age
-            lock_age=$(stat -c %Y "$lock_file" 2>/dev/null)
+            lock_age=$(get_stat "$lock_file" mtime_unix)
             local current_time
             current_time=$(date +%s)
             local age_minutes=$(( (current_time - lock_age) / 60 ))
