@@ -2520,7 +2520,7 @@ _cc_cron_completion() {
         cc-cron)
             COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history stats run next edit clone export import purge config doctor version completion help" -- "${cur}"))
             ;;
-        remove|pause|resume|enable|disable|show|history|run|clone|next)
+        remove|pause|resume|enable|disable|show|history|run|clone|next|stats)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         list)
