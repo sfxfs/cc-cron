@@ -102,11 +102,6 @@ load_config() {
     done < "$CONFIG_FILE"
 }
 
-# Get config file path
-get_config_file() {
-    echo "$CONFIG_FILE"
-}
-
 # Helper functions for file paths
 get_meta_file() { echo "${LOG_DIR}/${1}.meta"; }
 get_log_file() { echo "${LOG_DIR}/${1}.log"; }
