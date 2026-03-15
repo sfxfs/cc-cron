@@ -544,6 +544,37 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
+@test "parse_job_options parses cron option" {
+    parse_job_options --cron "0 12 * * *"
+    [ "$PARSED_CRON" == "0 12 * * *" ]
+    [ "$PARSED_HAS_CHANGES" -eq 1 ]
+}
+
+@test "parse_job_options parses prompt option" {
+    parse_job_options --prompt "new prompt"
+    [ "$PARSED_PROMPT" == "new prompt" ]
+    [ "$PARSED_HAS_CHANGES" -eq 1 ]
+}
+
+@test "parse_job_options parses multiple options" {
+    parse_job_options --cron "0 0 * * *" --prompt "test" --model "sonnet"
+    [ "$PARSED_CRON" == "0 0 * * *" ]
+    [ "$PARSED_PROMPT" == "test" ]
+    [ "$PARSED_MODEL" == "sonnet" ]
+    [ "$PARSED_HAS_CHANGES" -eq 1 ]
+}
+
+@test "parse_job_options rejects invalid cron" {
+    run parse_job_options --cron "invalid"
+    [ "$status" -ne 0 ]
+}
+
+@test "parse_job_options rejects missing argument" {
+    run parse_job_options --cron
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"requires"* ]]
+}
+
 @test "cmd_clone fails for non-existent job" {
     run cmd_clone "nonexistent"
     [ "$status" -ne 0 ]

@@ -292,6 +292,63 @@ validate_workdir() {
     [[ -d "$1" ]] || error "Directory not found: $1"
 }
 
+# Parse job modification options (--cron, --prompt, --workdir, --model, --permission-mode, --timeout)
+# Sets global variables: PARSED_CRON, PARSED_PROMPT, PARSED_WORKDIR, PARSED_MODEL, PARSED_PERMISSION, PARSED_TIMEOUT, PARSED_HAS_CHANGES
+parse_job_options() {
+    PARSED_CRON=""
+    PARSED_PROMPT=""
+    PARSED_WORKDIR=""
+    PARSED_MODEL=""
+    PARSED_PERMISSION=""
+    PARSED_TIMEOUT=""
+    PARSED_HAS_CHANGES=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --cron)
+                [[ -z "${2:-}" ]] && error "--cron requires a cron expression"
+                validate_cron "$2"
+                PARSED_CRON="$2"
+                PARSED_HAS_CHANGES=1
+                shift 2
+                ;;
+            --prompt)
+                [[ -z "${2:-}" ]] && error "--prompt requires a prompt text"
+                PARSED_PROMPT="$2"
+                PARSED_HAS_CHANGES=1
+                shift 2
+                ;;
+            --workdir)
+                [[ -z "${2:-}" ]] && error "--workdir requires a path"
+                validate_workdir "$2"
+                PARSED_WORKDIR="$2"
+                PARSED_HAS_CHANGES=1
+                shift 2
+                ;;
+            --model)
+                PARSED_MODEL="${2:-}"
+                PARSED_HAS_CHANGES=1
+                shift 2
+                ;;
+            --permission-mode)
+                [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
+                PARSED_PERMISSION="$2"
+                PARSED_HAS_CHANGES=1
+                shift 2
+                ;;
+            --timeout)
+                [[ -z "${2:-}" ]] && error "--timeout requires seconds"
+                PARSED_TIMEOUT="$2"
+                PARSED_HAS_CHANGES=1
+                shift 2
+                ;;
+            *)
+                error "Unknown option: $1"
+                ;;
+        esac
+    done
+}
+
 # Crontab helper functions
 # Build a crontab entry for a job
 build_cron_entry() {
@@ -787,59 +844,17 @@ cmd_edit() {
     # Load current metadata (errors if not found)
     load_job_meta "$job_id"
 
-    local new_cron="${cron}"
-    local new_prompt="${prompt}"
-    local new_workdir="${workdir}"
-    local new_model="${model:-}"
-    local new_permission="${permission_mode}"
-    local new_timeout="${timeout:-0}"
-    local has_changes=0
+    # Parse options using helper
+    parse_job_options "$@"
 
-    # Parse options
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --cron)
-                [[ -z "${2:-}" ]] && error "--cron requires a cron expression"
-                validate_cron "$2"
-                new_cron="$2"
-                has_changes=1
-                shift 2
-                ;;
-            --prompt)
-                [[ -z "${2:-}" ]] && error "--prompt requires a prompt text"
-                new_prompt="$2"
-                has_changes=1
-                shift 2
-                ;;
-            --workdir)
-                [[ -z "${2:-}" ]] && error "--workdir requires a path"
-                validate_workdir "$2"
-                new_workdir="$2"
-                has_changes=1
-                shift 2
-                ;;
-            --model)
-                new_model="${2:-}"
-                has_changes=1
-                shift 2
-                ;;
-            --permission-mode)
-                [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
-                new_permission="$2"
-                has_changes=1
-                shift 2
-                ;;
-            --timeout)
-                [[ -z "${2:-}" ]] && error "--timeout requires seconds"
-                new_timeout="$2"
-                has_changes=1
-                shift 2
-                ;;
-            *)
-                error "Unknown option: $1"
-                ;;
-        esac
-    done
+    # Apply parsed options (fall back to current values)
+    local new_cron="${PARSED_CRON:-$cron}"
+    local new_prompt="${PARSED_PROMPT:-$prompt}"
+    local new_workdir="${PARSED_WORKDIR:-$workdir}"
+    local new_model="${PARSED_MODEL:-${model:-}}"
+    local new_permission="${PARSED_PERMISSION:-$permission_mode}"
+    local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
+    local has_changes="$PARSED_HAS_CHANGES"
 
     if [[ "$has_changes" -eq 0 ]]; then
         warn "No changes specified. Use --cron, --prompt, --workdir, --model, --permission-mode, or --timeout"
@@ -883,64 +898,19 @@ cmd_clone() {
     # Load source job metadata
     load_job_meta "$source_id"
 
-    # Store source values
-    local src_cron="$cron"
-    local src_prompt="$prompt"
-    local src_recurring="$recurring"
-    local src_workdir="$workdir"
-    local src_model="${model:-}"
-    local src_permission="$permission_mode"
-    local src_timeout="${timeout:-0}"
+    # Parse options using helper
+    parse_job_options "$@"
 
-    # Parse optional overrides
-    local new_cron="$src_cron"
-    local new_prompt="$src_prompt"
-    local new_workdir="$src_workdir"
-    local new_model="$src_model"
-    local new_permission="$src_permission"
-    local new_timeout="$src_timeout"
-
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --cron)
-                [[ -z "${2:-}" ]] && error "--cron requires a cron expression"
-                validate_cron "$2"
-                new_cron="$2"
-                shift 2
-                ;;
-            --prompt)
-                [[ -z "${2:-}" ]] && error "--prompt requires a prompt text"
-                new_prompt="$2"
-                shift 2
-                ;;
-            --workdir)
-                [[ -z "${2:-}" ]] && error "--workdir requires a path"
-                validate_workdir "$2"
-                new_workdir="$2"
-                shift 2
-                ;;
-            --model)
-                new_model="${2:-}"
-                shift 2
-                ;;
-            --permission-mode)
-                [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
-                new_permission="$2"
-                shift 2
-                ;;
-            --timeout)
-                [[ -z "${2:-}" ]] && error "--timeout requires seconds"
-                new_timeout="$2"
-                shift 2
-                ;;
-            *)
-                error "Unknown option: $1"
-                ;;
-        esac
-    done
+    # Apply parsed options (fall back to source values)
+    local new_cron="${PARSED_CRON:-$cron}"
+    local new_prompt="${PARSED_PROMPT:-$prompt}"
+    local new_workdir="${PARSED_WORKDIR:-$workdir}"
+    local new_model="${PARSED_MODEL:-${model:-}}"
+    local new_permission="${PARSED_PERMISSION:-$permission_mode}"
+    local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
 
     # Create new job with copied settings
-    cmd_add "$new_cron" "$new_prompt" "$src_recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout"
+    cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout"
 
     success "Cloned job ${source_id} → ${LAST_CREATED_JOB_ID}"
 }
