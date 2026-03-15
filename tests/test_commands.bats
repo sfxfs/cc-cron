@@ -3076,17 +3076,22 @@ EOF
 @test "cmd_list --json escapes backslashes in prompt" {
     local job_id="jsonbackslash"
     local meta_file; meta_file=$(get_meta_file "$job_id")
+    local run_script; run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
     # Override prompt with backslash-containing value
     echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
+
+    # Add crontab entry so the job is listed
+    crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=Path: C"
 
     run cmd_list "" "true"
     [ "$status" -eq 0 ]
     # Check that backslash is escaped in JSON output (single \ becomes \\)
     [[ "$output" == *'Path: C:\\Users\\test'* ]]
 
-    rm -f "$meta_file"
+    rm -f "$meta_file" "$run_script"
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
 }
 
 @test "cmd_export escapes backslashes in prompt" {
