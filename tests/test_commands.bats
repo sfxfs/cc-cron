@@ -200,6 +200,35 @@ teardown() {
     rm -f "$meta_file"
 }
 
+@test "cmd_next shows no jobs message when empty" {
+    # Clear crontab cache
+    _CRONTAB_CACHE=""
+
+    # Skip if there are existing cc-cron jobs
+    local crontab_content
+    crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
+    if [[ "$crontab_content" == *"CC-CRON:"* ]]; then
+        skip "crontab has existing cc-cron jobs"
+    fi
+
+    run cmd_next
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No scheduled jobs found"* ]]
+}
+
+@test "cmd_next shows job not found for non-existent job" {
+    run cmd_next "nonexistent123"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Job not found"* ]]
+}
+
+@test "cmd_help next shows detailed help" {
+    run cmd_help "next"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron next"* ]]
+    [[ "$output" == *"upcoming scheduled runs"* ]]
+}
+
 @test "cmd_edit fails for non-existent job" {
     run cmd_edit "nonexistent" --cron "0 0 * * *"
     [ "$status" -ne 0 ]
