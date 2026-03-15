@@ -791,7 +791,7 @@ teardown() {
 
 @test "require_job_id fails without argument" {
     run require_job_id "testcmd"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     [[ "$output" == *"Usage: cc-cron testcmd <job-id>"* ]]
 }
 
@@ -827,7 +827,7 @@ teardown() {
 
 @test "parse_job_options rejects missing argument" {
     run parse_job_options --cron
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     [[ "$output" == *"requires"* ]]
 }
 
@@ -1323,7 +1323,7 @@ EOF
 
 @test "parse_job_options rejects unknown option" {
     run parse_job_options --unknown-option
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     [[ "$output" == *"Unknown option"* ]]
 }
 
