@@ -27,6 +27,9 @@ _CRONTAB_CACHE=""
 # Store last created job ID (for programmatic use)
 LAST_CREATED_JOB_ID=""
 
+# Store file size from remove_file (for tracking)
+REMOVE_FILE_SIZE=0
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -138,8 +141,27 @@ validate_range() {
 }
 
 # Helper to remove a file if it exists
+# Arguments: file, label, dry_run (optional, default: false)
+# Returns: 0 on success, prints removed file info
 remove_file() {
-    [[ -f "$1" ]] && { rm "$1"; info "Removed $2: ${1}"; }
+    local file="$1"
+    local label="$2"
+    local dry_run="${3:-false}"
+
+    [[ -f "$file" ]] || return 0
+
+    local file_size
+    file_size=$(get_stat "$file" size 2>/dev/null || echo "0")
+
+    if [[ "$dry_run" == "true" ]]; then
+        echo "  [dry-run] Would remove ${label}: ${file}"
+    else
+        rm -f "$file"
+        echo "  Removed ${label}: ${file}"
+    fi
+
+    # Return file size via global for tracking
+    REMOVE_FILE_SIZE="$file_size"
     return 0
 }
 
@@ -1171,27 +1193,21 @@ cmd_purge() {
         # Skip if job is active
         [[ -z "${active_jobs[$job_id]:-}" ]] || continue
 
-        # Remove all files for this orphaned job
-        local log_file status_file history_file run_script
-        log_file=$(get_log_file "$job_id")
-        status_file=$(get_status_file "$job_id")
-        history_file=$(get_history_file "$job_id")
-        run_script=$(get_run_script "$job_id")
+        # Remove all files for this orphaned job using helper
+        remove_file "$meta_file" "orphan" "$dry_run"
+        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
 
-        for file in "$meta_file" "$log_file" "$status_file" "$history_file" "$run_script"; do
-            [[ -f "$file" ]] || continue
-            local file_size
-            file_size=$(get_stat "$file" size || echo "0")
+        remove_file "$(get_log_file "$job_id")" "orphan" "$dry_run"
+        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
 
-            if [[ "$dry_run" == "true" ]]; then
-                echo "  [dry-run] Would remove orphan: ${file}"
-            else
-                rm -f "$file"
-                echo "  Removed orphan: ${file}"
-            fi
-            ((purged_orphans++)) || true
-            ((freed_bytes += file_size)) || true
-        done
+        remove_file "$(get_status_file "$job_id")" "orphan" "$dry_run"
+        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
+
+        remove_file "$(get_history_file "$job_id")" "orphan" "$dry_run"
+        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
+
+        remove_file "$(get_run_script "$job_id")" "orphan" "$dry_run"
+        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
     done
 
     # Clean up old run scripts for removed jobs
@@ -1204,17 +1220,8 @@ cmd_purge() {
         # Skip if job is active
         [[ -z "${active_jobs[$job_id]:-}" ]] || continue
 
-        local file_size
-        file_size=$(get_stat "$run_script" size || echo "0")
-
-        if [[ "$dry_run" == "true" ]]; then
-            echo "  [dry-run] Would remove orphan script: ${run_script}"
-        else
-            rm -f "$run_script"
-            echo "  Removed orphan script: ${run_script}"
-        fi
-        ((purged_orphans++)) || true
-        ((freed_bytes += file_size)) || true
+        remove_file "$run_script" "orphan script" "$dry_run"
+        ((purged_orphans++)) || true; ((freed_bytes += REMOVE_FILE_SIZE)) || true
     done
 
     # Summary
