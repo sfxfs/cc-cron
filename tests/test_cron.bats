@@ -52,3 +52,27 @@ teardown() {
     run validate_cron "0 9 * *"
     [ "$status" -ne 0 ]
 }
+
+@test "validate_cron_field rejects negative numbers" {
+    run validate_cron_field "-1" 0 59 "minute"
+    [ "$status" -ne 0 ]
+}
+
+@test "validate_cron_field rejects non-numeric" {
+    run validate_cron_field "abc" 0 59 "minute"
+    [ "$status" -ne 0 ]
+}
+
+@test "validate_range accepts boundary values" {
+    run validate_range 0 0 100 "test"
+    [ "$status" -eq 0 ]
+    run validate_range 100 0 100 "test"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_range rejects outside boundaries" {
+    run validate_range -1 0 100 "test"
+    [ "$status" -ne 0 ]
+    run validate_range 101 0 100 "test"
+    [ "$status" -ne 0 ]
+}

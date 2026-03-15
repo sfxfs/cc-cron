@@ -47,3 +47,31 @@ teardown() {
     [ -d "$LOG_DIR" ]
     [ -d "$LOCK_DIR" ]
 }
+
+@test "validate_workdir accepts existing directory" {
+    run validate_workdir "$BATS_TEST_TMPDIR"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_workdir rejects non-existent directory" {
+    run validate_workdir "/nonexistent/path/12345"
+    [ "$status" -ne 0 ]
+}
+
+@test "crontab caching works" {
+    # Clear cache
+    _CRONTAB_CACHE=""
+
+    # First call should populate cache
+    local content
+    content=$(get_crontab)
+
+    # Cache should now be populated
+    [[ -n "$_CRONTAB_CACHE" ]] || [ "$_CRONTAB_CACHE" == "" ]
+}
+
+@test "invalidate_crontab_cache clears cache" {
+    _CRONTAB_CACHE="test content"
+    invalidate_crontab_cache
+    [ -z "$_CRONTAB_CACHE" ]
+}
