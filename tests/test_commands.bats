@@ -1794,3 +1794,47 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
+
+@test "validate_timeout accepts zero" {
+    run validate_timeout "0"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_timeout accepts positive number" {
+    run validate_timeout "300"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_timeout rejects negative number" {
+    run validate_timeout "-1"
+    [ "$status" -ne 0 ]
+}
+
+@test "validate_timeout rejects non-numeric" {
+    run validate_timeout "abc"
+    [ "$status" -ne 0 ]
+}
+
+@test "validate_timeout rejects empty string" {
+    run validate_timeout ""
+    [ "$status" -ne 0 ]
+}
+
+@test "validate_range accepts boundary values" {
+    run validate_range "0" 0 10 "test"
+    [ "$status" -eq 0 ]
+
+    run validate_range "10" 0 10 "test"
+    [ "$status" -eq 0 ]
+
+    run validate_range "5" 0 10 "test"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_range rejects outside boundaries" {
+    run validate_range "-1" 0 10 "test"
+    [ "$status" -ne 0 ]
+
+    run validate_range "11" 0 10 "test"
+    [ "$status" -ne 0 ]
+}
