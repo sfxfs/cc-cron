@@ -850,57 +850,92 @@ calculate_next_run() {
             schedule_desc="hourly at minute $minute"
         fi
     elif [[ "$day" == "*" && "$month" == "*" && "$weekday" == "*" ]]; then
-        # Daily at specific time
-        local current_hour current_minute
-        current_hour=$(date +%H)
-        current_minute=$(date +%M)
-        current_hour=$((10#$current_hour))
-        current_minute=$((10#$current_minute))
+        # Check for hour step pattern like */2
+        if [[ "$hour" == */* ]]; then
+            local hour_step="${hour#*/}"
+            if [[ "$hour_step" =~ ^[0-9]+$ ]]; then
+                # Every N hours at specific minute
+                local current_hour current_minute
+                current_hour=$(date +%H)
+                current_minute=$(date +%M)
+                current_hour=$((10#$current_hour))
+                current_minute=$((10#$current_minute))
+                local target_minute=$((10#$minute))
 
-        local target_hour=$((10#$hour))
-        local target_minute=$((10#$minute))
-
-        local minutes_today=$((target_hour * 60 + target_minute))
-        local minutes_now=$((current_hour * 60 + current_minute))
-
-        local minutes_until=$((minutes_today - minutes_now))
-        if [[ $minutes_until -le 0 ]]; then
-            minutes_until=$((minutes_until + 1440))  # Add 24 hours
-        fi
-        next_time=$((now + minutes_until * 60))
-        schedule_desc="daily at ${hour}:${minute}"
-    elif [[ "$day" == "*" && "$month" == "*" && "$weekday" != "*" ]]; then
-        # Weekly
-        local current_weekday
-        current_weekday=$(date +%u)  # 1-7, Monday is 1
-        current_weekday=$((current_weekday % 7))  # Convert to 0-6, Sunday is 0
-
-        local target_weekday=$((10#$weekday))
-
-        local current_hour current_minute
-        current_hour=$(date +%H)
-        current_minute=$(date +%M)
-        current_hour=$((10#$current_hour))
-        current_minute=$((10#$current_minute))
-
-        local target_hour=$((10#$hour))
-        local target_minute=$((10#$minute))
-
-        local days_until=$(( (target_weekday - current_weekday + 7) % 7 ))
-        if [[ $days_until -eq 0 ]]; then
-            # Same day, check if time has passed
-            local minutes_target=$((target_hour * 60 + target_minute))
-            local minutes_now=$((current_hour * 60 + current_minute))
-            if [[ $minutes_target -le $minutes_now ]]; then
-                days_until=7
+                local hours_until=$(( (hour_step - current_hour % hour_step) % hour_step ))
+                if [[ $hours_until -eq 0 ]]; then
+                    # Check if we've passed the minute this hour
+                    if [[ $current_minute -ge $target_minute ]]; then
+                        hours_until=$hour_step
+                    fi
+                fi
+                next_time=$((now + hours_until * 3600 + (target_minute - current_minute) * 60))
+                schedule_desc="every ${hour_step} hours at minute ${minute}"
+            else
+                # Invalid step pattern
+                schedule_desc="custom schedule (${cron})"
+                next_time=0
             fi
+        else
+            # Daily at specific time
+            local current_hour current_minute
+            current_hour=$(date +%H)
+            current_minute=$(date +%M)
+            current_hour=$((10#$current_hour))
+            current_minute=$((10#$current_minute))
+
+            local target_hour=$((10#$hour))
+            local target_minute=$((10#$minute))
+
+            local minutes_today=$((target_hour * 60 + target_minute))
+            local minutes_now=$((current_hour * 60 + current_minute))
+
+            local minutes_until=$((minutes_today - minutes_now))
+            if [[ $minutes_until -le 0 ]]; then
+                minutes_until=$((minutes_until + 1440))  # Add 24 hours
+            fi
+            next_time=$((now + minutes_until * 60))
+            schedule_desc="daily at ${hour}:${minute}"
         fi
+    elif [[ "$day" == "*" && "$month" == "*" && "$weekday" != "*" ]]; then
+        # Check if weekday is a simple single value (not a range or list)
+        if [[ "$weekday" =~ ^[0-6]$ ]]; then
+            # Weekly on a specific day
+            local current_weekday
+            current_weekday=$(date +%u)  # 1-7, Monday is 1
+            current_weekday=$((current_weekday % 7))  # Convert to 0-6, Sunday is 0
 
-        local minutes_until=$((days_until * 1440 + target_hour * 60 + target_minute - current_hour * 60 - current_minute))
-        next_time=$((now + minutes_until * 60))
+            local target_weekday=$((10#$weekday))
 
-        local day_names=("Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday")
-        schedule_desc="weekly on ${day_names[$target_weekday]} at ${hour}:${minute}"
+            local current_hour current_minute
+            current_hour=$(date +%H)
+            current_minute=$(date +%M)
+            current_hour=$((10#$current_hour))
+            current_minute=$((10#$current_minute))
+
+            local target_hour=$((10#$hour))
+            local target_minute=$((10#$minute))
+
+            local days_until=$(( (target_weekday - current_weekday + 7) % 7 ))
+            if [[ $days_until -eq 0 ]]; then
+                # Same day, check if time has passed
+                local minutes_target=$((target_hour * 60 + target_minute))
+                local minutes_now=$((current_hour * 60 + current_minute))
+                if [[ $minutes_target -le $minutes_now ]]; then
+                    days_until=7
+                fi
+            fi
+
+            local minutes_until=$((days_until * 1440 + target_hour * 60 + target_minute - current_hour * 60 - current_minute))
+            next_time=$((now + minutes_until * 60))
+
+            local day_names=("Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday")
+            schedule_desc="weekly on ${day_names[$target_weekday]} at ${hour}:${minute}"
+        else
+            # Complex weekday pattern (range, list, etc.)
+            schedule_desc="custom schedule (${cron})"
+            next_time=0
+        fi
     else
         # Complex schedule - show cron expression
         schedule_desc="custom schedule (${cron})"

@@ -1927,6 +1927,30 @@ EOF
     [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
+@test "calculate_next_run handles hour step pattern" {
+    run calculate_next_run "0 */2 * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles hour step pattern */6" {
+    run calculate_next_run "0 */6 * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run returns empty for weekday range" {
+    run calculate_next_run "0 9 * * 1-5"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "calculate_next_run returns empty for weekday list" {
+    run calculate_next_run "0 9 * * 1,3,5"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
 # Tests for cmd_stats function
 @test "cmd_stats shows no jobs message when empty" {
     # Clear any existing meta files
