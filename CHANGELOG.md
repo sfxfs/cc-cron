@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.3] - 2025-03-16
+
+### Fixed
+- Correct bash completion for edit and clone commands (clone was duplicated causing option completion to fail)
+
+### Documentation
+- Add CHANGELOG.md to track version history
+- Add help documentation for export, import, remove, doctor, and version commands
+
+### Tests
+- Add test to verify edit/clone options are included in completion
+- Add tests for new help functions
+
 ## [2.3.2] - 2025-03-16
 
 ### Fixed
