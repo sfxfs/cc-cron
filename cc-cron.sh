@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.9"
+readonly VERSION="2.4.10"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -278,7 +278,8 @@ validate_cron_field() {
             [[ "$end" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"
             validate_range "$start" "$min" "$max" "$field_name range start"
             validate_range "$end" "$min" "$max" "$field_name range end"
-            [[ "$start" -gt "$end" ]] && error "Invalid range '$value' for $field_name (start > end)" "$EXIT_INVALID_ARGS"
+            [[ "$start" -gt "$end" ]] && \
+                error "Invalid range '$value' for $field_name (start > end)" "$EXIT_INVALID_ARGS"
             return 0
             ;;
     esac
@@ -329,7 +330,8 @@ validate_permission_mode() {
             return 0
             ;;
         *)
-            error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
+            error "Invalid permission mode: $1. " \
+                "Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
             ;;
     esac
 }
@@ -615,7 +617,8 @@ cmd_add() {
 
     # Generate run script using helper
     local run_script
-    run_script=$(generate_run_script "$job_id" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$recurring" "$prompt")
+    run_script=$(generate_run_script "$job_id" "$job_workdir" "$job_model" \
+        "$job_permission" "$job_timeout" "$recurring" "$prompt")
 
     # Create the cron entry using helper
     crontab_add_entry "$(build_cron_entry "$job_id" "$cron_expr" "$run_script" "$recurring" "$prompt")"
@@ -1745,7 +1748,8 @@ cmd_import() {
         fi
 
         # Create the job
-        cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "false" "$job_tags"
+        cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" \
+            "$job_model" "$job_permission" "$job_timeout" "false" "$job_tags"
 
         # Pause if needed (use job ID from LAST_CREATED_JOB_ID)
         if [[ "$job_paused" == "true" && -n "${LAST_CREATED_JOB_ID:-}" ]]; then
@@ -1932,7 +1936,8 @@ cmd_config() {
                     # Valid keys
                     ;;
                 *)
-                    error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout" "$EXIT_INVALID_ARGS"
+                    error "Invalid config key: ${key}. Valid keys: workdir, model, " \
+                        "permission_mode, timeout" "$EXIT_INVALID_ARGS"
                     ;;
             esac
 
@@ -2821,7 +2826,9 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history stats run next edit clone export import purge config doctor version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W \
+                "add list remove logs status pause resume enable disable show history stats run next edit clone export import purge config doctor version completion help" \
+                -- "${cur}"))
             ;;
         remove|pause|resume|enable|disable|show|history|run|next|stats)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
@@ -2852,7 +2859,9 @@ _cc_cron_completion() {
             if [[ ${#words[@]} -eq 3 ]]; then
                 COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             else
-                COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout --tags" -- "${cur}"))
+                COMPREPLY=($(compgen -W \
+                "--cron --prompt --workdir --model --permission-mode --timeout --tags" \
+                -- "${cur}"))
             fi
             ;;
         --model)
@@ -2876,7 +2885,9 @@ _cc_cron_completion() {
             ;;
         *)
             if [[ " ${words[@]} " =~ " add " ]]; then
-                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}"))
+                COMPREPLY=($(compgen -W \
+                    "--once --workdir --model --permission-mode --timeout --tags --quiet -q" \
+                    -- "${cur}"))
             fi
             ;;
     esac
@@ -2967,7 +2978,8 @@ Options:
                 esac
             done
 
-            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$quiet" "$job_tags"
+            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" \
+                "$job_model" "$job_permission" "$job_timeout" "$quiet" "$job_tags"
             ;;
         list)
             ensure_data_dir
@@ -3052,7 +3064,9 @@ Options:
         edit)
             ensure_data_dir
             if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron edit <job-id> [--cron <expr>] [--prompt <text>] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]" "$EXIT_INVALID_ARGS"
+                error "Usage: cc-cron edit <job-id> [--cron <expr>] [--prompt <text>] " \
+                    "[--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]" \
+                    "$EXIT_INVALID_ARGS"
             fi
             local edit_job_id="$1"
             shift
