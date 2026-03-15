@@ -196,3 +196,29 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"dry-run"* ]] || [[ "$output" == *"Purging"* ]]
 }
+
+@test "cmd_config list works" {
+    run cmd_config list
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Current configuration"* ]]
+}
+
+@test "cmd_config set validates workdir" {
+    run cmd_config set workdir "/nonexistent/path"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_config set validates permission_mode" {
+    run cmd_config set permission_mode invalid
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_config set validates timeout" {
+    run cmd_config set timeout "notanumber"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_config rejects invalid key" {
+    run cmd_config set invalid_key value
+    [ "$status" -ne 0 ]
+}

@@ -197,6 +197,32 @@ purge 命令会删除：
 - 超过指定天数的历史文件
 - 孤立文件（已不在 crontab 中的任务相关文件）
 
+### 配置管理
+
+通过配置文件管理默认设置：
+
+```bash
+# 显示当前配置
+./cc-cron.sh config list
+
+# 设置默认值
+./cc-cron.sh config set workdir /home/user/myproject
+./cc-cron.sh config set model sonnet
+./cc-cron.sh config set permission_mode auto
+./cc-cron.sh config set timeout 300
+
+# 移除配置值
+./cc-cron.sh config unset model
+```
+
+配置保存在 `~/.cc-cron/config`。有效的配置项：
+- `workdir` - 默认工作目录
+- `model` - 默认模型（sonnet、opus、haiku）
+- `permission_mode` - 默认权限模式
+- `timeout` - 默认超时时间（秒）
+
+**优先级：** 命令行选项 > 配置文件 > 环境变量 > 内置默认值
+
 ### 查看版本
 
 ```bash
@@ -213,7 +239,7 @@ eval "$(cc-cron completion)"
 ```
 
 **功能：**
-- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export`、`import`、`purge`、`version`、`completion`
+- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export`、`import`、`purge`、`config`、`version`、`completion`
 - `remove`、`logs`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export` 的任务 ID 补全
 - 模型名：`sonnet`、`opus`、`haiku`
 - 权限模式：`bypassPermissions`、`acceptEdits`、`auto`、`default`
@@ -236,16 +262,16 @@ eval "$(cc-cron completion)"
 
 ## 单任务配置与全局配置
 
-每个任务都可以通过命令行选项指定自己的设置。未指定时，任务会回退到环境变量默认值。
+每个任务都可以通过命令行选项指定自己的设置。未指定时，任务会回退到配置文件，然后是环境变量默认值。
 
-| 设置项 | 单任务选项 | 环境变量 | 默认值 |
-|---------|----------------|---------------------|---------|
-| 工作目录 | `--workdir` | `CC_WORKDIR` | `$HOME` |
-| 模型 | `--model` | `CC_MODEL` | Claude 默认 |
-| 权限模式 | `--permission-mode` | `CC_PERMISSION_MODE` | `bypassPermissions` |
-| 超时 | `--timeout` | `CC_TIMEOUT` | `0`（不超时） |
+| 设置项 | 单任务选项 | 配置文件 | 环境变量 | 默认值 |
+|---------|----------------|-------------|---------------------|---------|
+| 工作目录 | `--workdir` | `workdir` | `CC_WORKDIR` | `$HOME` |
+| 模型 | `--model` | `model` | `CC_MODEL` | Claude 默认 |
+| 权限模式 | `--permission-mode` | `permission_mode` | `CC_PERMISSION_MODE` | `bypassPermissions` |
+| 超时 | `--timeout` | `timeout` | `CC_TIMEOUT` | `0`（不超时） |
 
-**优先级：** 单任务选项 > 环境变量 > 内置默认值
+**优先级：** 单任务选项 > 配置文件 > 环境变量 > 内置默认值
 
 ## Cron 表达式格式
 

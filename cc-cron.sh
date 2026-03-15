@@ -12,18 +12,20 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.5.0"
+readonly VERSION="1.6.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
 LOG_DIR="${LOG_DIR:-${DATA_DIR}/logs}"
 LOCK_DIR="${LOCK_DIR:-${DATA_DIR}/locks}"
+CONFIG_FILE="${CONFIG_FILE:-${DATA_DIR}/config}"
 CRON_COMMENT_PREFIX="CC-CRON:"
 
-# Environment configuration (can be overridden)
+# Environment configuration (can be overridden by config file)
 CC_WORKDIR="${CC_WORKDIR:-$HOME}"
 CC_PERMISSION_MODE="${CC_PERMISSION_MODE:-bypassPermissions}"
 CC_MODEL="${CC_MODEL:-}"
+CC_TIMEOUT="${CC_TIMEOUT:-0}"
 
 # Crontab cache (performance optimization)
 _CRONTAB_CACHE=""
@@ -51,6 +53,45 @@ error() {
 # Ensure data directory exists
 ensure_data_dir() {
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
+}
+
+# Load configuration from file
+load_config() {
+    [[ -f "$CONFIG_FILE" ]] || return 0
+
+    while IFS='=' read -r key value; do
+        # Skip comments and empty lines
+        [[ "$key" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$key" ]] && continue
+
+        # Remove surrounding quotes from value
+        value="${value#\"}"
+        value="${value%\"}"
+
+        case "$key" in
+            workdir|CC_WORKDIR)
+                CC_WORKDIR="$value"
+                ;;
+            model|CC_MODEL)
+                CC_MODEL="$value"
+                ;;
+            permission_mode|CC_PERMISSION_MODE)
+                CC_PERMISSION_MODE="$value"
+                ;;
+            timeout|CC_TIMEOUT)
+                CC_TIMEOUT="$value"
+                ;;
+            data_dir|DATA_DIR)
+                # DATA_DIR can only be set before other dirs are created
+                warn "DATA_DIR must be set via environment variable, ignoring in config file"
+                ;;
+        esac
+    done < "$CONFIG_FILE"
+}
+
+# Get config file path
+get_config_file() {
+    echo "$CONFIG_FILE"
 }
 
 # Helper functions for file paths
@@ -1226,6 +1267,126 @@ cmd_purge() {
     echo "  Space freed:     ${freed_mb} MB"
 }
 
+# Manage configuration
+cmd_config() {
+    local action="${1:-list}"
+
+    case "$action" in
+        list)
+            info "Current configuration:"
+            echo
+            echo "  Config file: ${CONFIG_FILE}"
+            echo "  Data dir:    ${DATA_DIR}"
+            echo
+            echo "  Default workdir:    ${CC_WORKDIR}"
+            echo "  Default model:      ${CC_MODEL:-<not set>}"
+            echo "  Default permission: ${CC_PERMISSION_MODE}"
+            echo "  Default timeout:    ${CC_TIMEOUT}s"
+            echo
+            if [[ -f "$CONFIG_FILE" ]]; then
+                echo "Config file contents:"
+                echo "----------------------"
+                cat "$CONFIG_FILE"
+            else
+                echo "No config file exists. Create one with:"
+                echo "  cc-cron config set workdir /path/to/dir"
+                echo "  cc-cron config set model sonnet"
+            fi
+            ;;
+        set)
+            local key="${2:-}"
+            local value="${3:-}"
+
+            [[ -z "$key" ]] && error "Usage: cc-cron config set <key> <value>"
+            [[ -z "$value" ]] && error "Usage: cc-cron config set <key> <value>"
+
+            # Validate key
+            case "$key" in
+                workdir|model|permission_mode|timeout)
+                    # Valid keys
+                    ;;
+                *)
+                    error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout"
+                    ;;
+            esac
+
+            # Validate value
+            case "$key" in
+                workdir)
+                    [[ -d "$value" ]] || error "Directory not found: ${value}"
+                    ;;
+                model)
+                    # Accept any model name
+                    ;;
+                permission_mode)
+                    case "$value" in
+                        bypassPermissions|acceptEdits|auto|default)
+                            ;;
+                        *)
+                            error "Invalid permission mode: ${value}. Valid: bypassPermissions, acceptEdits, auto, default"
+                            ;;
+                    esac
+                    ;;
+                timeout)
+                    [[ "$value" =~ ^[0-9]+$ ]] || error "Timeout must be a number"
+                    ;;
+            esac
+
+            # Update config file
+            ensure_data_dir
+
+            # Read existing config or create new
+            local -A config_map
+            if [[ -f "$CONFIG_FILE" ]]; then
+                while IFS='=' read -r k v; do
+                    [[ "$k" =~ ^[[:space:]]*# ]] && continue
+                    [[ -z "$k" ]] && continue
+                    v="${v#\"}"
+                    v="${v%\"}"
+                    config_map["$k"]="$v"
+                done < "$CONFIG_FILE"
+            fi
+
+            # Set new value
+            config_map["$key"]="$value"
+
+            # Write config file
+            {
+                echo "# cc-cron configuration file"
+                echo "# Generated: $(date '+%Y-%m-%d %H:%M:%S')"
+                echo
+                for k in "${!config_map[@]}"; do
+                    echo "${k}=\"${config_map[$k]}\""
+                done
+            } > "$CONFIG_FILE"
+
+            success "Set ${key}=\"${value}\""
+            info "Config saved to: ${CONFIG_FILE}"
+            ;;
+        unset)
+            local key="${2:-}"
+
+            [[ -z "$key" ]] && error "Usage: cc-cron config unset <key>"
+
+            if [[ ! -f "$CONFIG_FILE" ]]; then
+                warn "No config file exists"
+                return 0
+            fi
+
+            # Remove key from config
+            local temp_file
+            temp_file=$(mktemp)
+            grep -v "^${key}=" "$CONFIG_FILE" > "$temp_file" || true
+            mv "$temp_file" "$CONFIG_FILE"
+
+            success "Unset ${key}"
+            ;;
+        *)
+            error "Unknown config action: ${action}. Use: list, set, unset"
+            ;;
+    esac
+}
+
 # Show version
 cmd_version() {
     echo "cc-cron version ${VERSION}"
@@ -1271,6 +1432,11 @@ COMMANDS:
     import <file>                   Import jobs from JSON file
     purge [days]                    Purge old logs and orphaned files (default: 7 days)
         --dry-run                   Show what would be deleted without actually deleting
+    config [action] [key] [value]  Manage configuration
+        list                        Show current configuration
+        set <key> <value>           Set a configuration value
+        unset <key>                 Remove a configuration value
+        Valid keys: workdir, model, permission_mode, timeout
     completion                      Output bash completion script
     version                         Show version information
     help                            Show this help message
@@ -1310,13 +1476,20 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit export import purge version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit export import purge config version completion help" -- "${cur}"))
             ;;
         remove|logs|pause|resume|show|history|run)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         export)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            ;;
+        config)
+            if [[ ${#words[@]} -eq 3 ]]; then
+                COMPREPLY=($(compgen -W "list set unset" -- "${cur}"))
+            elif [[ ${#words[@]} -eq 4 ]]; then
+                COMPREPLY=($(compgen -W "workdir model permission_mode timeout" -- "${cur}"))
+            fi
             ;;
         edit)
             if [[ ${#words[@]} -eq 3 ]]; then
@@ -1511,6 +1684,11 @@ Options:
                 esac
             done
             cmd_purge "$purge_days" "$dry_run"
+            ;;
+        config)
+            ensure_data_dir
+            load_config
+            cmd_config "${1:-list}" "${2:-}" "${3:-}"
             ;;
         version|--version|-v)
             cmd_version

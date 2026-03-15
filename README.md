@@ -197,6 +197,32 @@ The purge command removes:
 - History files older than the specified days
 - Orphaned files (files for jobs that no longer exist in crontab)
 
+### Configuration Management
+
+Manage default settings via configuration file:
+
+```bash
+# Show current configuration
+./cc-cron.sh config list
+
+# Set default values
+./cc-cron.sh config set workdir /home/user/myproject
+./cc-cron.sh config set model sonnet
+./cc-cron.sh config set permission_mode auto
+./cc-cron.sh config set timeout 300
+
+# Remove a configuration value
+./cc-cron.sh config unset model
+```
+
+Configuration is stored in `~/.cc-cron/config`. Valid keys:
+- `workdir` - Default working directory
+- `model` - Default model (sonnet, opus, haiku)
+- `permission_mode` - Default permission mode
+- `timeout` - Default timeout in seconds
+
+**Priority:** Command-line options > Config file > Environment variables > Built-in defaults
+
 ### Check Version
 
 ```bash
@@ -213,7 +239,7 @@ eval "$(cc-cron completion)"
 ```
 
 **Features:**
-- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `export`, `import`, `purge`, `version`, `completion`
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `export`, `import`, `purge`, `config`, `version`, `completion`
 - Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, `history`, `run`, `edit`, and `export` commands
 - Model names: `sonnet`, `opus`, `haiku`
 - Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`
@@ -236,16 +262,16 @@ Shows execution status (running/success/failure), timestamps, and a summary of r
 
 ## Per-Job vs Global Configuration
 
-Each job can have its own settings specified via command-line options. When not specified, jobs fall back to environment variable defaults.
+Each job can have its own settings specified via command-line options. When not specified, jobs fall back to config file, then environment variable defaults.
 
-| Setting | Per-Job Option | Environment Variable | Default |
-|---------|----------------|---------------------|---------|
-| Working directory | `--workdir` | `CC_WORKDIR` | `$HOME` |
-| Model | `--model` | `CC_MODEL` | Claude's default |
-| Permission mode | `--permission-mode` | `CC_PERMISSION_MODE` | `bypassPermissions` |
-| Timeout | `--timeout` | `CC_TIMEOUT` | `0` (no timeout) |
+| Setting | Per-Job Option | Config File | Environment Variable | Default |
+|---------|----------------|-------------|---------------------|---------|
+| Working directory | `--workdir` | `workdir` | `CC_WORKDIR` | `$HOME` |
+| Model | `--model` | `model` | `CC_MODEL` | Claude's default |
+| Permission mode | `--permission-mode` | `permission_mode` | `CC_PERMISSION_MODE` | `bypassPermissions` |
+| Timeout | `--timeout` | `timeout` | `CC_TIMEOUT` | `0` (no timeout) |
 
-**Priority:** Per-job option > Environment variable > Built-in default
+**Priority:** Per-job option > Config file > Environment variable > Built-in default
 
 ## Cron Expression Format
 
