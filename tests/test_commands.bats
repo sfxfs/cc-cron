@@ -3062,7 +3062,8 @@ EOF
     local job_id="jsonbackslash"
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "" "$prompt"
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
+    # Override prompt with backslash-containing value
     echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
 
     run cmd_list "" "true"
@@ -3077,7 +3078,8 @@ EOF
     local job_id="exportback"
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "" "$prompt"
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
+    # Override prompt with backslash-containing value
     echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
 
     run cmd_export "$job_id"
