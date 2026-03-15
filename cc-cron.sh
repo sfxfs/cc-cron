@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.8.3"
+readonly VERSION="1.8.4"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1598,79 +1598,208 @@ cmd_version() {
     echo "cc-cron version ${VERSION}"
 }
 
+# Show help for a specific command
+help_add() {
+    cat << 'HELP'
+cc-cron add - Add a scheduled job
+
+USAGE:
+    cc-cron add <cron-expression> <prompt> [options]
+
+ARGUMENTS:
+    <cron-expression>  Standard 5-field cron expression
+                       minute (0-59) hour (0-23) day-of-month (1-31) month (1-12) day-of-week (0-6)
+    <prompt>           The prompt to send to Claude Code
+
+OPTIONS:
+    --once                      Create a one-shot job (auto-removes after success)
+    --workdir <path>            Working directory for this job (default: $HOME)
+    --model <name>              Model to use: sonnet, opus, haiku, etc.
+    --permission-mode <mode>    Permission mode: bypassPermissions, acceptEdits, auto, default
+    --timeout <seconds>         Timeout for job execution (0 = no timeout, default)
+
+EXAMPLES:
+    cc-cron add "0 9 * * 1-5" "Run daily tests"
+    cc-cron add "0 * * * *" "Check status" --model sonnet
+    cc-cron add "30 14 28 2 *" "Reminder" --once
+HELP
+}
+
+help_edit() {
+    cat << 'HELP'
+cc-cron edit - Edit a job's settings
+
+USAGE:
+    cc-cron edit <job-id> [options]
+
+OPTIONS:
+    --cron <expr>               Update cron schedule
+    --prompt <text>             Update prompt
+    --workdir <path>            Update working directory
+    --model <name>              Update model
+    --permission-mode <mode>    Update permission mode
+    --timeout <seconds>         Update timeout
+
+EXAMPLES:
+    cc-cron edit myjob --cron "0 12 * * *"
+    cc-cron edit myjob --prompt "New prompt" --model opus
+HELP
+}
+
+help_clone() {
+    cat << 'HELP'
+cc-cron clone - Clone an existing job
+
+USAGE:
+    cc-cron clone <job-id> [options]
+
+OPTIONS:
+    --cron <expr>               Override cron schedule
+    --prompt <text>             Override prompt
+    --workdir <path>            Override working directory
+    --model <name>              Override model
+    --permission-mode <mode>    Override permission mode
+    --timeout <seconds>         Override timeout
+
+EXAMPLES:
+    cc-cron clone myjob
+    cc-cron clone myjob --cron "0 0 * * *"
+HELP
+}
+
+help_config() {
+    cat << 'HELP'
+cc-cron config - Manage default configuration
+
+USAGE:
+    cc-cron config list              Show current configuration
+    cc-cron config set <key> <value> Set a configuration value
+    cc-cron config unset <key>       Remove a configuration value
+
+VALID KEYS:
+    workdir          Default working directory
+    model            Default model (sonnet, opus, haiku)
+    permission_mode  Default permission mode
+    timeout          Default timeout in seconds
+
+EXAMPLES:
+    cc-cron config set workdir /home/user/project
+    cc-cron config set model sonnet
+    cc-cron config unset model
+HELP
+}
+
+help_purge() {
+    cat << 'HELP'
+cc-cron purge - Clean up old data
+
+USAGE:
+    cc-cron purge [days] [--dry-run]
+
+ARGUMENTS:
+    days      Purge files older than this many days (default: 7)
+
+OPTIONS:
+    --dry-run   Show what would be deleted without actually deleting
+
+DESCRIPTION:
+    Removes:
+    - Log files older than specified days
+    - History files older than specified days
+    - Orphaned files (files for jobs no longer in crontab)
+
+EXAMPLES:
+    cc-cron purge
+    cc-cron purge 30
+    cc-cron purge --dry-run
+HELP
+}
+
 # Show help
 cmd_help() {
+    local topic="${1:-}"
+
+    # Show detailed help for specific command
+    case "$topic" in
+        add)
+            help_add
+            return 0
+            ;;
+        edit)
+            help_edit
+            return 0
+            ;;
+        clone)
+            help_clone
+            return 0
+            ;;
+        config)
+            help_config
+            return 0
+            ;;
+        purge)
+            help_purge
+            return 0
+            ;;
+        "")
+            # No argument - show general help
+            ;;
+        *)
+            echo "Unknown help topic: $topic"
+            echo "Run 'cc-cron help' for available commands"
+            return 1
+            ;;
+    esac
+
+    # General help - concise command list
     cat << 'HELP'
 cc-cron - Schedule Claude Code commands as cron jobs
 
 USAGE:
-    cc-cron <command> [options]
+    cc-cron <command> [arguments...] [options]
 
 COMMANDS:
-    add <cron> <prompt> [options]    Add a scheduled job
-        <cron>   - Standard 5-field cron expression (minute hour day month weekday)
-        <prompt> - The prompt to send to Claude Code
+    add <cron> <prompt>     Add a scheduled job
+    list                    List all scheduled jobs
+    status                  Show status overview
+    remove <job-id>         Remove a job
+    logs <job-id>           Show logs for a job
+    pause <job-id>          Pause a job
+    resume <job-id>         Resume a paused job
+    show <job-id>           Show job details
+    history <job-id>        Show execution history
+    run <job-id>            Run a job immediately
+    edit <job-id>           Edit a job
+    clone <job-id>          Clone a job
+    export [job-id]         Export jobs to JSON
+    import <file>           Import jobs from JSON
+    purge [days]            Clean up old data
+    config                  Manage configuration
+    doctor                  Diagnose issues
+    version                 Show version
+    help [command]          Show help
 
-        Options:
-          --once                      Create a one-shot job (auto-removes after success)
-          --workdir <path>            Working directory for this job
-          --model <name>              Model to use: sonnet, opus, etc.
-          --permission-mode <mode>    Permission mode (bypassPermissions, acceptEdits, auto, default)
-          --timeout <seconds>         Timeout for job execution (0 = no timeout)
+MORE HELP:
+    cc-cron help add       Add a job with options
+    cc-cron help edit      Edit job options
+    cc-cron help clone     Clone job options
+    cc-cron help config    Configuration management
+    cc-cron help purge     Cleanup options
 
-    list                            List all scheduled jobs
-    status                          Show status overview and log activity
-    remove <job-id>                 Remove a scheduled job
-    logs <job-id> [--tail]          Show logs for a job (--tail for live follow)
-    pause <job-id>                  Pause a scheduled job
-    resume <job-id>                 Resume a paused job
-    enable <job-id>                 Alias for resume
-    disable <job-id>                Alias for pause
-    show <job-id>                   Show detailed information for a job
-    history <job-id> [lines]        Show execution history for a job
-    run <job-id>                    Run a job immediately (for testing)
-    edit <job-id> [options]         Edit a job's settings
-        --cron <expr>               Update cron schedule
-        --prompt <text>             Update prompt
-        --workdir <path>            Update working directory
-        --model <name>              Update model
-        --permission-mode <mode>    Update permission mode
-        --timeout <seconds>         Update timeout
-    clone <job-id> [options]        Clone an existing job with a new ID
-        --cron <expr>               Override cron schedule
-        --prompt <text>             Override prompt
-        --workdir <path>            Override working directory
-        --model <name>              Override model
-        --permission-mode <mode>    Override permission mode
-        --timeout <seconds>         Override timeout
-    export [job-id] [file]          Export job(s) to JSON (to file or stdout)
-    import <file>                   Import jobs from JSON file
-    purge [days]                    Purge old logs and orphaned files (default: 7 days)
-        --dry-run                   Show what would be deleted without actually deleting
-    config [action] [key] [value]  Manage configuration
-        list                        Show current configuration
-        set <key> <value>           Set a configuration value
-        unset <key>                 Remove a configuration value
-        Valid keys: workdir, model, permission_mode, timeout
-    doctor                          Diagnose common issues
-    completion                      Output bash completion script
-    version                         Show version information
-    help                            Show this help message
-
-ENVIRONMENT VARIABLES (used as defaults when not specified per-job):
-    CC_WORKDIR          Working directory (default: $HOME)
-    CC_PERMISSION_MODE  Permission mode (default: bypassPermissions)
-    CC_MODEL            Model to use (default: unset, uses Claude's default)
-    CC_TIMEOUT          Job timeout in seconds (default: 0, no timeout)
-
-CRON EXPRESSION FORMAT:
-    ┌───────────── minute (0 - 59)
-    │ ┌───────────── hour (0 - 23)
-    │ │ ┌───────────── day of month (1 - 31)
-    │ │ │ ┌───────────── month (1 - 12)
-    │ │ │ │ ┌───────────── day of week (0 - 6, 0 = Sunday)
-    │ │ │ │ │
+CRON FORMAT:
     * * * * *
+    │ │ │ │ │
+    │ │ │ │ └─ day of week (0-6, 0=Sunday)
+    │ │ │ └─── month (1-12)
+    │ │ └───── day of month (1-31)
+    │ └─────── hour (0-23)
+    └───────── minute (0-59)
+
+ENVIRONMENT:
+    CC_WORKDIR         Default working directory
+    CC_MODEL           Default model
+    CC_PERMISSION_MODE Default permission mode
+    CC_TIMEOUT         Default timeout in seconds
 HELP
 }
 
@@ -1929,7 +2058,7 @@ Options:
             cmd_completion
             ;;
         help|--help|-h)
-            cmd_help
+            cmd_help "${1:-}"
             ;;
         *)
             error "Unknown command: ${command}. Run 'cc-cron help' for usage."

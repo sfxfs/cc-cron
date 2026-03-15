@@ -795,3 +795,244 @@ teardown() {
     [[ "$output" == *"Total scheduled jobs"* ]]
     [[ "$output" == *"Summary"* ]]
 }
+
+@test "cmd_help shows command list" {
+    run cmd_help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"COMMANDS:"* ]]
+    [[ "$output" == *"add"* ]]
+    [[ "$output" == *"list"* ]]
+    [[ "$output" == *"remove"* ]]
+}
+
+@test "cmd_help add shows detailed help" {
+    run cmd_help "add"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron add"* ]]
+    [[ "$output" == *"--once"* ]]
+    [[ "$output" == *"--workdir"* ]]
+    [[ "$output" == *"--model"* ]]
+}
+
+@test "cmd_help config shows detailed help" {
+    run cmd_help "config"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron config"* ]]
+    [[ "$output" == *"workdir"* ]]
+    [[ "$output" == *"model"* ]]
+}
+
+@test "cmd_help edit shows detailed help" {
+    run cmd_help "edit"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron edit"* ]]
+    [[ "$output" == *"--cron"* ]]
+    [[ "$output" == *"--prompt"* ]]
+}
+
+@test "cmd_help unknown topic returns error" {
+    run cmd_help "unknowncommand"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Unknown help topic"* ]]
+}
+
+@test "cmd_import handles invalid JSON" {
+    command -v jq &>/dev/null || skip "jq not installed"
+    local json_file="${BATS_TEST_TMPDIR}/invalid.json"
+    echo "not valid json" > "$json_file"
+
+    run cmd_import "$json_file"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_import handles empty jobs array" {
+    command -v jq &>/dev/null || skip "jq not installed"
+    local json_file="${BATS_TEST_TMPDIR}/empty.json"
+    echo '{"version":"1.0","jobs":[]}' > "$json_file"
+
+    run cmd_import "$json_file"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No jobs found"* ]]
+}
+
+@test "cmd_import handles missing workdir" {
+    command -v jq &>/dev/null || skip "jq not installed"
+    local json_file="${BATS_TEST_TMPDIR}/missing_dir.json"
+    cat > "$json_file" << 'EOF'
+{"version":"1.0","jobs":[{"id":"test","created":"2024-01-01","cron":"0 9 * * *","recurring":true,"prompt":"test","workdir":"/nonexistent/path/12345","model":"","permission_mode":"bypassPermissions","timeout":0,"paused":false}]}
+EOF
+
+    run cmd_import "$json_file"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Skipping job with missing workdir"* ]]
+}
+
+@test "cmd_import handles invalid cron expression" {
+    command -v jq &>/dev/null || skip "jq not installed"
+    local json_file="${BATS_TEST_TMPDIR}/bad_cron.json"
+    cat > "$json_file" << EOF
+{"version":"1.0","jobs":[{"id":"test","created":"2024-01-01","cron":"invalid cron","recurring":true,"prompt":"test","workdir":"${BATS_TEST_TMPDIR}","model":"","permission_mode":"bypassPermissions","timeout":0,"paused":false}]}
+EOF
+
+    run cmd_import "$json_file"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Skipping invalid cron"* ]]
+}
+
+@test "cmd_export escapes quotes in prompt" {
+    local job_id="quotejob"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    echo 'id="quotejob"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 0 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test with \"quotes\" inside"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    run cmd_export "$job_id"
+    [ "$status" -eq 0 ]
+    # Check that quotes are escaped in JSON output
+    [[ "$output" == *'\"quotes\"'* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "parse_job_options validates permission-mode" {
+    run parse_job_options --permission-mode "invalid_mode"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Invalid permission mode"* ]]
+}
+
+@test "parse_job_options validates timeout" {
+    run parse_job_options --timeout "not_a_number"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Timeout must be a non-negative number"* ]]
+}
+
+@test "parse_job_options accepts valid permission-mode" {
+    parse_job_options --permission-mode "auto"
+    [ "$PARSED_PERMISSION" == "auto" ]
+}
+
+@test "parse_job_options accepts valid timeout" {
+    parse_job_options --timeout "300"
+    [ "$PARSED_TIMEOUT" == "300" ]
+}
+
+@test "parse_job_options parses workdir" {
+    parse_job_options --workdir "$BATS_TEST_TMPDIR"
+    [ "$PARSED_WORKDIR" == "$BATS_TEST_TMPDIR" ]
+}
+
+@test "parse_job_options rejects invalid workdir" {
+    run parse_job_options --workdir "/nonexistent/path"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Directory not found"* ]]
+}
+
+@test "parse_job_options rejects unknown option" {
+    run parse_job_options --unknown-option
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Unknown option"* ]]
+}
+
+@test "cmd_show displays timeout when set" {
+    local job_id="showtimeout"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    echo 'id="showtimeout"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 0 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="300"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Timeout:"* ]]
+    [[ "$output" == *"300s"* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "cmd_show displays model when set" {
+    local job_id="showmodel"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    echo 'id="showmodel"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 0 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model="sonnet"' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Model:"* ]]
+    [[ "$output" == *"sonnet"* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "cmd_show displays paused status" {
+    local job_id="showpaused"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+
+    echo 'id="showpaused"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 0 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    touch "$paused_file"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"PAUSED"* ]]
+
+    rm -f "$meta_file" "$paused_file"
+}
+
+@test "cmd_show displays execution statistics" {
+    local job_id="showstats"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    echo 'id="showstats"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 0 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
+    echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:05:00" status="failed" exit_code="1"' >> "$history_file"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Statistics:"* ]]
+    [[ "$output" == *"Total runs:"* ]]
+    [[ "$output" == *"2"* ]]
+
+    rm -f "$meta_file" "$history_file"
+}
