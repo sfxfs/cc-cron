@@ -2664,14 +2664,19 @@ Options:
         list)
             ensure_data_dir
             local filter_tag=""
-            # Parse optional --tag flag
+            # Support both positional argument and --tag flag
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     --tag)
                         filter_tag="${2:-}"
                         shift 2
                         ;;
+                    -*)
+                        shift
+                        ;;
                     *)
+                        # Positional argument (tag name)
+                        filter_tag="$1"
                         shift
                         ;;
                 esac
