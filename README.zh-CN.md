@@ -183,6 +183,7 @@ echo "Created job: $JOB_ID"
 | `--model <名称>` | 更新模型 |
 | `--permission-mode <模式>` | 更新权限模式 |
 | `--timeout <秒数>` | 更新超时时间 |
+| `--tags <标签>` | 更新标签 |
 
 **示例：**
 ```bash
@@ -211,6 +212,7 @@ echo "Created job: $JOB_ID"
 | `--model <名称>` | 覆盖模型 |
 | `--permission-mode <模式>` | 覆盖权限模式 |
 | `--timeout <秒数>` | 覆盖超时时间 |
+| `--tags <标签>` | 覆盖标签 |
 
 **示例：**
 ```bash

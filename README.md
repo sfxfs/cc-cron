@@ -183,6 +183,7 @@ Modify an existing job's settings:
 | `--model <name>` | Update model |
 | `--permission-mode <mode>` | Update permission mode |
 | `--timeout <seconds>` | Update timeout |
+| `--tags <tags>` | Update tags |
 
 **Example:**
 ```bash
@@ -211,6 +212,7 @@ Create a copy of an existing job with a new ID:
 | `--model <name>` | Override model |
 | `--permission-mode <mode>` | Override permission mode |
 | `--timeout <seconds>` | Override timeout |
+| `--tags <tags>` | Override tags |
 
 **Example:**
 ```bash
