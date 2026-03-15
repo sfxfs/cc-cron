@@ -177,6 +177,26 @@ Import jobs from a JSON file:
 - Ubuntu/Debian: `apt-get install jq`
 - macOS: `brew install jq`
 
+### Purge Old Data
+
+Clean up old logs and orphaned files:
+
+```bash
+# Purge files older than 7 days (default)
+./cc-cron.sh purge
+
+# Purge files older than 30 days
+./cc-cron.sh purge 30
+
+# Dry-run to see what would be deleted
+./cc-cron.sh purge --dry-run
+```
+
+The purge command removes:
+- Log files older than the specified days
+- History files older than the specified days
+- Orphaned files (files for jobs that no longer exist in crontab)
+
 ### Check Version
 
 ```bash
@@ -193,7 +213,7 @@ eval "$(cc-cron completion)"
 ```
 
 **Features:**
-- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `export`, `import`, `version`, `completion`
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `export`, `import`, `purge`, `version`, `completion`
 - Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, `history`, `run`, `edit`, and `export` commands
 - Model names: `sonnet`, `opus`, `haiku`
 - Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`

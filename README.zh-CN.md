@@ -177,6 +177,26 @@ eval "$(cc-cron completion)"
 - Ubuntu/Debian：`apt-get install jq`
 - macOS：`brew install jq`
 
+### 清理旧数据
+
+清理旧日志和孤立文件：
+
+```bash
+# 清理 7 天前的文件（默认）
+./cc-cron.sh purge
+
+# 清理 30 天前的文件
+./cc-cron.sh purge 30
+
+# 预览模式，查看将会删除什么
+./cc-cron.sh purge --dry-run
+```
+
+purge 命令会删除：
+- 超过指定天数的日志文件
+- 超过指定天数的历史文件
+- 孤立文件（已不在 crontab 中的任务相关文件）
+
 ### 查看版本
 
 ```bash
@@ -193,7 +213,7 @@ eval "$(cc-cron completion)"
 ```
 
 **功能：**
-- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export`、`import`、`version`、`completion`
+- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export`、`import`、`purge`、`version`、`completion`
 - `remove`、`logs`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export` 的任务 ID 补全
 - 模型名：`sonnet`、`opus`、`haiku`
 - 权限模式：`bypassPermissions`、`acceptEdits`、`auto`、`default`

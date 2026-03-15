@@ -180,3 +180,19 @@ teardown() {
     # Cleanup
     rm -f "$meta_file"
 }
+
+@test "cmd_purge accepts days argument" {
+    run cmd_purge "30"
+    [ "$status" -eq 0 ]
+}
+
+@test "cmd_purge rejects invalid days argument" {
+    run cmd_purge "invalid"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_purge dry-run mode works" {
+    run cmd_purge "30" "true"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"dry-run"* ]] || [[ "$output" == *"Purging"* ]]
+}

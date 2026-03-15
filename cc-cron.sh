@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.4.0"
+readonly VERSION="1.5.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1073,6 +1073,159 @@ cmd_import() {
     success "Imported ${imported} job(s), skipped ${skipped}"
 }
 
+# Purge old logs and orphaned files
+cmd_purge() {
+    local days="${1:-7}"
+    local dry_run="${2:-false}"
+
+    # Validate days argument
+    [[ "$days" =~ ^[0-9]+$ ]] || error "Invalid days argument: ${days}"
+
+    info "Purging files older than ${days} days..."
+    [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"
+    echo
+
+    local purged_logs=0
+    local purged_history=0
+    local purged_orphans=0
+    local freed_bytes=0
+
+    # Get list of active job IDs from crontab
+    local -A active_jobs
+    while IFS= read -r line; do
+        if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
+            local job_id temp
+            temp="${line#*"${CRON_COMMENT_PREFIX}"}"
+            job_id="${temp%%:*}"
+            active_jobs["$job_id"]=1
+        fi
+    done < <(get_crontab)
+
+    # Also check paused jobs
+    for paused_file in "${DATA_DIR}"/*.paused; do
+        [[ -f "$paused_file" ]] || continue
+        local job_id
+        job_id=$(basename "$paused_file" .paused)
+        active_jobs["$job_id"]=1
+    done
+
+    # Clean up log files
+    for log_file in "${LOG_DIR}"/*.log; do
+        [[ -f "$log_file" ]] || continue
+        local job_id
+        job_id=$(basename "$log_file" .log)
+
+        # Check if file is old enough
+        local file_age
+        file_age=$(find "$log_file" -mtime +"$days" 2>/dev/null)
+        [[ -n "$file_age" ]] || continue
+
+        local file_size
+        file_size=$(stat -c %s "$log_file" 2>/dev/null || echo "0")
+
+        if [[ "$dry_run" == "true" ]]; then
+            echo "  [dry-run] Would remove: ${log_file}"
+        else
+            rm -f "$log_file"
+            echo "  Removed log: ${log_file}"
+        fi
+        ((purged_logs++)) || true
+        ((freed_bytes += file_size)) || true
+    done
+
+    # Clean up history files
+    for history_file in "${LOG_DIR}"/*.history; do
+        [[ -f "$history_file" ]] || continue
+        local job_id
+        job_id=$(basename "$history_file" .history)
+
+        local file_age
+        file_age=$(find "$history_file" -mtime +"$days" 2>/dev/null)
+        [[ -n "$file_age" ]] || continue
+
+        local file_size
+        file_size=$(stat -c %s "$history_file" 2>/dev/null || echo "0")
+
+        if [[ "$dry_run" == "true" ]]; then
+            echo "  [dry-run] Would remove: ${history_file}"
+        else
+            rm -f "$history_file"
+            echo "  Removed history: ${history_file}"
+        fi
+        ((purged_history++)) || true
+        ((freed_bytes += file_size)) || true
+    done
+
+    # Clean up orphaned files (files for jobs not in crontab)
+    for meta_file in "${LOG_DIR}"/*.meta; do
+        [[ -f "$meta_file" ]] || continue
+        local job_id
+        job_id=$(basename "$meta_file" .meta)
+
+        # Skip if job is active
+        [[ -z "${active_jobs[$job_id]:-}" ]] || continue
+
+        # Remove all files for this orphaned job
+        local log_file status_file history_file run_script
+        log_file=$(get_log_file "$job_id")
+        status_file=$(get_status_file "$job_id")
+        history_file=$(get_history_file "$job_id")
+        run_script=$(get_run_script "$job_id")
+
+        for file in "$meta_file" "$log_file" "$status_file" "$history_file" "$run_script"; do
+            [[ -f "$file" ]] || continue
+            local file_size
+            file_size=$(stat -c %s "$file" 2>/dev/null || echo "0")
+
+            if [[ "$dry_run" == "true" ]]; then
+                echo "  [dry-run] Would remove orphan: ${file}"
+            else
+                rm -f "$file"
+                echo "  Removed orphan: ${file}"
+            fi
+            ((purged_orphans++)) || true
+            ((freed_bytes += file_size)) || true
+        done
+    done
+
+    # Clean up old run scripts for removed jobs
+    for run_script in "${DATA_DIR}"/run-*.sh; do
+        [[ -f "$run_script" ]] || continue
+        local job_id
+        job_id=$(basename "$run_script" .sh)
+        job_id="${job_id#run-}"
+
+        # Skip if job is active
+        [[ -z "${active_jobs[$job_id]:-}" ]] || continue
+
+        local file_size
+        file_size=$(stat -c %s "$run_script" 2>/dev/null || echo "0")
+
+        if [[ "$dry_run" == "true" ]]; then
+            echo "  [dry-run] Would remove orphan script: ${run_script}"
+        else
+            rm -f "$run_script"
+            echo "  Removed orphan script: ${run_script}"
+        fi
+        ((purged_orphans++)) || true
+        ((freed_bytes += file_size)) || true
+    done
+
+    # Summary
+    local freed_mb
+    freed_mb=$(echo "scale=2; ${freed_bytes} / 1048576" | bc)
+    echo
+    if [[ "$dry_run" == "true" ]]; then
+        info "Dry-run summary:"
+    else
+        success "Purge complete:"
+    fi
+    echo "  Logs purged:     ${purged_logs}"
+    echo "  History purged:  ${purged_history}"
+    echo "  Orphans removed: ${purged_orphans}"
+    echo "  Space freed:     ${freed_mb} MB"
+}
+
 # Show version
 cmd_version() {
     echo "cc-cron version ${VERSION}"
@@ -1116,6 +1269,8 @@ COMMANDS:
         --timeout <seconds>         Update timeout
     export [job-id] [file]          Export job(s) to JSON (to file or stdout)
     import <file>                   Import jobs from JSON file
+    purge [days]                    Purge old logs and orphaned files (default: 7 days)
+        --dry-run                   Show what would be deleted without actually deleting
     completion                      Output bash completion script
     version                         Show version information
     help                            Show this help message
@@ -1155,7 +1310,7 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit export import version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit export import purge version completion help" -- "${cur}"))
             ;;
         remove|logs|pause|resume|show|history|run)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
@@ -1338,6 +1493,24 @@ Options:
                 error "Usage: cc-cron import <file>"
             fi
             cmd_import "$1"
+            ;;
+        purge)
+            ensure_data_dir
+            local purge_days="7"
+            local dry_run="false"
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    --dry-run)
+                        dry_run="true"
+                        shift
+                        ;;
+                    *)
+                        purge_days="$1"
+                        shift
+                        ;;
+                esac
+            done
+            cmd_purge "$purge_days" "$dry_run"
             ;;
         version|--version|-v)
             cmd_version
