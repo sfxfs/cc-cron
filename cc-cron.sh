@@ -2361,6 +2361,49 @@ EXAMPLES:
 HELP
 }
 
+help_pause() {
+    cat << 'HELP'
+cc-cron pause - Pause a scheduled job
+
+USAGE:
+    cc-cron pause <job-id>
+
+ARGUMENTS:
+    job-id      Job ID to pause
+
+DESCRIPTION:
+    Temporarily disable a scheduled job without removing it.
+    The job will not run until resumed.
+
+    Alias: disable
+
+EXAMPLES:
+    cc-cron pause abc12345
+    cc-cron disable abc12345
+HELP
+}
+
+help_resume() {
+    cat << 'HELP'
+cc-cron resume - Resume a paused job
+
+USAGE:
+    cc-cron resume <job-id>
+
+ARGUMENTS:
+    job-id      Job ID to resume
+
+DESCRIPTION:
+    Re-enable a paused job so it runs on its schedule again.
+
+    Alias: enable
+
+EXAMPLES:
+    cc-cron resume abc12345
+    cc-cron enable abc12345
+HELP
+}
+
 # Show help
 cmd_help() {
     local topic="${1:-}"
@@ -2419,6 +2462,14 @@ cmd_help() {
             help_status
             return 0
             ;;
+        pause|disable)
+            help_pause
+            return 0
+            ;;
+        resume|enable)
+            help_resume
+            return 0
+            ;;
         "")
             # No argument - show general help
             ;;
@@ -2442,8 +2493,8 @@ COMMANDS:
     status                  Show status overview
     remove <job-id>         Remove a job
     logs <job-id>           Show logs for a job
-    pause <job-id>          Pause a job
-    resume <job-id>         Resume a paused job
+    pause <job-id>          Pause a job (alias: disable)
+    resume <job-id>         Resume a paused job (alias: enable)
     show <job-id>           Show job details
     history <job-id>        Show execution history
     stats [job-id]          Show execution statistics

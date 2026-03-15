@@ -2139,6 +2139,36 @@ EOF
     [[ "$output" == *"execution statistics"* ]]
 }
 
+@test "cmd_help pause shows detailed help" {
+    run cmd_help "pause"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron pause"* ]]
+    [[ "$output" == *"Temporarily disable"* ]]
+    [[ "$output" == *"Alias: disable"* ]]
+}
+
+@test "cmd_help resume shows detailed help" {
+    run cmd_help "resume"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron resume"* ]]
+    [[ "$output" == *"Re-enable a paused job"* ]]
+    [[ "$output" == *"Alias: enable"* ]]
+}
+
+@test "cmd_help disable shows pause help" {
+    run cmd_help "disable"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron pause"* ]]
+    [[ "$output" == *"Alias: disable"* ]]
+}
+
+@test "cmd_help enable shows resume help" {
+    run cmd_help "enable"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron resume"* ]]
+    [[ "$output" == *"Alias: enable"* ]]
+}
+
 @test "cmd_stats handles malformed history entries gracefully" {
     local job_id="malformedstats"
     local meta_file; meta_file=$(get_meta_file "$job_id")
