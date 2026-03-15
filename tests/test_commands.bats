@@ -609,6 +609,21 @@ EOF
     rm -f "$log_file"
 }
 
+@test "cmd_logs for job with no log file" {
+    local job_id="nologjob"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id")
+
+    # Create metadata but no log file
+    create_test_meta "$job_id"
+
+    run cmd_logs "$job_id" "false"
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    [[ "$output" == *"No logs found"* ]]
+
+    rm -f "$meta_file"
+}
+
 @test "get_stat returns file size" {
     local test_file="${BATS_TEST_TMPDIR}/stat_test"
     echo "test content" > "$test_file"
