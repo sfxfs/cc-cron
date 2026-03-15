@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.1.3"
+readonly VERSION="2.1.4"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -288,6 +288,14 @@ validate_cron() {
     validate_cron_field "${fields[2]}" 1 31 "day of month"
     validate_cron_field "${fields[3]}" 1 12 "month"
     validate_cron_field "${fields[4]}" 0 6 "day of week"
+}
+
+# Check if cron expression is valid (returns true/false, no exit)
+is_valid_cron() {
+    local cron="$1"
+
+    # Run validation in subshell to catch errors without exiting
+    ( validate_cron "$cron" ) 2>/dev/null
 }
 
 # Validate working directory exists
@@ -1436,6 +1444,11 @@ cmd_import() {
         error "jq is required for import. Install with: apt-get install jq or brew install jq"
     fi
 
+    # Validate JSON syntax
+    if ! jq '.' "$input_file" >/dev/null 2>&1; then
+        error "Invalid JSON in file: ${input_file}"
+    fi
+
     # Parse JSON
     local job_count
     job_count=$(jq '.jobs | length' "$input_file")
@@ -1466,7 +1479,7 @@ cmd_import() {
         job_paused=$(jq -r '.paused' <<< "$job_json")
 
         # Validate cron expression
-        if ! validate_cron "$job_cron" 2>/dev/null; then
+        if ! is_valid_cron "$job_cron"; then
             warn "Skipping invalid cron expression: ${job_cron}"
             ((skipped++)) || true
             continue

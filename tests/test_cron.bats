@@ -153,3 +153,26 @@ teardown() {
     run validate_timeout "1.5"
     [ "$status" -ne 0 ]
 }
+
+@test "is_valid_cron returns true for valid expression" {
+    run is_valid_cron "0 9 * * 1-5"
+    [ "$status" -eq 0 ]
+    run is_valid_cron "* * * * *"
+    [ "$status" -eq 0 ]
+}
+
+@test "is_valid_cron returns false for invalid expression" {
+    run is_valid_cron "invalid cron"
+    [ "$status" -ne 0 ]
+    run is_valid_cron "0 9 * *"
+    [ "$status" -ne 0 ]
+    run is_valid_cron "60 9 * * *"
+    [ "$status" -ne 0 ]
+}
+
+@test "is_valid_cron does not exit on error" {
+    # This should not exit the script, just return false
+    run is_valid_cron "bad"
+    [ "$status" -ne 0 ]
+    # If we reach here, the function returned false as expected
+}
