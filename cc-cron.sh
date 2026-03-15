@@ -246,6 +246,119 @@ get_lock_file() {
     echo "${LOCK_DIR}/${dir_hash}.lock"
 }
 
+# Generate run script for a job (shared by add and edit)
+generate_run_script() {
+    local job_id="$1"
+    local job_workdir="$2"
+    local job_model="$3"
+    local job_permission="$4"
+    local job_timeout="$5"
+    local recurring="$6"
+    local prompt="$7"
+
+    local log_file; log_file=$(get_log_file "$job_id")
+    local status_file; status_file=$(get_status_file "$job_id")
+    local lock_file; lock_file=$(get_lock_file "$job_workdir")
+    local run_script; run_script=$(get_run_script "$job_id")
+
+    # Build claude options
+    local claude_opts="-p"
+    [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
+    [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
+
+    # Sanitize prompt for safe shell embedding
+    local safe_prompt="${prompt//\'/\'\\\'\'}"
+    local current_path="$PATH"
+
+    cat > "$run_script" << RUNEOF
+#!/usr/bin/env bash
+# Auto-generated job runner for ${job_id}
+set -e
+
+export PATH="${current_path}"
+
+LOG_FILE="${log_file}"
+STATUS_FILE="${status_file}"
+HISTORY_FILE="${LOG_DIR}/${job_id}.history"
+LOCK_FILE="${lock_file}"
+WORKDIR="${job_workdir}"
+JOB_ID="${job_id}"
+RECURRING="${recurring}"
+TIMEOUT="${job_timeout}"
+META_FILE="${LOG_DIR}/${job_id}.meta"
+
+cleanup() { exec 9>&-; }
+trap cleanup EXIT
+
+exec 9>"\$LOCK_FILE"
+if ! flock -n 9; then
+    echo "[\$(date '+%Y-%m-%d %H:%M:%S')] SKIPPED: Another job is running in \$WORKDIR" >> "\$LOG_FILE"
+    exit 0
+fi
+
+echo "start_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" > "\$STATUS_FILE"
+echo "status=\"running\"" >> "\$STATUS_FILE"
+
+cd "\$WORKDIR"
+if [[ "\${TIMEOUT:-0}" -gt 0 ]]; then
+    timeout "\${TIMEOUT}" claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
+else
+    claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
+fi
+EXIT_CODE=\$?
+
+echo "end_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" >> "\$STATUS_FILE"
+echo "exit_code=\"\${EXIT_CODE}\"" >> "\$STATUS_FILE"
+
+if [[ \$EXIT_CODE -eq 0 ]]; then
+    echo "status=\"success\"" >> "\$STATUS_FILE"
+    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"success\" exit_code=\"0\"" >> "\$HISTORY_FILE"
+    if [[ "\$RECURRING" == "false" ]]; then
+        echo "[\$(date '+%Y-%m-%d %H:%M:%S')] AUTO-REMOVED: One-shot job completed successfully" >> "\$LOG_FILE"
+        (crontab -l 2>/dev/null | grep -v "CC-CRON:\${JOB_ID}:" || true) | crontab -
+        rm -f "\$LOG_FILE" "\$STATUS_FILE" "\$META_FILE" "\$HISTORY_FILE" "\$0"
+    fi
+else
+    echo "status=\"failed\"" >> "\$STATUS_FILE"
+    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"failed\" exit_code=\"\${EXIT_CODE}\"" >> "\$HISTORY_FILE"
+    [[ "\$RECURRING" == "false" ]] && echo "[\$(date '+%Y-%m-%d %H:%M:%S')] One-shot job failed - keeping job for retry" >> "\$LOG_FILE"
+fi
+RUNEOF
+    chmod +x "$run_script"
+    echo "$run_script"
+}
+
+# Write job metadata file
+write_meta_file() {
+    local job_id="$1"
+    local created="$2"
+    local cron="$3"
+    local recurring="$4"
+    local prompt="$5"
+    local workdir="$6"
+    local model="$7"
+    local permission="$8"
+    local timeout="$9"
+    local run_script="${10:-}"
+    local modified="${11:-}"
+
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    {
+        echo "id=\"${job_id}\""
+        echo "created=\"${created}\""
+        [[ -n "$modified" ]] && echo "modified=\"${modified}\""
+        echo "cron=\"${cron}\""
+        echo "recurring=\"${recurring}\""
+        echo "prompt=\"${prompt}\""
+        echo "workdir=\"${workdir}\""
+        echo "model=\"${model}\""
+        echo "permission_mode=\"${permission}\""
+        echo "timeout=\"${timeout}\""
+        echo "run_script=\"${run_script}\""
+    } > "$meta_file"
+}
+
 # Add a new cron job
 cmd_add() {
     local cron_expr="$1"
@@ -261,116 +374,20 @@ cmd_add() {
 
     local job_id
     job_id=$(generate_job_id)
-    local log_file; log_file=$(get_log_file "$job_id")
-    local status_file; status_file=$(get_status_file "$job_id")
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    local lock_file; lock_file=$(get_lock_file "$job_workdir")
     local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
     ensure_data_dir
 
-    # Build the command with per-job or environment options
-    local claude_opts="-p"
-    [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
-    [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
-
-    # Sanitize prompt for safe shell embedding
-    local safe_prompt="${prompt//\'/\'\\\'\'}"
-
-    # Create wrapper script that handles locking and status tracking
-    local run_script; run_script=$(get_run_script "$job_id")
-
-    # Capture current PATH for cron environment
-    local current_path="$PATH"
-
-    cat > "$run_script" << RUNEOF
-#!/usr/bin/env bash
-# Auto-generated job runner for ${job_id}
-set -e
-
-# Set PATH for cron environment (captured at job creation time)
-export PATH="${current_path}"
-
-LOG_FILE="${log_file}"
-STATUS_FILE="${status_file}"
-HISTORY_FILE="${LOG_DIR}/${job_id}.history"
-LOCK_FILE="${lock_file}"
-WORKDIR="${job_workdir}"
-JOB_ID="${job_id}"
-RECURRING="${recurring}"
-TIMEOUT="${job_timeout}"
-
-# Cleanup function to release lock
-cleanup() {
-    exec 9>&-
-}
-trap cleanup EXIT
-
-# Acquire lock for this directory (non-blocking)
-exec 9>"\$LOCK_FILE"
-if ! flock -n 9; then
-    echo "[\$(date '+%Y-%m-%d %H:%M:%S')] SKIPPED: Another job is running in \$WORKDIR" >> "\$LOG_FILE"
-    exit 0
-fi
-
-# Record start time
-echo "start_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" > "\$STATUS_FILE"
-echo "status=\"running\"" >> "\$STATUS_FILE"
-
-# Run the job
-cd "\$WORKDIR"
-if [[ "\${TIMEOUT:-0}" -gt 0 ]]; then
-    timeout "\${TIMEOUT}" claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
-else
-    claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
-fi
-EXIT_CODE=\$?
-
-# Record end time and status
-echo "end_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" >> "\$STATUS_FILE"
-echo "exit_code=\"\${EXIT_CODE}\"" >> "\$STATUS_FILE"
-
-if [[ \$EXIT_CODE -eq 0 ]]; then
-    echo "status=\"success\"" >> "\$STATUS_FILE"
-    # Record to history
-    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"success\" exit_code=\"0\"" >> "\$HISTORY_FILE"
-    # Auto-remove one-shot jobs after successful execution
-    if [[ "\$RECURRING" == "false" ]]; then
-        echo "[\$(date '+%Y-%m-%d %H:%M:%S')] AUTO-REMOVED: One-shot job completed successfully" >> "\$LOG_FILE"
-        (crontab -l 2>/dev/null | grep -v "CC-CRON:\${JOB_ID}:" || true) | crontab -
-        rm -f "\$LOG_FILE" "\$STATUS_FILE" "${meta_file}" "\$HISTORY_FILE" "\$0"
-    fi
-else
-    echo "status=\"failed\"" >> "\$STATUS_FILE"
-    # Record to history
-    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"failed\" exit_code=\"\${EXIT_CODE}\"" >> "\$HISTORY_FILE"
-    # Keep one-shot job on failure for retry/debugging
-    if [[ "\$RECURRING" == "false" ]]; then
-        echo "[\$(date '+%Y-%m-%d %H:%M:%S')] One-shot job failed - keeping job for retry. Run 'cc-cron remove \${JOB_ID}' to clean up." >> "\$LOG_FILE"
-    fi
-fi
-RUNEOF
-    chmod +x "$run_script"
+    # Generate run script using helper
+    local run_script
+    run_script=$(generate_run_script "$job_id" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$recurring" "$prompt")
 
     # Create the cron entry
     local cron_entry="${cron_expr} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
-
-    # Add to crontab
     crontab_add_entry "$cron_entry"
 
-    # Save job metadata
-    cat > "$meta_file" << EOF
-id="${job_id}"
-created="${timestamp}"
-cron="${cron_expr}"
-recurring="${recurring}"
-prompt="${prompt}"
-workdir="${job_workdir}"
-model="${job_model}"
-permission_mode="${job_permission}"
-timeout="${job_timeout}"
-run_script="${run_script}"
-EOF
+    # Save job metadata using helper
+    write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script"
 
     success "Created cron job: ${job_id}"
     info "Schedule: ${cron_expr}"
@@ -380,11 +397,8 @@ EOF
     info "Permission: ${job_permission}"
     [[ "$job_timeout" -gt 0 ]] && info "Timeout: ${job_timeout}s"
     info "Prompt: ${prompt}"
-    info "Log file: ${log_file}"
-
-    if [[ "$recurring" == "false" ]]; then
-        info "One-shot job: will auto-remove after successful execution"
-    fi
+    info "Log file: $(get_log_file "$job_id")"
+    [[ "$recurring" == "false" ]] && info "One-shot job: will auto-remove after successful execution"
 }
 
 # List all cc-cron jobs (optimized: single crontab read)
@@ -721,11 +735,7 @@ cmd_edit() {
                 shift 2
                 ;;
             --model)
-                if [[ -n "${2:-}" ]]; then
-                    new_model="$2"
-                else
-                    new_model=""
-                fi
+                new_model="${2:-}"
                 has_changes=1
                 shift 2
                 ;;
@@ -762,103 +772,17 @@ cmd_edit() {
         crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
     fi
 
-    # Update metadata file
+    # Update metadata file using helper
     local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    cat > "$meta_file" << EOF
-id="${job_id}"
-created="${created}"
-modified="${timestamp}"
-cron="${new_cron}"
-recurring="${recurring}"
-prompt="${new_prompt}"
-workdir="${new_workdir}"
-model="${new_model}"
-permission_mode="${new_permission}"
-timeout="${new_timeout}"
-run_script="${run_script}"
-EOF
+    local new_run_script; new_run_script=$(get_run_script "$job_id")
+    write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp"
 
-    # Update run script with new settings
-    local log_file; log_file=$(get_log_file "$job_id")
-    local status_file; status_file=$(get_status_file "$job_id")
-    local lock_file; lock_file=$(get_lock_file "$new_workdir")
-
-    # Build the command with options
-    local claude_opts="-p"
-    [[ -n "$new_model" ]] && claude_opts="$claude_opts --model $new_model"
-    [[ "$new_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $new_permission"
-
-    local safe_prompt="${new_prompt//\'/\'\\\'\'}"
-    local current_path="$PATH"
-
-    cat > "$run_script" << RUNEOF
-#!/usr/bin/env bash
-# Auto-generated job runner for ${job_id}
-set -e
-
-# Set PATH for cron environment (captured at job creation time)
-export PATH="${current_path}"
-
-LOG_FILE="${log_file}"
-STATUS_FILE="${status_file}"
-HISTORY_FILE="${LOG_DIR}/${job_id}.history"
-LOCK_FILE="${lock_file}"
-WORKDIR="${new_workdir}"
-JOB_ID="${job_id}"
-RECURRING="${recurring}"
-TIMEOUT="${new_timeout}"
-
-# Cleanup function to release lock
-cleanup() {
-    exec 9>&-
-}
-trap cleanup EXIT
-
-# Acquire lock for this directory (non-blocking)
-exec 9>"\$LOCK_FILE"
-if ! flock -n 9; then
-    echo "[\$(date '+%Y-%m-%d %H:%M:%S')] SKIPPED: Another job is running in \$WORKDIR" >> "\$LOG_FILE"
-    exit 0
-fi
-
-# Record start time
-echo "start_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" > "\$STATUS_FILE"
-echo "status=\"running\"" >> "\$STATUS_FILE"
-
-# Run the job
-cd "\$WORKDIR"
-if [[ "\${TIMEOUT:-0}" -gt 0 ]]; then
-    timeout "\${TIMEOUT}" claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
-else
-    claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
-fi
-EXIT_CODE=\$?
-
-# Record end time and status
-echo "end_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" >> "\$STATUS_FILE"
-echo "exit_code=\"\${EXIT_CODE}\"" >> "\$STATUS_FILE"
-
-if [[ \$EXIT_CODE -eq 0 ]]; then
-    echo "status=\"success\"" >> "\$STATUS_FILE"
-    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"success\" exit_code=\"0\"" >> "\$HISTORY_FILE"
-    if [[ "\$RECURRING" == "false" ]]; then
-        echo "[\$(date '+%Y-%m-%d %H:%M:%S')] AUTO-REMOVED: One-shot job completed successfully" >> "\$LOG_FILE"
-        (crontab -l 2>/dev/null | grep -v "CC-CRON:\${JOB_ID}:" || true) | crontab -
-        rm -f "\$LOG_FILE" "\$STATUS_FILE" "${meta_file}" "\$HISTORY_FILE" "\$0"
-    fi
-else
-    echo "status=\"failed\"" >> "\$STATUS_FILE"
-    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"failed\" exit_code=\"\${EXIT_CODE}\"" >> "\$HISTORY_FILE"
-    if [[ "\$RECURRING" == "false" ]]; then
-        echo "[\$(date '+%Y-%m-%d %H:%M:%S')] One-shot job failed - keeping job for retry. Run 'cc-cron remove \${JOB_ID}' to clean up." >> "\$LOG_FILE"
-    fi
-fi
-RUNEOF
-    chmod +x "$run_script"
+    # Generate new run script using helper
+    generate_run_script "$job_id" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$recurring" "$new_prompt" > /dev/null
 
     # Re-add to crontab if not paused
     if [[ "$was_paused" -eq 0 ]]; then
-        local cron_entry="${new_cron} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${new_prompt:0:30}"
+        local cron_entry="${new_cron} ${new_run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${new_prompt:0:30}"
         crontab_add_entry "$cron_entry"
     fi
 
