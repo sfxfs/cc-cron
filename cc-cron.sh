@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.3.4"
+readonly VERSION="2.3.5"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -330,6 +330,7 @@ parse_job_options() {
     PARSED_PERMISSION=""
     PARSED_TIMEOUT=""
     PARSED_TAGS=""
+    PARSED_TAGS_SET=0
     PARSED_HAS_CHANGES=0
 
     while [[ $# -gt 0 ]]; do
@@ -375,6 +376,7 @@ parse_job_options() {
                 ;;
             --tags)
                 PARSED_TAGS="${2:-}"
+                PARSED_TAGS_SET=1
                 PARSED_HAS_CHANGES=1
                 shift 2
                 ;;
@@ -1194,7 +1196,13 @@ cmd_edit() {
     local new_model="${PARSED_MODEL:-${model:-}}"
     local new_permission="${PARSED_PERMISSION:-$permission_mode}"
     local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
-    local new_tags="${PARSED_TAGS:-${tags:-}}"
+    # For tags, use PARSED_TAGS_SET to distinguish between "not passed" and "passed empty"
+    local new_tags
+    if [[ "$PARSED_TAGS_SET" -eq 1 ]]; then
+        new_tags="$PARSED_TAGS"
+    else
+        new_tags="${tags:-}"
+    fi
     local has_changes="$PARSED_HAS_CHANGES"
 
     if [[ "$has_changes" -eq 0 ]]; then
@@ -1260,7 +1268,13 @@ cmd_clone() {
     local new_model="${PARSED_MODEL:-${model:-}}"
     local new_permission="${PARSED_PERMISSION:-$permission_mode}"
     local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
-    local new_tags="${PARSED_TAGS:-${tags:-}}"
+    # For tags, use PARSED_TAGS_SET to distinguish between "not passed" and "passed empty"
+    local new_tags
+    if [[ "$PARSED_TAGS_SET" -eq 1 ]]; then
+        new_tags="$PARSED_TAGS"
+    else
+        new_tags="${tags:-}"
+    fi
 
     # Create new job with copied settings
     cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "false" "$new_tags"

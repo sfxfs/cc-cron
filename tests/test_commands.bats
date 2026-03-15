@@ -924,6 +924,62 @@ teardown() {
     rm -f "$meta_file" "$cloned_meta"
 }
 
+@test "cmd_clone with tags override" {
+    # Create source job with tags
+    local source_id="clonetags2"
+    local meta_file; meta_file=$(get_meta_file "$source_id")
+    echo 'id="clonetags2"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="tagged job"' >> "$meta_file"
+    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'tags="prod,backup"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    cmd_clone "$source_id" --tags "dev,test" >/dev/null
+
+    # Verify cloned job has overridden tags
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$cloned_meta" ]]
+    grep -q 'tags="dev,test"' "$cloned_meta"
+
+    # Cleanup
+    rm -f "$meta_file" "$cloned_meta"
+}
+
+@test "cmd_clone with empty tags override clears tags" {
+    # Create source job with tags
+    local source_id="clonetags3"
+    local meta_file; meta_file=$(get_meta_file "$source_id")
+    echo 'id="clonetags3"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="tagged job"' >> "$meta_file"
+    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'tags="prod,backup"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    cmd_clone "$source_id" --tags "" >/dev/null
+
+    # Verify cloned job has no tags
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$cloned_meta" ]]
+    ! grep -q 'tags=' "$cloned_meta"
+
+    # Cleanup
+    rm -f "$meta_file" "$cloned_meta"
+}
+
 @test "cmd_list shows no jobs message when empty" {
     # Clear crontab cache
     _CRONTAB_CACHE=""
@@ -1139,6 +1195,39 @@ EOF
 
     # Verify tags updated
     grep -q 'tags="newtag"' "$meta_file"
+
+    rm -f "$meta_file"
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+}
+
+@test "cmd_edit clears tags with empty string" {
+    local job_id="edittagjob2"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Create initial metadata with tags
+    cat > "$meta_file" << EOF
+id="${job_id}"
+created="2024-01-01 10:00:00"
+cron="0 9 * * *"
+recurring="true"
+prompt="test prompt"
+workdir="/tmp"
+model=""
+permission_mode="bypassPermissions"
+timeout="0"
+run_script="/tmp/run.sh"
+tags="prod,backup"
+EOF
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --tags ""
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Tags: prod,backup → none"* ]]
+
+    # Verify tags removed from metadata
+    ! grep -q 'tags=' "$meta_file"
 
     rm -f "$meta_file"
     crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
