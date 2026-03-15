@@ -186,6 +186,20 @@ teardown() {
     [ "$status" -ne 0 ]
 }
 
+@test "cmd_run fails when run script is missing" {
+    local job_id="runmissing"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Create metadata but no run script
+    create_test_meta "$job_id"
+
+    run cmd_run "$job_id"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Run script not found"* ]]
+
+    rm -f "$meta_file"
+}
+
 @test "cmd_edit fails for non-existent job" {
     run cmd_edit "nonexistent" --cron "0 0 * * *"
     [ "$status" -ne 0 ]
