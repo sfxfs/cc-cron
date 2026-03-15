@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.1.4"
+readonly VERSION="2.1.5"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1622,8 +1622,13 @@ cmd_purge() {
     ((freed_bytes += PURGE_BYTES)) || true
 
     # Summary
-    local freed_mb
-    freed_mb=$(echo "scale=2; ${freed_bytes} / 1048576" | bc)
+    local freed_mb_int freed_mb
+    freed_mb_int=$((freed_bytes * 100 / 1048576))
+    if [[ $freed_mb_int -lt 100 ]]; then
+        freed_mb="0.${freed_mb_int}"
+    else
+        freed_mb="${freed_mb_int:0:-2}.${freed_mb_int: -2}"
+    fi
     echo
     if [[ "$dry_run" == "true" ]]; then
         info "Dry-run summary:"
