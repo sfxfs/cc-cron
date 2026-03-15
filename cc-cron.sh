@@ -1694,7 +1694,9 @@ _cc_cron_completion() {
             fi
             ;;
         export)
-            COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            if [[ ${#words[@]} -eq 3 ]]; then
+                COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            fi
             ;;
         config)
             if [[ ${#words[@]} -eq 3 ]]; then
