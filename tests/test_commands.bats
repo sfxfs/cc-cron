@@ -244,6 +244,42 @@ teardown() {
     [[ "$output" == *"dry-run"* ]] || [[ "$output" == *"Purging"* ]]
 }
 
+@test "purge_old_files handles empty directory" {
+    # Create an empty temp directory
+    local empty_dir="${BATS_TEST_TMPDIR}/empty_purge"
+    mkdir -p "$empty_dir"
+
+    PURGE_COUNT=0
+    PURGE_BYTES=0
+
+    purge_old_files "$empty_dir" "log" "30" "false" "test log"
+
+    [ "$PURGE_COUNT" -eq 0 ]
+    [ "$PURGE_BYTES" -eq 0 ]
+
+    rm -rf "$empty_dir"
+}
+
+@test "purge_old_files handles dry-run mode" {
+    local test_dir="${BATS_TEST_TMPDIR}/purge_test"
+    mkdir -p "$test_dir"
+
+    # Create a test file
+    local test_file="${test_dir}/test.log"
+    echo "test content" > "$test_file"
+
+    PURGE_COUNT=0
+    PURGE_BYTES=0
+
+    # Use 0 days to match any file
+    purge_old_files "$test_dir" "log" "0" "true" "test log"
+
+    # File should still exist in dry-run mode
+    [[ -f "$test_file" ]]
+
+    rm -rf "$test_dir"
+}
+
 @test "cmd_config list works" {
     run cmd_config list
     [ "$status" -eq 0 ]
