@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.7.0"
+readonly VERSION="1.7.1"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1598,6 +1598,8 @@ COMMANDS:
     logs <job-id>                   Show logs for a job
     pause <job-id>                  Pause a scheduled job
     resume <job-id>                 Resume a paused job
+    enable <job-id>                 Alias for resume
+    disable <job-id>                Alias for pause
     show <job-id>                   Show detailed information for a job
     history <job-id> [lines]        Show execution history for a job
     run <job-id>                    Run a job immediately (for testing)
@@ -1657,9 +1659,9 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit export import purge config doctor version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history run edit export import purge config doctor version completion help" -- "${cur}"))
             ;;
-        remove|logs|pause|resume|show|history|run)
+        remove|logs|pause|resume|enable|disable|show|history|run)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         export)
@@ -1806,6 +1808,20 @@ Options:
                 error "Usage: cc-cron resume <job-id>"
             fi
             cmd_resume "$1"
+            ;;
+        enable)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron enable <job-id>"
+            fi
+            cmd_resume "$1"
+            ;;
+        disable)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron disable <job-id>"
+            fi
+            cmd_pause "$1"
             ;;
         show)
             ensure_data_dir
