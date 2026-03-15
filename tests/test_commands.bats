@@ -554,6 +554,34 @@ teardown() {
     rm -f "$meta_file"
 }
 
+@test "generate_run_script creates executable script" {
+    local job_id="testgen"
+    generate_run_script "$job_id" "/tmp" "sonnet" "auto" "0" "true" "test prompt" >/dev/null
+
+    local run_script; run_script=$(get_run_script "$job_id")
+    [ -f "$run_script" ]
+    [ -x "$run_script" ]
+
+    # Verify script contains expected elements
+    grep -q "claude" "$run_script"
+    grep -q "test prompt" "$run_script"
+
+    rm -f "$run_script"
+}
+
+@test "generate_run_script handles empty model" {
+    local job_id="testnomodel"
+    generate_run_script "$job_id" "/tmp" "" "bypassPermissions" "0" "true" "prompt" >/dev/null
+
+    local run_script; run_script=$(get_run_script "$job_id")
+    [ -f "$run_script" ]
+
+    # Should not contain --model flag
+    ! grep -q "\-\-model" "$run_script"
+
+    rm -f "$run_script"
+}
+
 @test "require_job_id fails without argument" {
     run require_job_id "testcmd"
     [ "$status" -ne 0 ]
