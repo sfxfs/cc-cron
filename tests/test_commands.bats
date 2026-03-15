@@ -1847,6 +1847,19 @@ EOF
     [[ "$output" == *"enable"* ]]
 }
 
+@test "cmd_completion includes edit options" {
+    run cmd_completion
+    [ "$status" -eq 0 ]
+    # Check for edit/clone options
+    [[ "$output" == *"--cron"* ]]
+    [[ "$output" == *"--prompt"* ]]
+    [[ "$output" == *"--workdir"* ]]
+    [[ "$output" == *"--model"* ]]
+    [[ "$output" == *"--permission-mode"* ]]
+    [[ "$output" == *"--timeout"* ]]
+    [[ "$output" == *"--tags"* ]]
+}
+
 @test "cmd_add --quiet outputs only job ID" {
     local job_workdir="$BATS_TEST_TMPDIR"
     cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" "true" >/dev/null
