@@ -209,19 +209,8 @@ teardown() {
 }
 
 @test "cmd_export creates valid JSON structure" {
-    # Create a temp meta file for testing
     local job_id="testexp"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    echo 'id="testexp"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 0 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="test prompt"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+    create_test_meta "$job_id"
 
     run cmd_export "$job_id"
     [ "$status" -eq 0 ]
@@ -229,8 +218,7 @@ teardown() {
     [[ "$output" == *'"jobs":['* ]]
     [[ "$output" == *'"id":"testexp"'* ]]
 
-    # Cleanup
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "cmd_purge accepts days argument" {
@@ -994,63 +982,32 @@ EOF
 
 @test "cmd_show displays timeout when set" {
     local job_id="showtimeout"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    echo 'id="showtimeout"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 0 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="test"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="300"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
 
     run cmd_show "$job_id"
     [ "$status" -eq 0 ]
     [[ "$output" == *"Timeout:"* ]]
     [[ "$output" == *"300s"* ]]
 
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "cmd_show displays model when set" {
     local job_id="showmodel"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    echo 'id="showmodel"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 0 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="test"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model="sonnet"' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+    create_test_meta "$job_id" "/tmp" "sonnet"
 
     run cmd_show "$job_id"
     [ "$status" -eq 0 ]
     [[ "$output" == *"Model:"* ]]
     [[ "$output" == *"sonnet"* ]]
 
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "cmd_show displays paused status" {
     local job_id="showpaused"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    create_test_meta "$job_id"
     local paused_file="${DATA_DIR}/${job_id}.paused"
-
-    echo 'id="showpaused"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 0 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="test"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
 
     touch "$paused_file"
 
@@ -1058,24 +1015,13 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"PAUSED"* ]]
 
-    rm -f "$meta_file" "$paused_file"
+    rm -f "$(get_meta_file "$job_id")" "$paused_file"
 }
 
 @test "cmd_show displays execution statistics" {
     local job_id="showstats"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    create_test_meta "$job_id"
     local history_file; history_file=$(get_history_file "$job_id")
-
-    echo 'id="showstats"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 0 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="test"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
 
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:05:00" status="failed" exit_code="1"' >> "$history_file"
@@ -1086,5 +1032,5 @@ EOF
     [[ "$output" == *"Total runs:"* ]]
     [[ "$output" == *"2"* ]]
 
-    rm -f "$meta_file" "$history_file"
+    rm -f "$(get_meta_file "$job_id")" "$history_file"
 }
