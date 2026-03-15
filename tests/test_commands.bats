@@ -318,19 +318,7 @@ teardown() {
     local meta_file; meta_file=$(get_meta_file "$job_id")
     local run_script; run_script=$(get_run_script "$job_id")
 
-    # Create metadata
-    cat > "$meta_file" << EOF
-id="${job_id}"
-created="2024-01-01"
-cron="0 9 * * *"
-recurring="true"
-prompt="test prompt"
-workdir="${job_workdir}"
-model=""
-permission_mode="bypassPermissions"
-timeout="0"
-run_script="${run_script}"
-EOF
+    create_test_meta "$job_id" "$job_workdir"
 
     # Create a simple run script that succeeds
     cat > "$run_script" << 'EOF'
@@ -354,19 +342,7 @@ EOF
     local meta_file; meta_file=$(get_meta_file "$job_id")
     local run_script; run_script=$(get_run_script "$job_id")
 
-    # Create metadata
-    cat > "$meta_file" << EOF
-id="${job_id}"
-created="2024-01-01"
-cron="0 9 * * *"
-recurring="true"
-prompt="test prompt"
-workdir="${job_workdir}"
-model=""
-permission_mode="bypassPermissions"
-timeout="0"
-run_script="${run_script}"
-EOF
+    create_test_meta "$job_id" "$job_workdir"
 
     # Create a run script that fails
     cat > "$run_script" << 'EOF'
