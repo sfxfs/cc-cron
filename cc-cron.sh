@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.8.4"
+readonly VERSION="1.8.5"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1715,6 +1715,84 @@ EXAMPLES:
 HELP
 }
 
+help_logs() {
+    cat << 'HELP'
+cc-cron logs - View job logs
+
+USAGE:
+    cc-cron logs <job-id> [--tail]
+
+ARGUMENTS:
+    <job-id>   The job ID to view logs for
+
+OPTIONS:
+    --tail, -f   Follow log output in real-time
+
+EXAMPLES:
+    cc-cron logs abc123
+    cc-cron logs abc123 --tail
+HELP
+}
+
+help_run() {
+    cat << 'HELP'
+cc-cron run - Execute a job immediately
+
+USAGE:
+    cc-cron run <job-id>
+
+ARGUMENTS:
+    <job-id>   The job ID to run
+
+DESCRIPTION:
+    Executes the job synchronously and displays output.
+    Useful for testing job configuration.
+
+EXAMPLES:
+    cc-cron run abc123
+HELP
+}
+
+help_show() {
+    cat << 'HELP'
+cc-cron show - Display job details
+
+USAGE:
+    cc-cron show <job-id>
+
+ARGUMENTS:
+    <job-id>   The job ID to display
+
+DESCRIPTION:
+    Shows complete job information including:
+    - Metadata (ID, created, schedule, recurring)
+    - Configuration (workdir, model, permission, timeout)
+    - Full prompt text
+    - Last execution status (if available)
+    - Execution statistics (total runs, success/failure count)
+HELP
+}
+
+help_history() {
+    cat << 'HELP'
+cc-cron history - View execution history
+
+USAGE:
+    cc-cron history <job-id> [lines]
+
+ARGUMENTS:
+    <job-id>   The job ID to view history for
+    lines      Number of entries to show (default: 20)
+
+DESCRIPTION:
+    Displays execution history with timestamps and status.
+
+EXAMPLES:
+    cc-cron history abc123
+    cc-cron history abc123 50
+HELP
+}
+
 # Show help
 cmd_help() {
     local topic="${1:-}"
@@ -1739,6 +1817,22 @@ cmd_help() {
             ;;
         purge)
             help_purge
+            return 0
+            ;;
+        logs)
+            help_logs
+            return 0
+            ;;
+        run)
+            help_run
+            return 0
+            ;;
+        show)
+            help_show
+            return 0
+            ;;
+        history)
+            help_history
             return 0
             ;;
         "")
@@ -1785,6 +1879,10 @@ MORE HELP:
     cc-cron help clone     Clone job options
     cc-cron help config    Configuration management
     cc-cron help purge     Cleanup options
+    cc-cron help logs      View job logs
+    cc-cron help run       Run a job immediately
+    cc-cron help show      View job details
+    cc-cron help history   View execution history
 
 CRON FORMAT:
     * * * * *

@@ -1118,3 +1118,198 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" == *"CC-CRON:abc123"* ]]
 }
+
+@test "cmd_help logs shows detailed help" {
+    run cmd_help "logs"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron logs"* ]]
+    [[ "$output" == *"--tail"* ]]
+}
+
+@test "cmd_help run shows detailed help" {
+    run cmd_help "run"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron run"* ]]
+    [[ "$output" == *"Execute a job immediately"* ]]
+}
+
+@test "cmd_help show shows detailed help" {
+    run cmd_help "show"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron show"* ]]
+    [[ "$output" == *"Display job details"* ]]
+}
+
+@test "cmd_help history shows detailed help" {
+    run cmd_help "history"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron history"* ]]
+    [[ "$output" == *"View execution history"* ]]
+}
+
+@test "cmd_completion outputs bash completion script" {
+    run cmd_completion
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"_cc_cron_completion"* ]]
+    [[ "$output" == *"complete -F"* ]]
+}
+
+@test "cmd_completion includes main commands" {
+    run cmd_completion
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"add"* ]]
+    [[ "$output" == *"list"* ]]
+    [[ "$output" == *"remove"* ]]
+    [[ "$output" == *"status"* ]]
+    [[ "$output" == *"edit"* ]]
+}
+
+@test "cmd_completion includes model options" {
+    run cmd_completion
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"sonnet"* ]]
+    [[ "$output" == *"opus"* ]]
+    [[ "$output" == *"haiku"* ]]
+}
+
+@test "cmd_completion includes permission modes" {
+    run cmd_completion
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"bypassPermissions"* ]]
+    [[ "$output" == *"acceptEdits"* ]]
+}
+
+@test "generate_run_script includes timeout when set" {
+    local job_id="timeoutjob"
+    generate_run_script "$job_id" "/tmp" "sonnet" "auto" "300" "true" "test prompt" >/dev/null
+
+    local run_script; run_script=$(get_run_script "$job_id")
+    [ -f "$run_script" ]
+    grep -q 'timeout "\${TIMEOUT}"' "$run_script"
+    grep -q 'TIMEOUT="300"' "$run_script"
+
+    rm -f "$run_script"
+}
+
+@test "generate_run_script without timeout has no timeout command" {
+    local job_id="notimeout"
+    generate_run_script "$job_id" "/tmp" "" "bypassPermissions" "0" "true" "test prompt" >/dev/null
+
+    local run_script; run_script=$(get_run_script "$job_id")
+    [ -f "$run_script" ]
+    ! grep -q "timeout " "$run_script"
+
+    rm -f "$run_script"
+}
+
+@test "write_meta_file includes modified field when provided" {
+    local job_id="modifiedjob"
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "" "auto" "0" "/tmp/run.sh" "2024-01-02 12:00:00"
+
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    [ -f "$meta_file" ]
+
+    source "$meta_file"
+    [ "$modified" == "2024-01-02 12:00:00" ]
+
+    rm -f "$meta_file"
+}
+
+@test "write_meta_file without modified field omits it" {
+    local job_id="nomodified"
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
+
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    [ -f "$meta_file" ]
+
+    # Should not contain modified field
+    ! grep -q "modified=" "$meta_file"
+
+    rm -f "$meta_file"
+}
+
+@test "error function outputs to stderr" {
+    run error "Test error message"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Test error message"* ]]
+}
+
+@test "error function uses custom exit code" {
+    run error "Custom exit" 42
+    [ "$status" -eq 42 ]
+}
+
+@test "error function defaults to EXIT_ERROR" {
+    run error "Default exit"
+    [ "$status" -eq 1 ]
+}
+
+@test "info function outputs message" {
+    run info "Test info"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Test info"* ]]
+}
+
+@test "success function outputs message" {
+    run success "Test success"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Test success"* ]]
+}
+
+@test "warn function outputs message" {
+    run warn "Test warning"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Test warning"* ]]
+}
+
+@test "cmd_pause handles already paused job" {
+    local job_id="alreadypaused"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+
+    # Create minimal meta file
+    echo 'id="alreadypaused"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+
+    # Create paused file
+    touch "$paused_file"
+
+    # Add entry to crontab (so we can check)
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:alreadypaused:recurring=true" 2>/dev/null || true
+
+    run cmd_pause "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"already paused"* ]]
+
+    rm -f "$meta_file" "$paused_file"
+}
+
+@test "crontab_add_entry and remove work together" {
+    # Skip if crontab not available
+    if ! crontab -l &>/dev/null; then
+        skip "crontab not available"
+    fi
+
+    local test_marker="CC-CRON:testaddremove123"
+    local test_entry="0 9 * * * /tmp/test.sh  # ${test_marker}:recurring=true"
+
+    # Add entry
+    crontab_add_entry "$test_entry"
+
+    # Verify it exists
+    crontab_has_entry "$test_marker"
+    [ "$?" -eq 0 ]
+
+    # Remove it
+    crontab_remove_entry "$test_marker"
+
+    # Verify it's gone
+    run crontab_has_entry "$test_marker"
+    [ "$status" -ne 0 ]
+}
