@@ -2507,12 +2507,24 @@ _cc_cron_completion() {
         done
     }
 
+    _get_tags() {
+        local meta_file tags
+        for meta_file in ~/.cc-cron/logs/*.meta; do
+            [[ -f "$meta_file" ]] || continue
+            # Extract tags from meta file
+            grep '^tags=' "$meta_file" 2>/dev/null | sed 's/tags=//; s/"//g' | tr ',' '\n'
+        done | sort -u
+    }
+
     case ${prev} in
         cc-cron)
             COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history stats run next edit clone export import purge config doctor version completion help" -- "${cur}"))
             ;;
         remove|pause|resume|enable|disable|show|history|run|clone|next)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            ;;
+        list)
+            COMPREPLY=($(compgen -W "$(_get_tags)" -- "${cur}"))
             ;;
         logs)
             if [[ ${#words[@]} -eq 3 ]]; then
