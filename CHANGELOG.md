@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add edge case tests for `cmd_list` tag filtering (non-existent tags, multiple tags)
 - Add tests for `cmd_next` with existing jobs
 - Add tests for `cmd_run` success and failure cases
+- Add test for `cmd_logs` with no log file
 
 ## [2.3.4] - 2025-03-16
 
