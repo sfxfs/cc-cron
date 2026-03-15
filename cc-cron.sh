@@ -131,7 +131,7 @@ extract_job_id() {
 validate_range() {
     local value="$1" min="$2" max="$3" context="$4"
     if [[ "$value" -lt "$min" || "$value" -gt "$max" ]]; then
-        error "Invalid value '$value' for $context (must be $min-$max)"
+        error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS"
     fi
 }
 
@@ -244,9 +244,9 @@ validate_cron_field() {
         */*)
             local step="${value#*/}"
             step="${step%%/*}"
-            [[ "$step" =~ ^[0-9]+$ ]] || error "Invalid step value in '$value' for $field_name"
+            [[ "$step" =~ ^[0-9]+$ ]] || error "Invalid step value in '$value' for $field_name" "$EXIT_INVALID_ARGS"
             [[ "$step" -ge 1 && "$step" -le "$max" ]] && return 0
-            error "Invalid step value '$step' in '$value' for $field_name (must be 1-$max)"
+            error "Invalid step value '$step' in '$value' for $field_name (must be 1-$max)" "$EXIT_INVALID_ARGS"
             ;;
     esac
 
@@ -255,17 +255,17 @@ validate_cron_field() {
         *-*)
             local start="${value%%-*}"
             local end="${value#*-}"
-            [[ "$start" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name"
-            [[ "$end" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name"
+            [[ "$start" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"
+            [[ "$end" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"
             validate_range "$start" "$min" "$max" "$field_name range start"
             validate_range "$end" "$min" "$max" "$field_name range end"
-            [[ "$start" -gt "$end" ]] && error "Invalid range '$value' for $field_name (start > end)"
+            [[ "$start" -gt "$end" ]] && error "Invalid range '$value' for $field_name (start > end)" "$EXIT_INVALID_ARGS"
             return 0
             ;;
     esac
 
     # Handle simple number
-    [[ "$value" =~ ^[0-9]+$ ]] || error "Invalid cron field value '$value' for $field_name"
+    [[ "$value" =~ ^[0-9]+$ ]] || error "Invalid cron field value '$value' for $field_name" "$EXIT_INVALID_ARGS"
     validate_range "$value" "$min" "$max" "$field_name"
 }
 
@@ -279,7 +279,7 @@ validate_cron() {
 
     # Early exit for wrong field count
     if [[ ${#fields[@]} -ne 5 ]]; then
-        error "Invalid cron expression: $cron (expected 5 fields: minute hour day month weekday)"
+        error "Invalid cron expression: $cron (expected 5 fields: minute hour day month weekday)" "$EXIT_INVALID_ARGS"
     fi
 
     # Validate each field: minute (0-59), hour (0-23), day (1-31), month (1-12), weekday (0-6)
@@ -300,7 +300,7 @@ is_valid_cron() {
 
 # Validate working directory exists
 validate_workdir() {
-    [[ -d "$1" ]] || error "Directory not found: $1"
+    [[ -d "$1" ]] || error "Directory not found: $1" "$EXIT_INVALID_ARGS"
 }
 
 # Validate permission mode
@@ -310,14 +310,14 @@ validate_permission_mode() {
             return 0
             ;;
         *)
-            error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default"
+            error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
             ;;
     esac
 }
 
 # Validate timeout value
 validate_timeout() {
-    [[ "$1" =~ ^[0-9]+$ ]] || error "Timeout must be a non-negative number"
+    [[ "$1" =~ ^[0-9]+$ ]] || error "Timeout must be a non-negative number" "$EXIT_INVALID_ARGS"
 }
 
 # Parse job modification options (--cron, --prompt, --workdir, --model, --permission-mode, --timeout, --tags)

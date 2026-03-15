@@ -25,7 +25,7 @@ teardown() {
 
 @test "validate_cron_field rejects out of range" {
     run validate_cron_field "60" 0 59 "minute"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_cron_field accepts step values" {
@@ -50,17 +50,17 @@ teardown() {
 
 @test "validate_cron rejects invalid expression" {
     run validate_cron "0 9 * *"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_cron_field rejects negative numbers" {
     run validate_cron_field "-1" 0 59 "minute"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_cron_field rejects non-numeric" {
     run validate_cron_field "abc" 0 59 "minute"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_range accepts boundary values" {
@@ -72,23 +72,23 @@ teardown() {
 
 @test "validate_range rejects outside boundaries" {
     run validate_range -1 0 100 "test"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     run validate_range 101 0 100 "test"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_cron_field rejects invalid step value" {
     run validate_cron_field "*/0" 0 59 "minute"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     run validate_cron_field "*/abc" 0 59 "minute"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_cron_field rejects invalid range" {
     run validate_cron_field "5-2" 0 59 "minute"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     run validate_cron_field "a-b" 0 59 "minute"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_cron_field accepts complex expressions" {
@@ -111,9 +111,9 @@ teardown() {
 
 @test "validate_cron rejects wrong field count" {
     run validate_cron "* * * *"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     run validate_cron "* * * * * *"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_permission_mode accepts valid modes" {
@@ -129,9 +129,9 @@ teardown() {
 
 @test "validate_permission_mode rejects invalid mode" {
     run validate_permission_mode "invalid"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     run validate_permission_mode ""
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "validate_timeout accepts valid values" {
@@ -145,13 +145,13 @@ teardown() {
 
 @test "validate_timeout rejects invalid values" {
     run validate_timeout "-1"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     run validate_timeout "abc"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     run validate_timeout ""
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     run validate_timeout "1.5"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "is_valid_cron returns true for valid expression" {
