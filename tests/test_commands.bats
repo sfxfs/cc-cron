@@ -1487,3 +1487,102 @@ EOF
     rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
     crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
 }
+
+# Tests for set -e edge cases (ensures [[ condition ]] && command patterns don't regress)
+
+@test "cmd_edit works on a paused job" {
+    local job_id="editpaused"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+
+    # Create job metadata
+    create_test_meta "$job_id"
+
+    # Create paused file
+    touch "$paused_file"
+
+    # Should be able to edit a paused job
+    run cmd_edit "$job_id" --prompt "new prompt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Updated job"* ]]
+
+    rm -f "$meta_file" "$paused_file"
+}
+
+@test "cmd_show without model does not show Model line" {
+    local job_id="shownomodel"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Create job metadata without model
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Job Details"* ]]
+    [[ "$output" != *"Model:"* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "cmd_show with model shows Model line" {
+    local job_id="showmodel"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Create job metadata with model
+    create_test_meta "$job_id" "/tmp" "sonnet" "bypassPermissions" "0"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Model:        sonnet"* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "cmd_show with timeout shows Timeout line" {
+    local job_id="showtimeout"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Create job metadata with timeout
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
+
+    run cmd_show "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Timeout:      300s"* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "cmd_status with exit code shows Exit code" {
+    local job_id="statusexit"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local status_file; status_file=$(get_status_file "$job_id")
+
+    # Create job metadata
+    create_test_meta "$job_id"
+
+    # Create status file with exit code
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
+    echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
+    echo 'status="failed"' >> "$status_file"
+    echo 'exit_code="1"' >> "$status_file"
+    echo 'workdir="/tmp"' >> "$status_file"
+
+    run cmd_status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Exit code: 1"* ]]
+
+    rm -f "$meta_file" "$status_file"
+}
+
+@test "generate_run_script with default permission omits permission flag" {
+    local job_id="rundefperm"
+    generate_run_script "$job_id" "/tmp" "" "default" "0" "true" "prompt" >/dev/null
+
+    local run_script; run_script=$(get_run_script "$job_id")
+    [ -f "$run_script" ]
+
+    # Should not contain --permission-mode flag
+    ! grep -q "\-\-permission-mode" "$run_script"
+
+    rm -f "$run_script"
+}
