@@ -1441,6 +1441,21 @@ EOF
     rm -f "$meta_file" "$paused_file"
 }
 
+@test "cmd_resume fails when metadata is missing" {
+    local job_id="missingmeta"
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+
+    # Create paused file without metadata
+    mkdir -p "$DATA_DIR"
+    touch "$paused_file"
+
+    run cmd_resume "$job_id"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"not found"* ]]
+
+    rm -f "$paused_file"
+}
+
 @test "crontab_add_entry and remove work together" {
     # Skip if crontab not available
     if ! crontab -l &>/dev/null; then
