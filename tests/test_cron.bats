@@ -76,3 +76,42 @@ teardown() {
     run validate_range 101 0 100 "test"
     [ "$status" -ne 0 ]
 }
+
+@test "validate_cron_field rejects invalid step value" {
+    run validate_cron_field "*/0" 0 59 "minute"
+    [ "$status" -ne 0 ]
+    run validate_cron_field "*/abc" 0 59 "minute"
+    [ "$status" -ne 0 ]
+}
+
+@test "validate_cron_field rejects invalid range" {
+    run validate_cron_field "5-2" 0 59 "minute"
+    [ "$status" -ne 0 ]
+    run validate_cron_field "a-b" 0 59 "minute"
+    [ "$status" -ne 0 ]
+}
+
+@test "validate_cron_field accepts complex expressions" {
+    run validate_cron_field "1-5,10,15-20" 0 59 "minute"
+    [ "$status" -eq 0 ]
+    run validate_cron_field "*/5,30" 0 59 "minute"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron accepts common schedules" {
+    run validate_cron "0 * * * *"
+    [ "$status" -eq 0 ]
+    run validate_cron "*/5 * * * *"
+    [ "$status" -eq 0 ]
+    run validate_cron "0 9 * * 1-5"
+    [ "$status" -eq 0 ]
+    run validate_cron "0 0 1 1 *"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron rejects wrong field count" {
+    run validate_cron "* * * *"
+    [ "$status" -ne 0 ]
+    run validate_cron "* * * * * *"
+    [ "$status" -ne 0 ]
+}

@@ -11,6 +11,9 @@ readonly EXIT_ERROR=1
 readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
+# Version
+readonly VERSION="1.1.0"
+
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
 LOG_DIR="${LOG_DIR:-${DATA_DIR}/logs}"
@@ -92,6 +95,18 @@ validate_cron_field() {
     # Handle wildcard (most common case first)
     [[ "$value" == "*" ]] && return 0
 
+    # Handle comma-separated list first (before step/range checks)
+    case "$value" in
+        *,*)
+            local IFS=','
+            local part
+            for part in $value; do
+                validate_cron_field "$part" "$min" "$max" "$field_name"
+            done
+            return 0
+            ;;
+    esac
+
     # Handle */n (step) - use case instead of regex for ~20% speedup
     case "$value" in
         */*)
@@ -113,18 +128,6 @@ validate_cron_field() {
             validate_range "$start" "$min" "$max" "$field_name range start"
             validate_range "$end" "$min" "$max" "$field_name range end"
             [[ "$start" -gt "$end" ]] && error "Invalid range '$value' for $field_name (start > end)"
-            return 0
-            ;;
-    esac
-
-    # Handle comma-separated list
-    case "$value" in
-        *,*)
-            local IFS=','
-            local part
-            for part in $value; do
-                validate_cron_field "$part" "$min" "$max" "$field_name"
-            done
             return 0
             ;;
     esac
@@ -420,6 +423,61 @@ cmd_logs() {
     fi
 }
 
+# Pause a job (comment out in crontab)
+cmd_pause() {
+    local job_id="$1"
+    local found=0
+
+    # Check if job exists
+    if ! crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
+        error "Job not found: ${job_id}"
+    fi
+
+    # Check if already paused
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+
+    if [[ -f "$paused_file" ]]; then
+        warn "Job ${job_id} is already paused"
+        return 0
+    fi
+
+    # Remove from crontab but keep metadata
+    crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
+    touch "$paused_file"
+
+    success "Paused job: ${job_id}"
+    info "Run 'cc-cron resume ${job_id}' to resume"
+}
+
+# Resume a paused job
+cmd_resume() {
+    local job_id="$1"
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    if [[ ! -f "$paused_file" ]]; then
+        error "Job ${job_id} is not paused"
+    fi
+
+    if [[ ! -f "$meta_file" ]]; then
+        error "Job metadata not found: ${job_id}"
+    fi
+
+    # Load metadata
+    source "$meta_file"
+
+    # Recreate cron entry
+    local run_script; run_script=$(get_run_script "$job_id")
+    local cron_entry="${cron} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
+
+    crontab_add_entry "$cron_entry"
+    rm -f "$paused_file"
+
+    success "Resumed job: ${job_id}"
+    info "Schedule: ${cron}"
+}
+
 # Show status of all jobs and recent executions
 cmd_status() {
     info "CC-Cron Status Report"
@@ -502,6 +560,11 @@ cmd_status() {
     echo -e "Summary: ${GREEN}${success_count} succeeded${NC}, ${RED}${failed_count} failed${NC}, ${YELLOW}${running_count} running${NC}, ${unknown_count} unknown${NC}"
 }
 
+# Show version
+cmd_version() {
+    echo "cc-cron version ${VERSION}"
+}
+
 # Show help
 cmd_help() {
     cat << 'HELP'
@@ -526,7 +589,10 @@ COMMANDS:
     status                          Show status overview and log activity
     remove <job-id>                 Remove a scheduled job
     logs <job-id>                   Show logs for a job
+    pause <job-id>                  Pause a scheduled job
+    resume <job-id>                 Resume a paused job
     completion                      Output bash completion script
+    version                         Show version information
     help                            Show this help message
 
 ENVIRONMENT VARIABLES (used as defaults when not specified per-job):
@@ -564,9 +630,9 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume version completion help" -- "${cur}"))
             ;;
-        remove|logs)
+        remove|logs|pause|resume)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         --model)
@@ -682,6 +748,23 @@ Options:
         status)
             ensure_data_dir
             cmd_status
+            ;;
+        pause)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron pause <job-id>"
+            fi
+            cmd_pause "$1"
+            ;;
+        resume)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron resume <job-id>"
+            fi
+            cmd_resume "$1"
+            ;;
+        version|--version|-v)
+            cmd_version
             ;;
         completion)
             cmd_completion

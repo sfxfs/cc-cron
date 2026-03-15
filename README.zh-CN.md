@@ -66,6 +66,28 @@ eval "$(cc-cron completion)"
 ./cc-cron.sh remove <job-id>
 ```
 
+### 暂停任务
+
+临时禁用任务（不删除）：
+
+```bash
+./cc-cron.sh pause <job-id>
+```
+
+### 恢复任务
+
+恢复已暂停的任务：
+
+```bash
+./cc-cron.sh resume <job-id>
+```
+
+### 查看版本
+
+```bash
+./cc-cron.sh version
+```
+
 ### Bash 自动补全
 
 为命令和任务 ID 启用 Tab 自动补全：
@@ -76,8 +98,8 @@ eval "$(cc-cron completion)"
 ```
 
 **功能：**
-- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`completion`
-- `remove` 和 `logs` 的任务 ID 补全
+- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`version`、`completion`
+- `remove`、`logs`、`pause`、`resume` 的任务 ID 补全
 - 模型名：`sonnet`、`opus`、`haiku`
 - 权限模式：`bypassPermissions`、`acceptEdits`、`auto`、`default`
 - `--workdir` 的目录补全

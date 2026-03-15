@@ -66,6 +66,28 @@ eval "$(cc-cron completion)"
 ./cc-cron.sh remove <job-id>
 ```
 
+### Pause a Job
+
+Temporarily disable a scheduled job without removing it:
+
+```bash
+./cc-cron.sh pause <job-id>
+```
+
+### Resume a Job
+
+Re-enable a paused job:
+
+```bash
+./cc-cron.sh resume <job-id>
+```
+
+### Check Version
+
+```bash
+./cc-cron.sh version
+```
+
 ### Bash Completion
 
 Enable tab completion for commands and job IDs:
@@ -76,8 +98,8 @@ eval "$(cc-cron completion)"
 ```
 
 **Features:**
-- Command completion: `add`, `list`, `remove`, `logs`, `status`, `completion`
-- Job ID completion for `remove` and `logs` commands
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `version`, `completion`
+- Job ID completion for `remove`, `logs`, `pause`, and `resume` commands
 - Model names: `sonnet`, `opus`, `haiku`
 - Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`
 - Directory completion for `--workdir`

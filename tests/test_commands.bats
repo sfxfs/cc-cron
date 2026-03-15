@@ -75,3 +75,19 @@ teardown() {
     invalidate_crontab_cache
     [ -z "$_CRONTAB_CACHE" ]
 }
+
+@test "cmd_version outputs version string" {
+    run cmd_version
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^cc-cron\ version\ [0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+@test "cmd_pause fails for non-existent job" {
+    run cmd_pause "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_resume fails for non-paused job" {
+    run cmd_resume "nonexistent"
+    [ "$status" -ne 0 ]
+}
