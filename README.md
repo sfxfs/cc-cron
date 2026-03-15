@@ -57,8 +57,11 @@ eval "$(cc-cron completion)"
 ### View Logs
 
 ```bash
-./cc-cron.sh logs <job-id>
+./cc-cron.sh logs <job-id> [--tail]
 ```
+
+Options:
+- `--tail` or `-f`: Follow log output in real-time (like `tail -f`)
 
 ### Remove a Job
 

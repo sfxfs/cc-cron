@@ -57,8 +57,11 @@ eval "$(cc-cron completion)"
 ### 查看日志
 
 ```bash
-./cc-cron.sh logs <job-id>
+./cc-cron.sh logs <job-id> [--tail]
 ```
+
+选项：
+- `--tail` 或 `-f`：实时跟踪日志输出（类似 `tail -f`）
 
 ### 删除任务
 

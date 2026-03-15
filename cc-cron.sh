@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.7.1"
+readonly VERSION="1.8.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -474,14 +474,21 @@ cmd_remove() {
 # Show logs for a job
 cmd_logs() {
     local job_id="$1"
+    local follow="${2:-false}"
     local log_file; log_file=$(get_log_file "$job_id")
 
-    if [[ -f "$log_file" ]]; then
+    if [[ ! -f "$log_file" ]]; then
+        error "No logs found for job: ${job_id}"
+    fi
+
+    if [[ "$follow" == "true" ]]; then
+        info "Following logs for job ${job_id} (Ctrl+C to stop)..."
+        echo "================================="
+        tail -f "$log_file"
+    else
         info "Logs for job ${job_id}:"
         echo "================================="
         cat "$log_file"
-    else
-        error "No logs found for job: ${job_id}"
     fi
 }
 
@@ -1519,7 +1526,7 @@ COMMANDS:
     list                            List all scheduled jobs
     status                          Show status overview and log activity
     remove <job-id>                 Remove a scheduled job
-    logs <job-id>                   Show logs for a job
+    logs <job-id> [--tail]          Show logs for a job (--tail for live follow)
     pause <job-id>                  Pause a scheduled job
     resume <job-id>                 Resume a paused job
     enable <job-id>                 Alias for resume
@@ -1585,8 +1592,15 @@ _cc_cron_completion() {
         cc-cron)
             COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history run edit export import purge config doctor version completion help" -- "${cur}"))
             ;;
-        remove|logs|pause|resume|enable|disable|show|history|run)
+        remove|pause|resume|enable|disable|show|history|run)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            ;;
+        logs)
+            if [[ ${#words[@]} -eq 3 ]]; then
+                COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            elif [[ ${#words[@]} -eq 4 ]]; then
+                COMPREPLY=($(compgen -W "--tail -f" -- "${cur}"))
+            fi
             ;;
         export)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
@@ -1711,9 +1725,15 @@ Options:
         logs)
             ensure_data_dir
             if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron logs <job-id>"
+                error "Usage: cc-cron logs <job-id> [--tail]"
             fi
-            cmd_logs "$1"
+            local logs_job_id="$1"
+            shift
+            local follow="false"
+            if [[ "${1:-}" == "--tail" || "${1:-}" == "-f" ]]; then
+                follow="true"
+            fi
+            cmd_logs "$logs_job_id" "$follow"
             ;;
         status)
             ensure_data_dir

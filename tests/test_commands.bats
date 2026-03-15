@@ -238,3 +238,33 @@ teardown() {
     run cmd_doctor
     [[ "$output" == *"flock"* ]]
 }
+
+@test "cmd_logs fails for non-existent job" {
+    run cmd_logs "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_logs shows log content" {
+    local job_id="testlog"
+    local log_file; log_file=$(get_log_file "$job_id")
+    echo "Test log entry" > "$log_file"
+
+    run cmd_logs "$job_id" "false"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Test log entry"* ]]
+
+    rm -f "$log_file"
+}
+
+@test "cmd_logs defaults to non-follow mode" {
+    local job_id="testcat"
+    local log_file; log_file=$(get_log_file "$job_id")
+    echo "Log content" > "$log_file"
+
+    run cmd_logs "$job_id" "false"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Logs for job"* ]]
+    [[ "$output" != *"Following logs"* ]]
+
+    rm -f "$log_file"
+}
