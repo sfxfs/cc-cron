@@ -174,7 +174,7 @@ require_job_id() {
     local command="$1"
     shift
     if [[ $# -lt 1 ]]; then
-        error "Usage: cc-cron ${command} <job-id>"
+        error "Usage: cc-cron ${command} <job-id>" "$EXIT_INVALID_ARGS"
     fi
 }
 
@@ -335,20 +335,20 @@ parse_job_options() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --cron)
-                [[ -z "${2:-}" ]] && error "--cron requires a cron expression"
+                [[ -z "${2:-}" ]] && error "--cron requires a cron expression" "$EXIT_INVALID_ARGS"
                 validate_cron "$2"
                 PARSED_CRON="$2"
                 PARSED_HAS_CHANGES=1
                 shift 2
                 ;;
             --prompt)
-                [[ -z "${2:-}" ]] && error "--prompt requires a prompt text"
+                [[ -z "${2:-}" ]] && error "--prompt requires a prompt text" "$EXIT_INVALID_ARGS"
                 PARSED_PROMPT="$2"
                 PARSED_HAS_CHANGES=1
                 shift 2
                 ;;
             --workdir)
-                [[ -z "${2:-}" ]] && error "--workdir requires a path"
+                [[ -z "${2:-}" ]] && error "--workdir requires a path" "$EXIT_INVALID_ARGS"
                 validate_workdir "$2"
                 PARSED_WORKDIR="$2"
                 PARSED_HAS_CHANGES=1
@@ -360,14 +360,14 @@ parse_job_options() {
                 shift 2
                 ;;
             --permission-mode)
-                [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
+                [[ -z "${2:-}" ]] && error "--permission-mode requires a mode" "$EXIT_INVALID_ARGS"
                 validate_permission_mode "$2"
                 PARSED_PERMISSION="$2"
                 PARSED_HAS_CHANGES=1
                 shift 2
                 ;;
             --timeout)
-                [[ -z "${2:-}" ]] && error "--timeout requires seconds"
+                [[ -z "${2:-}" ]] && error "--timeout requires seconds" "$EXIT_INVALID_ARGS"
                 validate_timeout "$2"
                 PARSED_TIMEOUT="$2"
                 PARSED_HAS_CHANGES=1
@@ -379,7 +379,7 @@ parse_job_options() {
                 shift 2
                 ;;
             *)
-                error "Unknown option: $1"
+                error "Unknown option: $1" "$EXIT_INVALID_ARGS"
                 ;;
         esac
     done
@@ -1811,8 +1811,8 @@ cmd_config() {
             local key="${2:-}"
             local value="${3:-}"
 
-            [[ -z "$key" ]] && error "Usage: cc-cron config set <key> <value>"
-            [[ -z "$value" ]] && error "Usage: cc-cron config set <key> <value>"
+            [[ -z "$key" ]] && error "Usage: cc-cron config set <key> <value>" "$EXIT_INVALID_ARGS"
+            [[ -z "$value" ]] && error "Usage: cc-cron config set <key> <value>" "$EXIT_INVALID_ARGS"
 
             # Validate key
             case "$key" in
@@ -1820,7 +1820,7 @@ cmd_config() {
                     # Valid keys
                     ;;
                 *)
-                    error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout"
+                    error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout" "$EXIT_INVALID_ARGS"
                     ;;
             esac
 
@@ -1874,7 +1874,7 @@ cmd_config() {
         unset)
             local key="${2:-}"
 
-            [[ -z "$key" ]] && error "Usage: cc-cron config unset <key>"
+            [[ -z "$key" ]] && error "Usage: cc-cron config unset <key>" "$EXIT_INVALID_ARGS"
 
             if [[ ! -f "$CONFIG_FILE" ]]; then
                 warn "No config file exists"
@@ -2600,7 +2600,7 @@ Options:
   --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or bypassPermissions)
   --timeout <seconds>         Timeout for job execution (default: \$CC_TIMEOUT or 0, no timeout)
   --tags <tags>               Comma-separated tags for organization (e.g., 'prod,backup')
-  --quiet, -q                 Only output the job ID (useful for scripting)"
+  --quiet, -q                 Only output the job ID (useful for scripting)" "$EXIT_INVALID_ARGS"
             fi
             local cron_expr="$1"
             local prompt="$2"
@@ -2623,24 +2623,24 @@ Options:
                         shift
                         ;;
                     --workdir)
-                        [[ -z "${2:-}" ]] && error "--workdir requires a path"
+                        [[ -z "${2:-}" ]] && error "--workdir requires a path" "$EXIT_INVALID_ARGS"
                         validate_workdir "$2"
                         job_workdir="$2"
                         shift 2
                         ;;
                     --model)
-                        [[ -z "${2:-}" ]] && error "--model requires a model name"
+                        [[ -z "${2:-}" ]] && error "--model requires a model name" "$EXIT_INVALID_ARGS"
                         job_model="$2"
                         shift 2
                         ;;
                     --permission-mode)
-                        [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
+                        [[ -z "${2:-}" ]] && error "--permission-mode requires a mode" "$EXIT_INVALID_ARGS"
                         validate_permission_mode "$2"
                         job_permission="$2"
                         shift 2
                         ;;
                     --timeout)
-                        [[ -z "${2:-}" ]] && error "--timeout requires seconds"
+                        [[ -z "${2:-}" ]] && error "--timeout requires seconds" "$EXIT_INVALID_ARGS"
                         validate_timeout "$2"
                         job_timeout="$2"
                         shift 2
@@ -2734,7 +2734,7 @@ Options:
         edit)
             ensure_data_dir
             if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron edit <job-id> [--cron <expr>] [--prompt <text>] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]"
+                error "Usage: cc-cron edit <job-id> [--cron <expr>] [--prompt <text>] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]" "$EXIT_INVALID_ARGS"
             fi
             local edit_job_id="$1"
             shift
@@ -2754,7 +2754,7 @@ Options:
         import)
             ensure_data_dir
             if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron import <file>"
+                error "Usage: cc-cron import <file>" "$EXIT_INVALID_ARGS"
             fi
             cmd_import "$1"
             ;;
