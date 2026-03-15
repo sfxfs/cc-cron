@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.3.8"
+readonly VERSION="2.3.9"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2135,12 +2135,14 @@ OPTIONS:
     --model <name>              Model to use: sonnet, opus, haiku, etc.
     --permission-mode <mode>    Permission mode: bypassPermissions, acceptEdits, auto, default
     --timeout <seconds>         Timeout for job execution (0 = no timeout, default)
+    --tags <tags>               Comma-separated tags for organization (e.g., 'prod,backup')
     --quiet, -q                 Only output the job ID (useful for scripting)
 
 EXAMPLES:
     cc-cron add "0 9 * * 1-5" "Run daily tests"
     cc-cron add "0 * * * *" "Check status" --model sonnet
     cc-cron add "30 14 28 2 *" "Reminder" --once
+    cc-cron add "0 0 * * *" "Daily task" --tags prod,backup
     cc-cron add "0 0 * * *" "Daily task" --quiet
 HELP
 }
