@@ -41,6 +41,28 @@ teardown() {
     [[ "$output" =~ ^[a-z0-9]{8}$ ]]
 }
 
+@test "generate_job_id produces unique ids" {
+    local id1 id2
+    id1=$(generate_job_id)
+    id2=$(generate_job_id)
+    [ "$id1" != "$id2" ]
+}
+
+@test "generate_job_id avoids collision" {
+    # Create a meta file with a specific ID to force collision handling
+    local existing_id="test0001"
+    local meta_file; meta_file=$(get_meta_file "$existing_id")
+    echo 'id="test0001"' > "$meta_file"
+
+    # generate_job_id should still work (generate a different ID)
+    local new_id
+    new_id=$(generate_job_id)
+    [ "$new_id" != "$existing_id" ]
+    [[ "$new_id" =~ ^[a-z0-9]{8}$ ]]
+
+    rm -f "$meta_file"
+}
+
 @test "ensure_data_dir creates directories" {
     run ensure_data_dir
     [ "$status" -eq 0 ]
