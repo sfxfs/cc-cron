@@ -391,7 +391,7 @@ crontab_has_entry() {
 # Remove entry from crontab matching pattern
 crontab_remove_entry() {
     local pattern="$1"
-    crontab -l 2>/dev/null | { grep -v "$pattern" || true; } | crontab -
+    get_crontab | { grep -v "$pattern" || true; } | crontab -
     invalidate_crontab_cache
 }
 
