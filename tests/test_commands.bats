@@ -1044,6 +1044,24 @@ teardown() {
     crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
 }
 
+@test "cmd_add with empty tags is allowed" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    LAST_CREATED_JOB_ID=""
+    # Empty tags should be allowed (results in no tags field in metadata)
+    cmd_add "0 10 * * *" "no tags job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    [ -n "$LAST_CREATED_JOB_ID" ]
+
+    local meta_file; meta_file=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$meta_file" ]]
+    # Tags field should not be present (empty string means no tags)
+    ! grep -q 'tags=' "$meta_file"
+
+    # Cleanup
+    rm -f "$meta_file"
+    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
+    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+}
+
 @test "cmd_show displays tags when set" {
     local job_id="taggedjob"
     local meta_file; meta_file=$(get_meta_file "$job_id")
