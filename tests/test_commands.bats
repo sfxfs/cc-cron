@@ -2208,6 +2208,41 @@ EOF
     [[ "$output" == *"Alias: enable"* ]]
 }
 
+@test "cmd_help export shows detailed help" {
+    run cmd_help "export"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron export"* ]]
+    [[ "$output" == *"Export jobs to JSON"* ]]
+}
+
+@test "cmd_help import shows detailed help" {
+    run cmd_help "import"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron import"* ]]
+    [[ "$output" == *"Import jobs from JSON"* ]]
+}
+
+@test "cmd_help remove shows detailed help" {
+    run cmd_help "remove"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron remove"* ]]
+    [[ "$output" == *"Remove a scheduled job"* ]]
+}
+
+@test "cmd_help doctor shows detailed help" {
+    run cmd_help "doctor"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron doctor"* ]]
+    [[ "$output" == *"Diagnose issues"* ]]
+}
+
+@test "cmd_help version shows detailed help" {
+    run cmd_help "version"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron version"* ]]
+    [[ "$output" == *"Show version"* ]]
+}
+
 @test "cmd_stats handles malformed history entries gracefully" {
     local job_id="malformedstats"
     local meta_file; meta_file=$(get_meta_file "$job_id")

@@ -2409,6 +2409,107 @@ EXAMPLES:
 HELP
 }
 
+help_export() {
+    cat << 'HELP'
+cc-cron export - Export jobs to JSON
+
+USAGE:
+    cc-cron export [job-id] [output-file]
+
+ARGUMENTS:
+    job-id       Job ID to export (optional, exports all if omitted)
+    output-file  File to write JSON output (optional, stdout if omitted)
+
+DESCRIPTION:
+    Export jobs to JSON format for backup or migration.
+    The exported JSON includes all job metadata and configuration.
+
+EXAMPLES:
+    cc-cron export                    # Export all jobs to stdout
+    cc-cron export "" backup.json     # Export all jobs to file
+    cc-cron export abc12345 job.json  # Export specific job
+HELP
+}
+
+help_import() {
+    cat << 'HELP'
+cc-cron import - Import jobs from JSON
+
+USAGE:
+    cc-cron import <file>
+
+ARGUMENTS:
+    file    JSON file to import jobs from
+
+DESCRIPTION:
+    Import jobs from a JSON file previously exported by cc-cron.
+    Requires jq to be installed for JSON parsing.
+
+    Invalid jobs (missing workdir or invalid cron) are skipped with warnings.
+
+EXAMPLES:
+    cc-cron import backup.json
+HELP
+}
+
+help_remove() {
+    cat << 'HELP'
+cc-cron remove - Remove a scheduled job
+
+USAGE:
+    cc-cron remove <job-id>
+
+ARGUMENTS:
+    job-id      Job ID to remove
+
+DESCRIPTION:
+    Remove a scheduled job permanently. This deletes the crontab entry
+    and all associated files (metadata, logs, history, run script).
+
+EXAMPLES:
+    cc-cron remove abc12345
+HELP
+}
+
+help_doctor() {
+    cat << 'HELP'
+cc-cron doctor - Diagnose issues
+
+USAGE:
+    cc-cron doctor
+
+DESCRIPTION:
+    Run diagnostics to check for common problems:
+    - Data directory existence
+    - Crontab access
+    - Claude CLI availability
+    - Required tools (flock, md5sum)
+    - Optional tools (jq for import)
+    - Lock file status
+    - Job consistency
+    - Disk space
+    - Directory permissions
+
+EXAMPLES:
+    cc-cron doctor
+HELP
+}
+
+help_version() {
+    cat << 'HELP'
+cc-cron version - Show version
+
+USAGE:
+    cc-cron version
+
+DESCRIPTION:
+    Display the current version of cc-cron.
+
+EXAMPLES:
+    cc-cron version
+HELP
+}
+
 # Show help
 cmd_help() {
     local topic="${1:-}"
@@ -2473,6 +2574,26 @@ cmd_help() {
             ;;
         resume|enable)
             help_resume
+            return 0
+            ;;
+        export)
+            help_export
+            return 0
+            ;;
+        import)
+            help_import
+            return 0
+            ;;
+        remove)
+            help_remove
+            return 0
+            ;;
+        doctor)
+            help_doctor
+            return 0
+            ;;
+        version)
+            help_version
             return 0
             ;;
         "")
