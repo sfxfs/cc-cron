@@ -21,12 +21,6 @@ LOCK_DIR="${LOCK_DIR:-${DATA_DIR}/locks}"
 CONFIG_FILE="${CONFIG_FILE:-${DATA_DIR}/config}"
 CRON_COMMENT_PREFIX="CC-CRON:"
 
-# Environment configuration (can be overridden by config file)
-CC_WORKDIR="${CC_WORKDIR:-$HOME}"
-CC_PERMISSION_MODE="${CC_PERMISSION_MODE:-bypassPermissions}"
-CC_MODEL="${CC_MODEL:-}"
-CC_TIMEOUT="${CC_TIMEOUT:-0}"
-
 # Crontab cache (performance optimization)
 _CRONTAB_CACHE=""
 
@@ -49,6 +43,19 @@ error() {
     echo -e "${RED}[ERROR]${NC} ${message}" >&2
     exit "$exit_code"
 }
+
+# Helper to validate and get numeric value safely
+safe_numeric() {
+    local value="$1"
+    local default="$2"
+    [[ "$value" =~ ^[0-9]+$ ]] && echo "$value" || echo "$default"
+}
+
+# Environment configuration (can be overridden by config file)
+CC_WORKDIR="${CC_WORKDIR:-$HOME}"
+CC_PERMISSION_MODE="${CC_PERMISSION_MODE:-bypassPermissions}"
+CC_MODEL="${CC_MODEL:-}"
+CC_TIMEOUT=$(safe_numeric "${CC_TIMEOUT:-}" "0")
 
 # Ensure data directory exists
 ensure_data_dir() {
@@ -395,6 +402,8 @@ cmd_add() {
     local job_model="${5:-$CC_MODEL}"
     local job_permission="${6:-$CC_PERMISSION_MODE}"
     local job_timeout="${7:-${CC_TIMEOUT:-0}}"
+    # Ensure timeout is numeric
+    job_timeout=$(safe_numeric "$job_timeout" "0")
 
     validate_cron "$cron_expr"
     validate_workdir "$job_workdir"
@@ -1704,7 +1713,8 @@ Options:
             local job_workdir="$CC_WORKDIR"
             local job_model="$CC_MODEL"
             local job_permission="$CC_PERMISSION_MODE"
-            local job_timeout="${CC_TIMEOUT:-0}"
+            local job_timeout
+            job_timeout=$(safe_numeric "${CC_TIMEOUT:-0}" "0")
 
             while [[ $# -gt 0 ]]; do
                 case "$1" in
