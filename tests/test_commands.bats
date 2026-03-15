@@ -1168,6 +1168,55 @@ EOF
     crontab_remove_entry "CC-CRON:${untagged_job}" 2>/dev/null || true
 }
 
+@test "cmd_list filters by non-existent tag shows no jobs" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create job with tag
+    cmd_add "0 9 * * *" "prod job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null
+    local prod_job="$LAST_CREATED_JOB_ID"
+
+    # List jobs with non-existent tag
+    run cmd_list "nonexistent"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"${prod_job}"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$prod_job")" "$(get_run_script "$prod_job")"
+    crontab_remove_entry "CC-CRON:${prod_job}" 2>/dev/null || true
+}
+
+@test "cmd_list filters by tag with multiple tags on job" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create job with multiple tags
+    cmd_add "0 9 * * *" "multi-tag job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup,daily" >/dev/null
+    local multi_job="$LAST_CREATED_JOB_ID"
+
+    # Filter by first tag
+    run cmd_list "prod"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"${multi_job}"* ]]
+
+    # Filter by middle tag
+    run cmd_list "backup"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"${multi_job}"* ]]
+
+    # Filter by last tag
+    run cmd_list "daily"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"${multi_job}"* ]]
+
+    # Filter by non-matching tag
+    run cmd_list "staging"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"${multi_job}"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$multi_job")" "$(get_run_script "$multi_job")"
+    crontab_remove_entry "CC-CRON:${multi_job}" 2>/dev/null || true
+}
+
 @test "cmd_edit updates tags" {
     local job_id="edittagjob"
     local meta_file; meta_file=$(get_meta_file "$job_id")
