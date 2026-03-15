@@ -816,18 +816,39 @@ calculate_next_run() {
         next_time=$((now + 60))
         schedule_desc="every minute"
     elif [[ "$hour" == "*" && "$minute" != "*" ]]; then
-        # Every hour at specific minute
-        local current_minute
-        current_minute=$(date +%M)
-        current_minute=$((10#$current_minute))
-        local target_minute=$((10#$minute))
+        # Check for step pattern like */5
+        if [[ "$minute" == */* ]]; then
+            local step="${minute#*/}"
+            if [[ "$step" =~ ^[0-9]+$ ]]; then
+                # Every N minutes
+                local current_minute
+                current_minute=$(date +%M)
+                current_minute=$((10#$current_minute))
+                local minutes_until=$(( (step - current_minute % step) % step ))
+                if [[ $minutes_until -eq 0 ]]; then
+                    minutes_until=$step
+                fi
+                next_time=$((now + minutes_until * 60))
+                schedule_desc="every ${step} minutes"
+            else
+                # Invalid step pattern
+                schedule_desc="custom schedule (${cron})"
+                next_time=0
+            fi
+        else
+            # Every hour at specific minute
+            local current_minute
+            current_minute=$(date +%M)
+            current_minute=$((10#$current_minute))
+            local target_minute=$((10#$minute))
 
-        local minutes_until=$(( (target_minute - current_minute + 60) % 60 ))
-        if [[ $minutes_until -eq 0 ]]; then
-            minutes_until=60
+            local minutes_until=$(( (target_minute - current_minute + 60) % 60 ))
+            if [[ $minutes_until -eq 0 ]]; then
+                minutes_until=60
+            fi
+            next_time=$((now + minutes_until * 60))
+            schedule_desc="hourly at minute $minute"
         fi
-        next_time=$((now + minutes_until * 60))
-        schedule_desc="hourly at minute $minute"
     elif [[ "$day" == "*" && "$month" == "*" && "$weekday" == "*" ]]; then
         # Daily at specific time
         local current_hour current_minute

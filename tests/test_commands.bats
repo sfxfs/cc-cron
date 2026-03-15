@@ -1909,6 +1909,24 @@ EOF
     [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
+@test "calculate_next_run handles minute step pattern" {
+    run calculate_next_run "*/5 * * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles minute step pattern */10" {
+    run calculate_next_run "*/10 * * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles minute step pattern */15" {
+    run calculate_next_run "*/15 * * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
 # Tests for cmd_stats function
 @test "cmd_stats shows no jobs message when empty" {
     # Clear any existing meta files
