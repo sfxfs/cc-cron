@@ -1737,3 +1737,60 @@ EOF
 
     rm -f "$run_script"
 }
+
+# Tests for calculate_next_run function
+@test "calculate_next_run handles every minute schedule" {
+    run calculate_next_run "* * * * *"
+    [ "$status" -eq 0 ]
+    # Should output a valid date-time format
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles hourly schedule" {
+    run calculate_next_run "30 * * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles daily schedule" {
+    run calculate_next_run "0 9 * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles weekly schedule" {
+    run calculate_next_run "0 9 * * 1"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles weekly schedule Sunday (0)" {
+    run calculate_next_run "0 10 * * 0"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles weekly schedule Saturday (6)" {
+    run calculate_next_run "0 14 * * 6"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run returns empty for complex schedule" {
+    # Monthly schedule is not supported, should return empty
+    run calculate_next_run "0 9 15 * *"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "calculate_next_run handles midnight schedule" {
+    run calculate_next_run "0 0 * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
+
+@test "calculate_next_run handles end of day schedule" {
+    run calculate_next_run "59 23 * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+}
