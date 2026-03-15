@@ -2800,7 +2800,7 @@ Options:
             cmd_help "${1:-}"
             ;;
         *)
-            error "Unknown command: ${command}. Run 'cc-cron help' for usage."
+            error "Unknown command: ${command}. Run 'cc-cron help' for usage." "$EXIT_INVALID_ARGS"
             ;;
     esac
 }
