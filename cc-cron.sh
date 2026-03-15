@@ -261,6 +261,16 @@ validate_workdir() {
 }
 
 # Crontab helper functions
+# Build a crontab entry for a job
+build_cron_entry() {
+    local job_id="$1"
+    local cron_expr="$2"
+    local run_script="$3"
+    local recurring="$4"
+    local prompt="$5"
+    echo "${cron_expr} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
+}
+
 crontab_add_entry() {
     local entry="$1"
     (crontab -l 2>/dev/null; echo "$entry") | crontab -
@@ -439,9 +449,8 @@ cmd_add() {
     local run_script
     run_script=$(generate_run_script "$job_id" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$recurring" "$prompt")
 
-    # Create the cron entry
-    local cron_entry="${cron_expr} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
-    crontab_add_entry "$cron_entry"
+    # Create the cron entry using helper
+    crontab_add_entry "$(build_cron_entry "$job_id" "$cron_expr" "$run_script" "$recurring" "$prompt")"
 
     # Save job metadata using helper
     write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script"
@@ -589,11 +598,9 @@ cmd_resume() {
     # Load metadata (errors if not found)
     load_job_meta "$job_id"
 
-    # Recreate cron entry
+    # Recreate cron entry using helper
     local run_script; run_script=$(get_run_script "$job_id")
-    local cron_entry="${cron} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
-
-    crontab_add_entry "$cron_entry"
+    crontab_add_entry "$(build_cron_entry "$job_id" "$cron" "$run_script" "$recurring" "$prompt")"
     rm -f "$paused_file"
 
     success "Resumed job: ${job_id}"
@@ -827,8 +834,7 @@ cmd_edit() {
 
     # Re-add to crontab if not paused
     if [[ "$was_paused" -eq 0 ]]; then
-        local cron_entry="${new_cron} ${new_run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${new_prompt:0:30}"
-        crontab_add_entry "$cron_entry"
+        crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
     fi
 
     success "Updated job: ${job_id}"
