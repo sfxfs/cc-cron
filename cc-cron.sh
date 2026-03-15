@@ -875,6 +875,76 @@ cmd_edit() {
     [[ "$workdir" != "$new_workdir" ]] && info "Workdir: ${workdir} → ${new_workdir}"
 }
 
+# Clone an existing job with a new ID
+cmd_clone() {
+    local source_id="$1"
+    shift || true
+
+    # Load source job metadata
+    load_job_meta "$source_id"
+
+    # Store source values
+    local src_cron="$cron"
+    local src_prompt="$prompt"
+    local src_recurring="$recurring"
+    local src_workdir="$workdir"
+    local src_model="${model:-}"
+    local src_permission="$permission_mode"
+    local src_timeout="${timeout:-0}"
+
+    # Parse optional overrides
+    local new_cron="$src_cron"
+    local new_prompt="$src_prompt"
+    local new_workdir="$src_workdir"
+    local new_model="$src_model"
+    local new_permission="$src_permission"
+    local new_timeout="$src_timeout"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --cron)
+                [[ -z "${2:-}" ]] && error "--cron requires a cron expression"
+                validate_cron "$2"
+                new_cron="$2"
+                shift 2
+                ;;
+            --prompt)
+                [[ -z "${2:-}" ]] && error "--prompt requires a prompt text"
+                new_prompt="$2"
+                shift 2
+                ;;
+            --workdir)
+                [[ -z "${2:-}" ]] && error "--workdir requires a path"
+                validate_workdir "$2"
+                new_workdir="$2"
+                shift 2
+                ;;
+            --model)
+                new_model="${2:-}"
+                shift 2
+                ;;
+            --permission-mode)
+                [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
+                new_permission="$2"
+                shift 2
+                ;;
+            --timeout)
+                [[ -z "${2:-}" ]] && error "--timeout requires seconds"
+                new_timeout="$2"
+                shift 2
+                ;;
+            *)
+                error "Unknown option: $1"
+                ;;
+        esac
+    done
+
+    # Create new job with copied settings
+    cmd_add "$new_cron" "$new_prompt" "$src_recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout"
+
+    success "Cloned job ${source_id} → ${LAST_CREATED_JOB_ID}"
+}
+
 # Show status of all jobs and recent executions
 cmd_status() {
     info "CC-Cron Status Report"
@@ -1590,6 +1660,13 @@ COMMANDS:
         --model <name>              Update model
         --permission-mode <mode>    Update permission mode
         --timeout <seconds>         Update timeout
+    clone <job-id> [options]        Clone an existing job with a new ID
+        --cron <expr>               Override cron schedule
+        --prompt <text>             Override prompt
+        --workdir <path>            Override working directory
+        --model <name>              Override model
+        --permission-mode <mode>    Override permission mode
+        --timeout <seconds>         Override timeout
     export [job-id] [file]          Export job(s) to JSON (to file or stdout)
     import <file>                   Import jobs from JSON file
     purge [days]                    Purge old logs and orphaned files (default: 7 days)
@@ -1639,9 +1716,9 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history run edit export import purge config doctor version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history run edit clone export import purge config doctor version completion help" -- "${cur}"))
             ;;
-        remove|pause|resume|enable|disable|show|history|run)
+        remove|pause|resume|enable|disable|show|history|run|clone)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         logs)
@@ -1662,6 +1739,13 @@ _cc_cron_completion() {
             fi
             ;;
         edit)
+            if [[ ${#words[@]} -eq 3 ]]; then
+                COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            else
+                COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout" -- "${cur}"))
+            fi
+            ;;
+        clone)
             if [[ ${#words[@]} -eq 3 ]]; then
                 COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             else
@@ -1818,6 +1902,13 @@ Options:
             local edit_job_id="$1"
             shift
             cmd_edit "$edit_job_id" "$@"
+            ;;
+        clone)
+            ensure_data_dir
+            require_job_id "$command" "$@"
+            local clone_source_id="$1"
+            shift
+            cmd_clone "$clone_source_id" "$@"
             ;;
         export)
             ensure_data_dir

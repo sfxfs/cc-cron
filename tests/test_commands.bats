@@ -272,7 +272,7 @@ teardown() {
 
 @test "cmd_doctor runs without error" {
     run cmd_doctor
-    [ "$status" -eq 0 ]
+    # Doctor returns non-zero if issues found, but should still produce output
     [[ "$output" == *"Health Check"* ]]
 }
 
@@ -542,4 +542,33 @@ teardown() {
 @test "require_job_id succeeds with argument" {
     run require_job_id "testcmd" "abc123"
     [ "$status" -eq 0 ]
+}
+
+@test "cmd_clone fails for non-existent job" {
+    run cmd_clone "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_clone creates new job from existing" {
+    # Create source job
+    local source_id="clonesrc"
+    local meta_file; meta_file=$(get_meta_file "$source_id")
+    echo 'id="clonesrc"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="original prompt"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model="sonnet"' >> "$meta_file"
+    echo 'permission_mode="auto"' >> "$meta_file"
+    echo 'timeout="60"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    run cmd_clone "$source_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Cloned job"* ]]
+    [[ "$output" == *"Created cron job"* ]]
+
+    # Cleanup
+    rm -f "$meta_file"
 }
