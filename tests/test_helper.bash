@@ -15,12 +15,6 @@ teardown_test_env() {
     [[ -d "${DATA_DIR:-}" ]] && rm -rf "$DATA_DIR"
 }
 
-# Extract and source functions from script
-load_script_functions() {
-    # Source the script functions without running main
-    source "${BATS_TEST_DIRNAME}/../cc-cron.sh" --source-only 2>/dev/null || true
-}
-
 # Create a test meta file with default values
 # Usage: create_test_meta <job_id> [workdir] [model] [permission_mode] [timeout]
 create_test_meta() {
