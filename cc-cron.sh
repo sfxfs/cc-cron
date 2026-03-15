@@ -217,7 +217,7 @@ generate_job_id() {
         job_id="${random_bytes:0:8}"
         [[ ! -f "$(get_meta_file "$job_id")" ]] && echo "$job_id" && return
     done
-    error "Failed to generate unique job ID after 10 attempts"
+    error "Failed to generate unique job ID after 10 attempts" "$EXIT_ERROR"
 }
 
 # Validate a single cron field value (optimized with case for speed)
@@ -733,7 +733,7 @@ cmd_logs() {
     if [[ ! -f "$log_file" ]]; then
         # Check if job exists to give better error message
         if [[ -f "$(get_meta_file "$job_id")" ]]; then
-            error "No logs found for job: ${job_id}. The job may not have run yet."
+            error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND"
         else
             error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
         fi
@@ -781,7 +781,7 @@ cmd_resume() {
     local paused_file="${DATA_DIR}/${job_id}.paused"
 
     if [[ ! -f "$paused_file" ]]; then
-        error "Job ${job_id} is not paused"
+        error "Job ${job_id} is not paused" "$EXIT_INVALID_ARGS"
     fi
 
     # Load metadata (errors if not found)
@@ -1103,7 +1103,7 @@ cmd_history() {
     if [[ ! -f "$log_file" ]]; then
         # Check if job exists to give better error message
         if [[ -f "$(get_meta_file "$job_id")" ]]; then
-            error "No logs found for job: ${job_id}. The job may not have run yet."
+            error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND"
         else
             error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
         fi
@@ -1149,7 +1149,7 @@ cmd_run() {
     local run_script; run_script=$(get_run_script "$job_id")
 
     if [[ ! -f "$run_script" ]]; then
-        error "Run script not found for job: ${job_id}"
+        error "Run script not found for job: ${job_id}" "$EXIT_NOT_FOUND"
     fi
 
     info "Running job ${job_id} immediately..."
@@ -1575,17 +1575,17 @@ cmd_import() {
     local input_file="$1"
 
     if [[ ! -f "$input_file" ]]; then
-        error "File not found: ${input_file}"
+        error "File not found: ${input_file}" "$EXIT_NOT_FOUND"
     fi
 
     # Check for jq
     if ! command -v jq &>/dev/null; then
-        error "jq is required for import. Install with: apt-get install jq or brew install jq"
+        error "jq is required for import. Install with: apt-get install jq or brew install jq" "$EXIT_ERROR"
     fi
 
     # Validate JSON syntax
     if ! jq '.' "$input_file" >/dev/null 2>&1; then
-        error "Invalid JSON in file: ${input_file}"
+        error "Invalid JSON in file: ${input_file}" "$EXIT_INVALID_ARGS"
     fi
 
     # Parse JSON
@@ -1690,7 +1690,7 @@ cmd_purge() {
     local dry_run="${2:-false}"
 
     # Validate days argument
-    [[ "$days" =~ ^[0-9]+$ ]] || error "Invalid days argument: ${days}"
+    [[ "$days" =~ ^[0-9]+$ ]] || error "Invalid days argument: ${days}" "$EXIT_INVALID_ARGS"
 
     info "Purging files older than ${days} days..."
     if [[ "$dry_run" == "true" ]]; then
@@ -1827,7 +1827,7 @@ cmd_config() {
             # Validate value
             case "$key" in
                 workdir)
-                    [[ -d "$value" ]] || error "Directory not found: ${value}"
+                    [[ -d "$value" ]] || error "Directory not found: ${value}" "$EXIT_INVALID_ARGS"
                     ;;
                 model)
                     # Accept any model name
@@ -1890,7 +1890,7 @@ cmd_config() {
             success "Unset ${key}"
             ;;
         *)
-            error "Unknown config action: ${action}. Use: list, set, unset"
+            error "Unknown config action: ${action}. Use: list, set, unset" "$EXIT_INVALID_ARGS"
             ;;
     esac
 }
