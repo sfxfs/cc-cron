@@ -351,3 +351,27 @@ teardown() {
 
     rm -f "$log_file" "$history_file"
 }
+
+@test "safe_numeric returns numeric value" {
+    run safe_numeric "123" "0"
+    [ "$status" -eq 0 ]
+    [ "$output" == "123" ]
+}
+
+@test "safe_numeric returns default for non-numeric" {
+    run safe_numeric "abc" "0"
+    [ "$status" -eq 0 ]
+    [ "$output" == "0" ]
+}
+
+@test "safe_numeric returns default for empty string" {
+    run safe_numeric "" "10"
+    [ "$status" -eq 0 ]
+    [ "$output" == "10" ]
+}
+
+@test "safe_numeric handles zero correctly" {
+    run safe_numeric "0" "10"
+    [ "$status" -eq 0 ]
+    [ "$output" == "0" ]
+}
