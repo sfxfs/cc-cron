@@ -1900,3 +1900,23 @@ EOF
     [[ "$output" == *"cc-cron stats"* ]]
     [[ "$output" == *"execution statistics"* ]]
 }
+
+@test "cmd_stats handles malformed history entries gracefully" {
+    local job_id="malformedstats"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    create_test_meta "$job_id"
+
+    # Create history with malformed entries
+    echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
+    echo 'malformed line without proper format' >> "$history_file"
+    echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="failed" exit_code="1"' >> "$history_file"
+
+    run cmd_stats "$job_id"
+    [ "$status" -eq 0 ]
+    # Should still show stats for valid entries
+    [[ "$output" == *"Total runs: 3"* ]]
+
+    rm -f "$meta_file" "$history_file"
+}
