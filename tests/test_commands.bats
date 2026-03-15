@@ -200,6 +200,78 @@ teardown() {
     rm -f "$meta_file"
 }
 
+@test "cmd_run executes job successfully" {
+    local job_id="runsuccess"
+    local job_workdir="$BATS_TEST_TMPDIR"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local run_script; run_script=$(get_run_script "$job_id")
+
+    # Create metadata
+    cat > "$meta_file" << EOF
+id="${job_id}"
+created="2024-01-01"
+cron="0 9 * * *"
+recurring="true"
+prompt="test prompt"
+workdir="${job_workdir}"
+model=""
+permission_mode="bypassPermissions"
+timeout="0"
+run_script="${run_script}"
+EOF
+
+    # Create a simple run script that succeeds
+    cat > "$run_script" << 'EOF'
+#!/bin/bash
+echo "Job executed successfully"
+exit 0
+EOF
+    chmod +x "$run_script"
+
+    run cmd_run "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Job executed successfully"* ]]
+    [[ "$output" == *"Job completed successfully"* ]]
+
+    rm -f "$meta_file" "$run_script"
+}
+
+@test "cmd_run handles job failure" {
+    local job_id="runfail"
+    local job_workdir="$BATS_TEST_TMPDIR"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local run_script; run_script=$(get_run_script "$job_id")
+
+    # Create metadata
+    cat > "$meta_file" << EOF
+id="${job_id}"
+created="2024-01-01"
+cron="0 9 * * *"
+recurring="true"
+prompt="test prompt"
+workdir="${job_workdir}"
+model=""
+permission_mode="bypassPermissions"
+timeout="0"
+run_script="${run_script}"
+EOF
+
+    # Create a run script that fails
+    cat > "$run_script" << 'EOF'
+#!/bin/bash
+echo "Job failed intentionally"
+exit 1
+EOF
+    chmod +x "$run_script"
+
+    run cmd_run "$job_id"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"Job failed intentionally"* ]]
+    [[ "$output" == *"exited with code: 1"* ]]
+
+    rm -f "$meta_file" "$run_script"
+}
+
 @test "cmd_next shows no jobs message when empty" {
     # Clear crontab cache
     _CRONTAB_CACHE=""
