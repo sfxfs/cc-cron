@@ -115,3 +115,21 @@ teardown() {
     run validate_cron "* * * * * *"
     [ "$status" -ne 0 ]
 }
+
+@test "validate_permission_mode accepts valid modes" {
+    run validate_permission_mode "bypassPermissions"
+    [ "$status" -eq 0 ]
+    run validate_permission_mode "acceptEdits"
+    [ "$status" -eq 0 ]
+    run validate_permission_mode "auto"
+    [ "$status" -eq 0 ]
+    run validate_permission_mode "default"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_permission_mode rejects invalid mode" {
+    run validate_permission_mode "invalid"
+    [ "$status" -ne 0 ]
+    run validate_permission_mode ""
+    [ "$status" -ne 0 ]
+}

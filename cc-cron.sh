@@ -295,6 +295,18 @@ validate_workdir() {
     [[ -d "$1" ]] || error "Directory not found: $1"
 }
 
+# Validate permission mode
+validate_permission_mode() {
+    case "$1" in
+        bypassPermissions|acceptEdits|auto|default)
+            return 0
+            ;;
+        *)
+            error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default"
+            ;;
+    esac
+}
+
 # Parse job modification options (--cron, --prompt, --workdir, --model, --permission-mode, --timeout)
 # Sets global variables: PARSED_CRON, PARSED_PROMPT, PARSED_WORKDIR, PARSED_MODEL, PARSED_PERMISSION, PARSED_TIMEOUT, PARSED_HAS_CHANGES
 parse_job_options() {
@@ -530,6 +542,7 @@ cmd_add() {
 
     validate_cron "$cron_expr"
     validate_workdir "$job_workdir"
+    validate_permission_mode "$job_permission"
 
     local job_id
     job_id=$(generate_job_id)
@@ -1333,13 +1346,7 @@ cmd_config() {
                     # Accept any model name
                     ;;
                 permission_mode)
-                    case "$value" in
-                        bypassPermissions|acceptEdits|auto|default)
-                            ;;
-                        *)
-                            error "Invalid permission mode: ${value}. Valid: bypassPermissions, acceptEdits, auto, default"
-                            ;;
-                    esac
+                    validate_permission_mode "$value"
                     ;;
                 timeout)
                     [[ "$value" =~ ^[0-9]+$ ]] || error "Timeout must be a number"
