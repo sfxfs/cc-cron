@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.0.0"
+readonly VERSION="2.0.1"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -794,7 +794,7 @@ calculate_next_run() {
         fi
         next_time=$((now + minutes_until * 60))
         schedule_desc="daily at ${hour}:${minute}"
-    elif [[ "$weekday" != "*" && "$weekday" != "*" ]]; then
+    elif [[ "$day" == "*" && "$month" == "*" && "$weekday" != "*" ]]; then
         # Weekly
         local current_weekday
         current_weekday=$(date +%u)  # 1-7, Monday is 1
