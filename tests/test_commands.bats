@@ -1809,3 +1809,94 @@ EOF
     [ "$status" -eq 0 ]
     [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
+
+# Tests for cmd_stats function
+@test "cmd_stats shows no jobs message when empty" {
+    # Clear any existing meta files
+    rm -f "${LOG_DIR}"/*.meta 2>/dev/null || true
+
+    run cmd_stats
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No jobs found"* ]]
+}
+
+@test "cmd_stats shows stats for specific job" {
+    local job_id="statsjob"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    # Create meta file
+    create_test_meta "$job_id"
+
+    # Create history file with some entries
+    echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
+    echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="success" exit_code="0"' >> "$history_file"
+    echo 'start="2024-01-03 10:00:00" end="2024-01-03 10:02:00" status="failed" exit_code="1"' >> "$history_file"
+
+    run cmd_stats "$job_id"
+    [ "$status" -eq 0 ]
+    # Job ID appears in output (color codes may be present)
+    [[ "$output" == *"${job_id}"* ]]
+    [[ "$output" == *"Total runs: 3"* ]]
+    [[ "$output" == *"Success: 2"* ]]
+    [[ "$output" == *"Failed"* ]]
+    [[ "$output" == *"1"* ]]
+    [[ "$output" == *"Success rate: 66%"* ]]
+
+    rm -f "$meta_file" "$history_file"
+}
+
+@test "cmd_stats fails for non-existent job" {
+    run cmd_stats "nonexistent123"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"not found"* ]]
+}
+
+@test "cmd_stats shows stats for all jobs" {
+    local job_id1="statsjob1"
+    local job_id2="statsjob2"
+    local meta_file1; meta_file1=$(get_meta_file "$job_id1")
+    local meta_file2; meta_file2=$(get_meta_file "$job_id2")
+    local history_file1; history_file1=$(get_history_file "$job_id1")
+    local history_file2; history_file2=$(get_history_file "$job_id2")
+
+    # Create meta files
+    create_test_meta "$job_id1"
+    create_test_meta "$job_id2"
+
+    # Create history files
+    echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file1"
+    echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:05:00" status="failed" exit_code="1"' > "$history_file2"
+
+    run cmd_stats
+    [ "$status" -eq 0 ]
+    # Job IDs appear in output (color codes may be present)
+    [[ "$output" == *"${job_id1}"* ]]
+    [[ "$output" == *"${job_id2}"* ]]
+
+    rm -f "$meta_file1" "$meta_file2" "$history_file1" "$history_file2"
+}
+
+@test "cmd_stats handles job with no history" {
+    local job_id="statsnohistory"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    create_test_meta "$job_id"
+
+    run cmd_stats "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Total runs: 0"* ]]
+    [[ "$output" == *"Success: 0"* ]]
+    # Failed has extra space for alignment
+    [[ "$output" == *"Failed"* ]]
+    [[ "$output" == *"0"* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "cmd_help stats shows detailed help" {
+    run cmd_help "stats"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron stats"* ]]
+    [[ "$output" == *"execution statistics"* ]]
+}

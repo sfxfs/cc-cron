@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.0.5"
+readonly VERSION="2.1.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1212,6 +1212,121 @@ cmd_status() {
     echo -e "Summary: ${GREEN}${success_count} succeeded${NC}, ${RED}${failed_count} failed${NC}, ${YELLOW}${running_count} running${NC}, ${unknown_count} unknown${NC}"
 }
 
+# Show execution statistics for jobs
+cmd_stats() {
+    local job_id="${1:-}"
+
+    if [[ -n "$job_id" ]]; then
+        # Show stats for specific job
+        _show_job_stats "$job_id"
+    else
+        # Show stats for all jobs
+        local found=0
+        for meta_file in "${LOG_DIR}"/*.meta; do
+            [[ -f "$meta_file" ]] || continue
+            local id
+            id=$(basename "$meta_file" .meta)
+            _show_job_stats "$id"
+            found=$((found + 1))
+        done
+
+        if [[ $found -eq 0 ]]; then
+            info "No jobs found."
+        fi
+    fi
+}
+
+# Helper function to show stats for a single job
+_show_job_stats() {
+    local job_id="$1"
+    local history_file; history_file=$(get_history_file "$job_id")
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    if [[ ! -f "$meta_file" ]]; then
+        error "Job not found: ${job_id}"
+    fi
+
+    source "$meta_file"
+
+    echo -e "Job: ${GREEN}${job_id}${NC}"
+    echo "Schedule: ${cron}"
+
+    # Count executions from history file
+    local total_runs=0
+    local success_count=0
+    local failed_count=0
+    local last_success=""
+    local last_failure=""
+    local total_duration=0
+    local duration_count=0
+
+    if [[ -f "$history_file" ]]; then
+        while IFS= read -r line; do
+            ((total_runs++)) || true
+
+            # Parse status
+            local h_status
+            h_status="${line#*status=\"}" && h_status="${h_status%%\"*}"
+
+            # Parse times for duration calculation
+            local h_start h_end
+            h_start="${line#*start=\"}" && h_start="${h_start%%\"*}"
+            h_end="${line#*end=\"}" && h_end="${h_end%%\"*}"
+
+            case "$h_status" in
+                success)
+                    ((success_count++)) || true
+                    last_success="$h_end"
+                    ;;
+                failed)
+                    ((failed_count++)) || true
+                    last_failure="$h_end"
+                    ;;
+            esac
+
+            # Calculate duration if we have both start and end
+            if [[ -n "$h_start" && -n "$h_end" ]]; then
+                local start_ts end_ts duration
+                start_ts=$(date -d "$h_start" +%s 2>/dev/null) || continue
+                end_ts=$(date -d "$h_end" +%s 2>/dev/null) || continue
+                duration=$((end_ts - start_ts))
+                total_duration=$((total_duration + duration))
+                ((duration_count++)) || true
+            fi
+        done < "$history_file"
+    fi
+
+    echo "Total runs: ${total_runs}"
+    echo -e "  ${GREEN}Success: ${success_count}${NC}"
+    echo -e "  ${RED}Failed:  ${failed_count}${NC}"
+
+    # Calculate success rate
+    if [[ $total_runs -gt 0 ]]; then
+        local success_rate
+        success_rate=$((success_count * 100 / total_runs))
+        echo "  Success rate: ${success_rate}%"
+    fi
+
+    # Calculate average duration
+    if [[ $duration_count -gt 0 ]]; then
+        local avg_duration
+        avg_duration=$((total_duration / duration_count))
+        local avg_min=$((avg_duration / 60))
+        local avg_sec=$((avg_duration % 60))
+        echo "  Avg duration: ${avg_min}m ${avg_sec}s"
+    fi
+
+    # Show last execution times
+    if [[ -n "$last_success" ]]; then
+        echo "  Last success: ${last_success}"
+    fi
+    if [[ -n "$last_failure" ]]; then
+        echo "  Last failure: ${last_failure}"
+    fi
+
+    echo
+}
+
 # Export jobs to JSON format
 cmd_export() {
     local job_id="${1:-}"
@@ -1996,6 +2111,30 @@ EXAMPLES:
 HELP
 }
 
+help_stats() {
+    cat << 'HELP'
+cc-cron stats - Show execution statistics
+
+USAGE:
+    cc-cron stats [job-id]
+
+ARGUMENTS:
+    [job-id]   Optional job ID to show specific job stats
+
+DESCRIPTION:
+    Displays execution statistics including:
+    - Total runs
+    - Success/failure counts
+    - Success rate
+    - Average duration
+    - Last success/failure times
+
+EXAMPLES:
+    cc-cron stats           # Show stats for all jobs
+    cc-cron stats abc123    # Show stats for specific job
+HELP
+}
+
 help_next() {
     cat << 'HELP'
 cc-cron next - Show upcoming scheduled runs
@@ -2065,6 +2204,10 @@ cmd_help() {
             help_next
             return 0
             ;;
+        stats)
+            help_stats
+            return 0
+            ;;
         "")
             # No argument - show general help
             ;;
@@ -2092,6 +2235,7 @@ COMMANDS:
     resume <job-id>         Resume a paused job
     show <job-id>           Show job details
     history <job-id>        Show execution history
+    stats [job-id]          Show execution statistics
     run <job-id>            Run a job immediately
     next [job-id]           Show upcoming scheduled runs
     edit <job-id>           Edit a job
@@ -2114,6 +2258,7 @@ MORE HELP:
     cc-cron help run       Run a job immediately
     cc-cron help show      View job details
     cc-cron help history   View execution history
+    cc-cron help stats     View execution statistics
 
 CRON FORMAT:
     * * * * *
@@ -2150,7 +2295,7 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history run next edit clone export import purge config doctor version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history stats run next edit clone export import purge config doctor version completion help" -- "${cur}"))
             ;;
         remove|pause|resume|enable|disable|show|history|run|clone|next)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
@@ -2330,6 +2475,10 @@ Options:
             ensure_data_dir
             require_job_id "$command" "$@"
             cmd_history "$1" "${2:-20}"
+            ;;
+        stats)
+            ensure_data_dir
+            cmd_stats "${1:-}"
             ;;
         run)
             ensure_data_dir
