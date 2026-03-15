@@ -989,17 +989,17 @@ teardown() {
 
 @test "cmd_add validates cron expression" {
     run cmd_add "invalid" "test" "true" "$BATS_TEST_TMPDIR" "" "bypassPermissions" "0"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add validates workdir" {
     run cmd_add "0 9 * * *" "test" "true" "/nonexistent/path" "" "bypassPermissions" "0"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add validates permission mode" {
     run cmd_add "0 9 * * *" "test" "true" "$BATS_TEST_TMPDIR" "" "invalid_mode" "0"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add creates one-shot job" {
@@ -1189,7 +1189,7 @@ EOF
 
 @test "cmd_help unknown topic returns error" {
     run cmd_help "unknowncommand"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 1 ]  # General error
     [[ "$output" == *"Unknown help topic"* ]]
 }
 
@@ -1199,7 +1199,7 @@ EOF
     echo "not valid json" > "$json_file"
 
     run cmd_import "$json_file"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_import handles empty jobs array" {
@@ -1302,13 +1302,13 @@ EOF
 
 @test "parse_job_options validates permission-mode" {
     run parse_job_options --permission-mode "invalid_mode"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     [[ "$output" == *"Invalid permission mode"* ]]
 }
 
 @test "parse_job_options validates timeout" {
     run parse_job_options --timeout "not_a_number"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     [[ "$output" == *"Timeout must be a non-negative number"* ]]
 }
 
@@ -1329,7 +1329,7 @@ EOF
 
 @test "parse_job_options rejects invalid workdir" {
     run parse_job_options --workdir "/nonexistent/path"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     [[ "$output" == *"Directory not found"* ]]
 }
 
@@ -1589,7 +1589,7 @@ EOF
 
 @test "error function outputs to stderr" {
     run error "Test error message"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 1 ]  # EXIT_ERROR (default)
     [[ "$output" == *"Test error message"* ]]
 }
 
@@ -1658,7 +1658,7 @@ EOF
     touch "$paused_file"
 
     run cmd_resume "$job_id"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
     [[ "$output" == *"not found"* ]]
 
     rm -f "$paused_file"
@@ -2112,7 +2112,7 @@ EOF
 
 @test "cmd_stats fails for non-existent job" {
     run cmd_stats "nonexistent123"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
     [[ "$output" == *"not found"* ]]
 }
 
