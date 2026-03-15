@@ -1256,6 +1256,68 @@ EOF
     rm -f "$meta_file" "$log_file"
 }
 
+@test "cmd_list --json outputs valid JSON" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create a job
+    cmd_add "0 9 * * *" "json test job" "true" "$job_workdir" "sonnet" "bypassPermissions" "0" "false" "test" >/dev/null
+    local job_id="$LAST_CREATED_JOB_ID"
+
+    run cmd_list "" "true"
+    [ "$status" -eq 0 ]
+    # Should be valid JSON array
+    [[ "$output" == "["*"]" ]]
+    # Should contain job id
+    [[ "$output" == *'"id":"'$job_id'"'* ]]
+    # Should contain model
+    [[ "$output" == *'"model":"sonnet"'* ]]
+    # Should contain tags
+    [[ "$output" == *'"tags":"test"'* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")"
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+}
+
+@test "cmd_list --json with tag filter" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create two jobs with different tags
+    cmd_add "0 9 * * *" "job one" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null
+    local job1="$LAST_CREATED_JOB_ID"
+
+    cmd_add "0 10 * * *" "job two" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "dev" >/dev/null
+    local job2="$LAST_CREATED_JOB_ID"
+
+    # Filter by prod tag
+    run cmd_list "prod" "true"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'"id":"'$job1'"'* ]]
+    [[ "$output" != *'"id":"'$job2'"'* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$job1")" "$(get_run_script "$job1")"
+    rm -f "$(get_meta_file "$job2")" "$(get_run_script "$job2")"
+    crontab_remove_entry "CC-CRON:${job1}" 2>/dev/null || true
+    crontab_remove_entry "CC-CRON:${job2}" 2>/dev/null || true
+}
+
+@test "cmd_list --json empty when no jobs" {
+    # Clear crontab cache
+    _CRONTAB_CACHE=""
+
+    # Only test if crontab is empty
+    local crontab_content
+    crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
+    if [[ "$crontab_content" == *"CC-CRON:"* ]]; then
+        skip "crontab has existing cc-cron jobs"
+    fi
+
+    run cmd_list "" "true"
+    [ "$status" -eq 0 ]
+    [[ "$output" == "["$'\n'"]" ]] || [[ "$output" == "[]" ]]
+}
+
 @test "cmd_status shows summary" {
     run cmd_status
     [ "$status" -eq 0 ]

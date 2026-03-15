@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.3.9"
+readonly VERSION="2.4.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -629,11 +629,15 @@ cmd_add() {
 # List all cc-cron jobs (optimized: single crontab read)
 cmd_list() {
     local filter_tag="${1:-}"
+    local json_output="${2:-false}"
     local found=0
+    local -a jobs=()
 
-    echo "Scheduled Claude Code Cron Jobs:"
-    echo "================================="
-    echo
+    if [[ "$json_output" != "true" ]]; then
+        echo "Scheduled Claude Code Cron Jobs:"
+        echo "================================="
+        echo
+    fi
 
     # Single crontab read with caching
     local crontab_content
@@ -670,32 +674,58 @@ cmd_list() {
                 fi
 
                 found=1
-                echo "Job ID: ${id}"
-                echo "  Created: ${created}"
-                echo "  Schedule: ${cron}"
-                echo "  Recurring: ${recurring}"
-                echo "  Workdir: ${workdir:-$CC_WORKDIR}"
-                if [[ -n "${model:-}" ]]; then
-                    echo "  Model: ${model}"
+
+                if [[ "$json_output" == "true" ]]; then
+                    # Build JSON object for this job
+                    local job_json="{\"id\":\"${id}\",\"created\":\"${created}\",\"cron\":\"${cron}\",\"recurring\":${recurring},\"workdir\":\"${workdir:-$CC_WORKDIR}\",\"permission\":\"${permission_mode:-$CC_PERMISSION_MODE}\",\"prompt\":\"${prompt//\"/\\\"}\""
+                    [[ -n "${model:-}" ]] && job_json+=",\"model\":\"${model}\""
+                    [[ -n "${tags:-}" ]] && job_json+=",\"tags\":\"${tags}\""
+                    job_json+="}"
+                    jobs+=("$job_json")
+                else
+                    echo "Job ID: ${id}"
+                    echo "  Created: ${created}"
+                    echo "  Schedule: ${cron}"
+                    echo "  Recurring: ${recurring}"
+                    echo "  Workdir: ${workdir:-$CC_WORKDIR}"
+                    if [[ -n "${model:-}" ]]; then
+                        echo "  Model: ${model}"
+                    fi
+                    echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
+                    if [[ -n "${tags:-}" ]]; then
+                        echo "  Tags: ${tags}"
+                    fi
+                    echo "  Prompt: ${prompt}"
+                    echo
                 fi
-                echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
-                if [[ -n "${tags:-}" ]]; then
-                    echo "  Tags: ${tags}"
-                fi
-                echo "  Prompt: ${prompt}"
-                echo
             else
                 # Skip jobs without metadata when filtering
                 [[ -n "$filter_tag" ]] && continue
                 found=1
-                echo "Job ID: ${job_id} (metadata missing)"
-                echo "  Raw: ${line}"
-                echo
+                if [[ "$json_output" == "true" ]]; then
+                    jobs+=("{\"id\":\"${job_id}\",\"error\":\"metadata missing\"}")
+                else
+                    echo "Job ID: ${job_id} (metadata missing)"
+                    echo "  Raw: ${line}"
+                    echo
+                fi
             fi
         fi
     done <<< "$crontab_content"
 
-    if [[ "$found" -eq 0 ]]; then
+    if [[ "$json_output" == "true" ]]; then
+        echo "["
+        local first=1
+        for job in "${jobs[@]}"; do
+            if [[ $first -eq 1 ]]; then
+                echo "  ${job}"
+                first=0
+            else
+                echo "  ,${job}"
+            fi
+        done
+        echo "]"
+    elif [[ "$found" -eq 0 ]]; then
         if [[ -n "$filter_tag" ]]; then
             info "No jobs found with tag: ${filter_tag}"
         else
@@ -2372,10 +2402,13 @@ help_list() {
 cc-cron list - List scheduled jobs
 
 USAGE:
-    cc-cron list [tag]
+    cc-cron list [tag] [options]
 
 ARGUMENTS:
     tag      Filter jobs by tag (optional)
+
+OPTIONS:
+    --json   Output in JSON format (machine-readable)
 
 DESCRIPTION:
     Lists all scheduled jobs with their details.
@@ -2385,6 +2418,8 @@ EXAMPLES:
     cc-cron list              # List all jobs
     cc-cron list prod         # List only jobs tagged 'prod'
     cc-cron list backup       # List only jobs tagged 'backup'
+    cc-cron list --json       # List all jobs in JSON format
+    cc-cron list prod --json  # List 'prod' jobs in JSON format
 HELP
 }
 
@@ -2888,12 +2923,17 @@ Options:
         list)
             ensure_data_dir
             local filter_tag=""
+            local json_output="false"
             # Support both positional argument and --tag flag
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     --tag)
                         filter_tag="${2:-}"
                         shift 2
+                        ;;
+                    --json)
+                        json_output="true"
+                        shift
                         ;;
                     -*)
                         shift
@@ -2905,7 +2945,7 @@ Options:
                         ;;
                 esac
             done
-            cmd_list "$filter_tag"
+            cmd_list "$filter_tag" "$json_output"
             ;;
         remove)
             ensure_data_dir
