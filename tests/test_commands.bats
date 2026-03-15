@@ -1303,6 +1303,89 @@ EOF
     crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
 }
 
+@test "cmd_edit clears model with empty string" {
+    local job_id="editmodel"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Create initial metadata with model
+    cat > "$meta_file" << EOF
+id="${job_id}"
+created="2024-01-01 10:00:00"
+cron="0 9 * * *"
+recurring="true"
+prompt="test prompt"
+workdir="/tmp"
+model="sonnet"
+permission_mode="bypassPermissions"
+timeout="0"
+run_script="/tmp/run.sh"
+EOF
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --model ""
+    [ "$status" -eq 0 ]
+
+    # Verify model removed from metadata
+    ! grep -q 'model=' "$meta_file" || [[ $(grep 'model=' "$meta_file") == 'model=""' ]]
+
+    rm -f "$meta_file"
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+}
+
+@test "cmd_clone with model override" {
+    local source_id="clonemodel"
+    local meta_file; meta_file=$(get_meta_file "$source_id")
+    echo 'id="clonemodel"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="model job"' >> "$meta_file"
+    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
+    echo 'model="opus"' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    cmd_clone "$source_id" --model "haiku" >/dev/null
+
+    # Verify cloned job has overridden model
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$cloned_meta" ]]
+    grep -q 'model="haiku"' "$cloned_meta"
+
+    # Cleanup
+    rm -f "$meta_file" "$cloned_meta"
+}
+
+@test "cmd_clone with empty model override clears model" {
+    local source_id="clonemodel2"
+    local meta_file; meta_file=$(get_meta_file "$source_id")
+    echo 'id="clonemodel2"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="model job"' >> "$meta_file"
+    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
+    echo 'model="opus"' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    cmd_clone "$source_id" --model "" >/dev/null
+
+    # Verify cloned job has no model
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$cloned_meta" ]]
+    ! grep -q 'model=' "$cloned_meta" || [[ $(grep 'model=' "$cloned_meta") == 'model=""' ]]
+
+    # Cleanup
+    rm -f "$meta_file" "$cloned_meta"
+}
+
 @test "cmd_add with model and timeout" {
     local job_workdir="$BATS_TEST_TMPDIR"
     run cmd_add "0 9 * * *" "with model" "true" "$job_workdir" "sonnet" "auto" "300"

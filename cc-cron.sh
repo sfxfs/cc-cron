@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.3.6"
+readonly VERSION="2.3.7"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -327,6 +327,7 @@ parse_job_options() {
     PARSED_PROMPT=""
     PARSED_WORKDIR=""
     PARSED_MODEL=""
+    PARSED_MODEL_SET=0
     PARSED_PERMISSION=""
     PARSED_TIMEOUT=""
     PARSED_TAGS=""
@@ -357,6 +358,7 @@ parse_job_options() {
                 ;;
             --model)
                 PARSED_MODEL="${2:-}"
+                PARSED_MODEL_SET=1
                 PARSED_HAS_CHANGES=1
                 shift 2
                 ;;
@@ -1198,7 +1200,13 @@ cmd_edit() {
     local new_cron="${PARSED_CRON:-$cron}"
     local new_prompt="${PARSED_PROMPT:-$prompt}"
     local new_workdir="${PARSED_WORKDIR:-$workdir}"
-    local new_model="${PARSED_MODEL:-${model:-}}"
+    # For model, use PARSED_MODEL_SET to distinguish between "not passed" and "passed empty"
+    local new_model
+    if [[ "$PARSED_MODEL_SET" -eq 1 ]]; then
+        new_model="$PARSED_MODEL"
+    else
+        new_model="${model:-}"
+    fi
     local new_permission="${PARSED_PERMISSION:-$permission_mode}"
     local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
     # For tags, use PARSED_TAGS_SET to distinguish between "not passed" and "passed empty"
@@ -1270,7 +1278,13 @@ cmd_clone() {
     local new_cron="${PARSED_CRON:-$cron}"
     local new_prompt="${PARSED_PROMPT:-$prompt}"
     local new_workdir="${PARSED_WORKDIR:-$workdir}"
-    local new_model="${PARSED_MODEL:-${model:-}}"
+    # For model, use PARSED_MODEL_SET to distinguish between "not passed" and "passed empty"
+    local new_model
+    if [[ "$PARSED_MODEL_SET" -eq 1 ]]; then
+        new_model="$PARSED_MODEL"
+    else
+        new_model="${model:-}"
+    fi
     local new_permission="${PARSED_PERMISSION:-$permission_mode}"
     local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
     # For tags, use PARSED_TAGS_SET to distinguish between "not passed" and "passed empty"
