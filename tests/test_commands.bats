@@ -532,3 +532,14 @@ teardown() {
 
     rm -f "$meta_file"
 }
+
+@test "require_job_id fails without argument" {
+    run require_job_id "testcmd"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Usage: cc-cron testcmd <job-id>"* ]]
+}
+
+@test "require_job_id succeeds with argument" {
+    run require_job_id "testcmd" "abc123"
+    [ "$status" -eq 0 ]
+}
