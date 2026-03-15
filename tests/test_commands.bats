@@ -509,6 +509,43 @@ teardown() {
     rm -f "$log_file" "$history_file"
 }
 
+@test "cmd_history falls back to log file when no history" {
+    local job_id="histfallback"
+    local log_file; log_file=$(get_log_file "$job_id")
+
+    echo "Log entry line 1" > "$log_file"
+    echo "Log entry line 2" >> "$log_file"
+
+    run cmd_history "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No structured history available"* ]]
+    [[ "$output" == *"Log entry line 1"* ]]
+
+    rm -f "$log_file"
+}
+
+@test "cmd_history respects lines argument" {
+    local job_id="histlines"
+    local log_file; log_file=$(get_log_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    echo "Log entry" > "$log_file"
+    # Create multiple history entries
+    for i in {1..5}; do
+        echo "start=\"2024-01-0${i} 10:00:00\" end=\"2024-01-0${i} 10:05:00\" status=\"success\" exit_code=\"0\"" >> "$history_file"
+    done
+
+    # Request only 2 lines
+    run cmd_history "$job_id" 2
+    [ "$status" -eq 0 ]
+    # Should only show 2 entries (last 2 lines of history)
+    local success_count
+    success_count=$(echo "$output" | grep -c "✓" || echo "0")
+    [ "$success_count" -eq 2 ]
+
+    rm -f "$log_file" "$history_file"
+}
+
 @test "safe_numeric returns numeric value" {
     run safe_numeric "123" "0"
     [ "$status" -eq 0 ]
@@ -728,6 +765,30 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"Cloned job"* ]]
     [[ "$output" == *"Created cron job"* ]]
+
+    # Cleanup
+    rm -f "$meta_file"
+}
+
+@test "cmd_clone with options overrides source values" {
+    # Create source job
+    local source_id="clonesrc2"
+    local meta_file; meta_file=$(get_meta_file "$source_id")
+    echo 'id="clonesrc2"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="original prompt"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    # Clone with custom cron
+    run cmd_clone "$source_id" --cron "0 12 * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Cloned job"* ]]
 
     # Cleanup
     rm -f "$meta_file"
