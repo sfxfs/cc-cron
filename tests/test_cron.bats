@@ -133,3 +133,23 @@ teardown() {
     run validate_permission_mode ""
     [ "$status" -ne 0 ]
 }
+
+@test "validate_timeout accepts valid values" {
+    run validate_timeout "0"
+    [ "$status" -eq 0 ]
+    run validate_timeout "60"
+    [ "$status" -eq 0 ]
+    run validate_timeout "3600"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_timeout rejects invalid values" {
+    run validate_timeout "-1"
+    [ "$status" -ne 0 ]
+    run validate_timeout "abc"
+    [ "$status" -ne 0 ]
+    run validate_timeout ""
+    [ "$status" -ne 0 ]
+    run validate_timeout "1.5"
+    [ "$status" -ne 0 ]
+}

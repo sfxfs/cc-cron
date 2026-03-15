@@ -307,6 +307,11 @@ validate_permission_mode() {
     esac
 }
 
+# Validate timeout value
+validate_timeout() {
+    [[ "$1" =~ ^[0-9]+$ ]] || error "Timeout must be a non-negative number"
+}
+
 # Parse job modification options (--cron, --prompt, --workdir, --model, --permission-mode, --timeout)
 # Sets global variables: PARSED_CRON, PARSED_PROMPT, PARSED_WORKDIR, PARSED_MODEL, PARSED_PERMISSION, PARSED_TIMEOUT, PARSED_HAS_CHANGES
 parse_job_options() {
@@ -347,12 +352,14 @@ parse_job_options() {
                 ;;
             --permission-mode)
                 [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
+                validate_permission_mode "$2"
                 PARSED_PERMISSION="$2"
                 PARSED_HAS_CHANGES=1
                 shift 2
                 ;;
             --timeout)
                 [[ -z "${2:-}" ]] && error "--timeout requires seconds"
+                validate_timeout "$2"
                 PARSED_TIMEOUT="$2"
                 PARSED_HAS_CHANGES=1
                 shift 2
@@ -1349,7 +1356,7 @@ cmd_config() {
                     validate_permission_mode "$value"
                     ;;
                 timeout)
-                    [[ "$value" =~ ^[0-9]+$ ]] || error "Timeout must be a number"
+                    validate_timeout "$value"
                     ;;
             esac
 
