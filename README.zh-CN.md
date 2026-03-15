@@ -82,6 +82,30 @@ eval "$(cc-cron completion)"
 ./cc-cron.sh resume <job-id>
 ```
 
+### 查看任务详情
+
+显示单个任务的完整信息：
+
+```bash
+./cc-cron.sh show <job-id>
+```
+
+显示内容包括：
+- 任务元数据（ID、创建时间、调度、是否循环、工作目录、模型、权限）
+- 完整的提示文本
+- 最近执行状态（如有）
+- 执行统计（总运行次数、成功/失败次数）
+
+### 查看执行历史
+
+显示任务的执行历史：
+
+```bash
+./cc-cron.sh history <job-id> [行数]
+```
+
+默认显示 20 行。每条记录显示开始时间、结束时间和状态。
+
 ### 查看版本
 
 ```bash
@@ -98,8 +122,8 @@ eval "$(cc-cron completion)"
 ```
 
 **功能：**
-- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`version`、`completion`
-- `remove`、`logs`、`pause`、`resume` 的任务 ID 补全
+- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`version`、`completion`
+- `remove`、`logs`、`pause`、`resume`、`show`、`history` 的任务 ID 补全
 - 模型名：`sonnet`、`opus`、`haiku`
 - 权限模式：`bypassPermissions`、`acceptEdits`、`auto`、`default`
 - `--workdir` 的目录补全

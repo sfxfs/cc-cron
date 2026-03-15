@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.1.0"
+readonly VERSION="1.2.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -57,6 +57,7 @@ ensure_data_dir() {
 get_meta_file() { echo "${LOG_DIR}/${1}.meta"; }
 get_log_file() { echo "${LOG_DIR}/${1}.log"; }
 get_status_file() { echo "${LOG_DIR}/${1}.status"; }
+get_history_file() { echo "${LOG_DIR}/${1}.history"; }
 get_run_script() { echo "${DATA_DIR}/run-${1}.sh"; }
 
 # Helper to validate a number is within range
@@ -251,6 +252,7 @@ export PATH="${current_path}"
 
 LOG_FILE="${log_file}"
 STATUS_FILE="${status_file}"
+HISTORY_FILE="${LOG_DIR}/${job_id}.history"
 LOCK_FILE="${lock_file}"
 WORKDIR="${job_workdir}"
 JOB_ID="${job_id}"
@@ -289,14 +291,18 @@ echo "exit_code=\"\${EXIT_CODE}\"" >> "\$STATUS_FILE"
 
 if [[ \$EXIT_CODE -eq 0 ]]; then
     echo "status=\"success\"" >> "\$STATUS_FILE"
+    # Record to history
+    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"success\" exit_code=\"0\"" >> "\$HISTORY_FILE"
     # Auto-remove one-shot jobs after successful execution
     if [[ "\$RECURRING" == "false" ]]; then
         echo "[\$(date '+%Y-%m-%d %H:%M:%S')] AUTO-REMOVED: One-shot job completed successfully" >> "\$LOG_FILE"
         (crontab -l 2>/dev/null | grep -v "CC-CRON:\${JOB_ID}:" || true) | crontab -
-        rm -f "\$LOG_FILE" "\$STATUS_FILE" "${meta_file}" "\$0"
+        rm -f "\$LOG_FILE" "\$STATUS_FILE" "${meta_file}" "\$HISTORY_FILE" "\$0"
     fi
 else
     echo "status=\"failed\"" >> "\$STATUS_FILE"
+    # Record to history
+    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"failed\" exit_code=\"\${EXIT_CODE}\"" >> "\$HISTORY_FILE"
     # Keep one-shot job on failure for retry/debugging
     if [[ "\$RECURRING" == "false" ]]; then
         echo "[\$(date '+%Y-%m-%d %H:%M:%S')] One-shot job failed - keeping job for retry. Run 'cc-cron remove \${JOB_ID}' to clean up." >> "\$LOG_FILE"
@@ -402,6 +408,7 @@ cmd_remove() {
     remove_file "$(get_meta_file "$job_id")" "metadata"
     remove_file "$(get_log_file "$job_id")" "log file"
     remove_file "$(get_status_file "$job_id")" "status file"
+    remove_file "$(get_history_file "$job_id")" "history file"
     remove_file "$(get_run_script "$job_id")" "run script"
 
     if [[ "$found" -eq 0 ]]; then
@@ -476,6 +483,118 @@ cmd_resume() {
 
     success "Resumed job: ${job_id}"
     info "Schedule: ${cron}"
+}
+
+# Show detailed information for a specific job
+cmd_show() {
+    local job_id="$1"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    if [[ ! -f "$meta_file" ]]; then
+        error "Job not found: ${job_id}"
+    fi
+
+    # Load metadata
+    source "$meta_file"
+
+    echo "Job Details: ${id}"
+    echo "===================="
+    echo
+    echo "  ID:           ${id}"
+    echo "  Created:      ${created}"
+    echo "  Schedule:     ${cron}"
+    echo "  Recurring:    ${recurring}"
+    echo "  Workdir:      ${workdir}"
+    [[ -n "${model:-}" ]] && echo "  Model:        ${model}"
+    echo "  Permission:   ${permission_mode}"
+    [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s"
+    echo
+    echo "  Prompt:"
+    echo "    ${prompt}"
+    echo
+
+    # Check if paused
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+    if [[ -f "$paused_file" ]]; then
+        echo -e "  Status:       ${YELLOW}PAUSED${NC}"
+        echo
+    fi
+
+    # Show current status
+    local status_file; status_file=$(get_status_file "$job_id")
+    if [[ -f "$status_file" ]]; then
+        source "$status_file"
+        echo "  Last Execution:"
+        echo "    Start:      ${start_time:-unknown}"
+        echo "    End:        ${end_time:-unknown}"
+        case "${status:-}" in
+            success) echo -e "    Status:     ${GREEN}SUCCESS${NC}" ;;
+            failed)  echo -e "    Status:     ${RED}FAILED${NC} (exit code: ${exit_code:-unknown})" ;;
+            running) echo -e "    Status:     ${YELLOW}RUNNING${NC}" ;;
+            *)       echo -e "    Status:     ${YELLOW}UNKNOWN${NC}" ;;
+        esac
+        echo
+    fi
+
+    # Show history summary
+    local history_file; history_file=$(get_history_file "$job_id")
+    if [[ -f "$history_file" ]]; then
+        local total_runs success_runs failed_runs
+        total_runs=$(wc -l < "$history_file")
+        success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0")
+        failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
+        echo "  Statistics:"
+        echo "    Total runs:    ${total_runs}"
+        echo -e "    Successful:    ${GREEN}${success_runs}${NC}"
+        echo -e "    Failed:        ${RED}${failed_runs}${NC}"
+        echo
+    fi
+
+    # Show log file location
+    local log_file; log_file=$(get_log_file "$job_id")
+    if [[ -f "$log_file" ]]; then
+        echo "  Log file: ${log_file}"
+    fi
+}
+
+# Show execution history for a job
+cmd_history() {
+    local job_id="$1"
+    local lines="${2:-20}"
+    local history_file; history_file=$(get_history_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id")
+
+    if [[ ! -f "$log_file" ]]; then
+        error "No logs found for job: ${job_id}"
+    fi
+
+    echo "Execution History for ${job_id}:"
+    echo "================================="
+    echo
+
+    # Show from history file if exists (structured format)
+    if [[ -f "$history_file" ]]; then
+        echo "Recent executions:"
+        echo "------------------"
+        tail -n "$lines" "$history_file" | while IFS= read -r line; do
+            local h_start h_end h_status h_exit
+            h_start=$(echo "$line" | grep -oP 'start="\K[^"]+' || echo "unknown")
+            h_end=$(echo "$line" | grep -oP 'end="\K[^"]+' || echo "unknown")
+            h_status=$(echo "$line" | grep -oP 'status="\K[^"]+' || echo "unknown")
+            h_exit=$(echo "$line" | grep -oP 'exit_code="\K[^"]+' || echo "")
+
+            case "$h_status" in
+                success) echo -e "  ${GREEN}✓${NC} ${h_start} - ${h_end}" ;;
+                failed)  echo -e "  ${RED}✗${NC} ${h_start} - ${h_end} (exit: ${h_exit})" ;;
+                *)       echo -e "  ${YELLOW}?${NC} ${h_start} - ${h_end}" ;;
+            esac
+        done
+    else
+        # Fall back to parsing log file timestamps
+        echo "No structured history available. Showing recent log entries:"
+        echo "------------------------------------------------------------"
+        tail -n "$lines" "$log_file"
+    fi
 }
 
 # Show status of all jobs and recent executions
@@ -591,6 +710,8 @@ COMMANDS:
     logs <job-id>                   Show logs for a job
     pause <job-id>                  Pause a scheduled job
     resume <job-id>                 Resume a paused job
+    show <job-id>                   Show detailed information for a job
+    history <job-id> [lines]        Show execution history for a job
     completion                      Output bash completion script
     version                         Show version information
     help                            Show this help message
@@ -630,9 +751,9 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history version completion help" -- "${cur}"))
             ;;
-        remove|logs|pause|resume)
+        remove|logs|pause|resume|show|history)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         --model)
@@ -762,6 +883,20 @@ Options:
                 error "Usage: cc-cron resume <job-id>"
             fi
             cmd_resume "$1"
+            ;;
+        show)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron show <job-id>"
+            fi
+            cmd_show "$1"
+            ;;
+        history)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron history <job-id> [lines]"
+            fi
+            cmd_history "$1" "${2:-20}"
             ;;
         version|--version|-v)
             cmd_version

@@ -91,3 +91,18 @@ teardown() {
     run cmd_resume "nonexistent"
     [ "$status" -ne 0 ]
 }
+
+@test "cmd_show fails for non-existent job" {
+    run cmd_show "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_history fails for non-existent job" {
+    run cmd_history "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
+@test "get_history_file returns correct path" {
+    run get_history_file "testjob"
+    [ "$output" == "${LOG_DIR}/testjob.history" ]
+}

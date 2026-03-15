@@ -82,6 +82,30 @@ Re-enable a paused job:
 ./cc-cron.sh resume <job-id>
 ```
 
+### Show Job Details
+
+Display full information for a specific job:
+
+```bash
+./cc-cron.sh show <job-id>
+```
+
+This displays:
+- Job metadata (ID, created, schedule, recurring, workdir, model, permission)
+- Full prompt text
+- Last execution status (if available)
+- Execution statistics (total runs, success/failure counts)
+
+### View Execution History
+
+Show execution history for a job:
+
+```bash
+./cc-cron.sh history <job-id> [lines]
+```
+
+Default is 20 lines. Each entry shows start time, end time, and status.
+
 ### Check Version
 
 ```bash
@@ -98,8 +122,8 @@ eval "$(cc-cron completion)"
 ```
 
 **Features:**
-- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `version`, `completion`
-- Job ID completion for `remove`, `logs`, `pause`, and `resume` commands
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `version`, `completion`
+- Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, and `history` commands
 - Model names: `sonnet`, `opus`, `haiku`
 - Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`
 - Directory completion for `--workdir`
