@@ -419,6 +419,17 @@ Each job can have its own settings specified via command-line options. When not 
 - Per-job settings are saved and persist across restarts
 - One-shot jobs (`--once`) auto-remove after successful execution; on failure, they remain for debugging/retry
 
+## Exit Codes
+
+The script uses the following exit codes:
+
+| Code | Constant | Description |
+|------|----------|-------------|
+| 0 | `EXIT_SUCCESS` | Command completed successfully |
+| 1 | `EXIT_ERROR` | General error (file operations, validation failures, etc.) |
+| 2 | `EXIT_NOT_FOUND` | Job not found |
+| 3 | `EXIT_INVALID_ARGS` | Invalid arguments or usage error |
+
 ## Development
 
 ### Running Tests
