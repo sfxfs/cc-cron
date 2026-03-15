@@ -884,6 +884,34 @@ teardown() {
     rm -f "$meta_file"
 }
 
+@test "cmd_clone preserves tags from source" {
+    # Create source job with tags
+    local source_id="clonetags"
+    local meta_file; meta_file=$(get_meta_file "$source_id")
+    echo 'id="clonetags"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 9 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="tagged job"' >> "$meta_file"
+    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'tags="prod,backup"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    cmd_clone "$source_id" >/dev/null
+
+    # Verify cloned job has tags
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$cloned_meta" ]]
+    grep -q 'tags="prod,backup"' "$cloned_meta"
+
+    # Cleanup
+    rm -f "$meta_file" "$cloned_meta"
+}
+
 @test "cmd_list shows no jobs message when empty" {
     # Clear crontab cache
     _CRONTAB_CACHE=""
