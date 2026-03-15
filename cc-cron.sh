@@ -579,12 +579,18 @@ cmd_add() {
         info "Schedule: ${cron_expr}"
         info "Recurring: ${recurring}"
         info "Workdir: ${job_workdir}"
-        [[ -n "$job_model" ]] && info "Model: ${job_model}"
+        if [[ -n "$job_model" ]]; then
+            info "Model: ${job_model}"
+        fi
         info "Permission: ${job_permission}"
-        [[ "$job_timeout" -gt 0 ]] && info "Timeout: ${job_timeout}s"
+        if [[ "$job_timeout" -gt 0 ]]; then
+            info "Timeout: ${job_timeout}s"
+        fi
         info "Prompt: ${prompt}"
         info "Log file: $(get_log_file "$job_id")"
-        [[ "$recurring" == "false" ]] && info "One-shot job: will auto-remove after successful execution"
+        if [[ "$recurring" == "false" ]]; then
+            info "One-shot job: will auto-remove after successful execution"
+        fi
     fi
 }
 
@@ -912,9 +918,15 @@ cmd_edit() {
     fi
 
     success "Updated job: ${job_id}"
-    [[ "$cron" != "$new_cron" ]] && info "Schedule: ${cron} → ${new_cron}"
-    [[ "$prompt" != "$new_prompt" ]] && info "Prompt updated"
-    [[ "$workdir" != "$new_workdir" ]] && info "Workdir: ${workdir} → ${new_workdir}"
+    if [[ "$cron" != "$new_cron" ]]; then
+        info "Schedule: ${cron} → ${new_cron}"
+    fi
+    if [[ "$prompt" != "$new_prompt" ]]; then
+        info "Prompt updated"
+    fi
+    if [[ "$workdir" != "$new_workdir" ]]; then
+        info "Workdir: ${workdir} → ${new_workdir}"
+    fi
 }
 
 # Clone an existing job with a new ID
@@ -1226,7 +1238,9 @@ cmd_purge() {
     [[ "$days" =~ ^[0-9]+$ ]] || error "Invalid days argument: ${days}"
 
     info "Purging files older than ${days} days..."
-    [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"
+    if [[ "$dry_run" == "true" ]]; then
+        info "(dry-run mode - no files will be deleted)"
+    fi
     echo
 
     # Get list of active job IDs from crontab
