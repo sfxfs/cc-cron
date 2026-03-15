@@ -780,6 +780,11 @@ cmd_resume() {
     local job_id="$1"
     local paused_file="${DATA_DIR}/${job_id}.paused"
 
+    # Check if job exists first
+    if [[ ! -f "$(get_meta_file "$job_id")" ]]; then
+        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
+    fi
+
     if [[ ! -f "$paused_file" ]]; then
         error "Job ${job_id} is not paused" "$EXIT_INVALID_ARGS"
     fi

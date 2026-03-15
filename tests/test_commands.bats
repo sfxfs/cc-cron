@@ -106,27 +106,27 @@ teardown() {
 
 @test "cmd_pause fails for non-existent job" {
     run cmd_pause "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
-@test "cmd_resume fails for non-paused job" {
+@test "cmd_resume fails for non-existent job" {
     run cmd_resume "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_show fails for non-existent job" {
     run cmd_show "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_history fails for non-existent job" {
     run cmd_history "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_remove fails for non-existent job" {
     run cmd_remove "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "get_history_file returns correct path" {
@@ -136,7 +136,7 @@ teardown() {
 
 @test "load_job_meta fails for non-existent job" {
     run load_job_meta "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "load_job_meta loads existing job" {
@@ -183,7 +183,7 @@ teardown() {
 
 @test "cmd_run fails for non-existent job" {
     run cmd_run "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_run fails when run script is missing" {
@@ -231,7 +231,7 @@ teardown() {
 
 @test "cmd_edit fails for non-existent job" {
     run cmd_edit "nonexistent" --cron "0 0 * * *"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_edit with no options shows warning" {
@@ -265,7 +265,7 @@ teardown() {
 
 @test "cmd_export fails for non-existent job" {
     run cmd_export "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_import fails for non-existent file" {
@@ -409,22 +409,22 @@ teardown() {
 
 @test "cmd_config set validates workdir" {
     run cmd_config set workdir "/nonexistent/path"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config set validates permission_mode" {
     run cmd_config set permission_mode invalid
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config set validates timeout" {
     run cmd_config set timeout "notanumber"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config rejects invalid key" {
     run cmd_config set invalid_key value
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config unset removes key" {
@@ -470,7 +470,7 @@ teardown() {
 
 @test "cmd_logs fails for non-existent job" {
     run cmd_logs "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_logs shows log content" {
@@ -834,7 +834,7 @@ teardown() {
 
 @test "parse_job_options rejects invalid cron" {
     run parse_job_options --cron "invalid"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "parse_job_options rejects missing argument" {
@@ -845,7 +845,7 @@ teardown() {
 
 @test "cmd_clone fails for non-existent job" {
     run cmd_clone "nonexistent"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_clone creates new job from existing" {
