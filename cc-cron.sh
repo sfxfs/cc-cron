@@ -922,15 +922,12 @@ cmd_status() {
     echo "======================"
     echo
 
-    # Check if crontab exists
-    if ! crontab -l &>/dev/null; then
-        warn "No crontab configured for current user"
-        return
-    fi
+    # Count jobs from crontab
+    local crontab_content
+    crontab_content=$(get_crontab) || { warn "No crontab configured for current user"; return; }
 
-    # Count jobs
     local job_count
-    job_count=$(crontab -l 2>/dev/null | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
+    job_count=$(echo "$crontab_content" | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
     echo "Total scheduled jobs: ${job_count}"
     echo
 
