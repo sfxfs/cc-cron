@@ -24,6 +24,9 @@ CRON_COMMENT_PREFIX="CC-CRON:"
 # Crontab cache (performance optimization)
 _CRONTAB_CACHE=""
 
+# Store last created job ID (for programmatic use)
+LAST_CREATED_JOB_ID=""
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -445,6 +448,9 @@ cmd_add() {
     info "Prompt: ${prompt}"
     info "Log file: $(get_log_file "$job_id")"
     [[ "$recurring" == "false" ]] && info "One-shot job: will auto-remove after successful execution"
+
+    # Store job ID for programmatic use (e.g., import)
+    LAST_CREATED_JOB_ID="$job_id"
 }
 
 # List all cc-cron jobs (optimized: single crontab read)
@@ -1059,14 +1065,9 @@ cmd_import() {
         # Create the job
         cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout"
 
-        # Pause if needed
-        if [[ "$job_paused" == "true" ]]; then
-            local new_job_id
-            # Get the most recently created job ID from crontab
-            new_job_id=$(crontab -l 2>/dev/null | grep "${CRON_COMMENT_PREFIX}" | tail -1 | sed "s/.*${CRON_COMMENT_PREFIX}\\([^:]*\\):.*/\\1/")
-            if [[ -n "$new_job_id" ]]; then
-                cmd_pause "$new_job_id"
-            fi
+        # Pause if needed (use job ID from LAST_CREATED_JOB_ID)
+        if [[ "$job_paused" == "true" && -n "${LAST_CREATED_JOB_ID:-}" ]]; then
+            cmd_pause "$LAST_CREATED_JOB_ID"
         fi
 
         ((imported++)) || true
