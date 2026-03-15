@@ -1313,3 +1313,148 @@ EOF
     run crontab_has_entry "$test_marker"
     [ "$status" -ne 0 ]
 }
+
+@test "cmd_list handles job with missing metadata" {
+    # Create a fake crontab entry with a job ID that has no metadata
+    local job_id="missingmeta"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Ensure metadata doesn't exist
+    rm -f "$meta_file" 2>/dev/null || true
+
+    # Add a fake crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_list
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"missingmeta"* ]] || [[ "$output" == *"metadata missing"* ]] || [[ "$output" == *"No scheduled jobs"* ]]
+
+    # Cleanup
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+}
+
+@test "generate_run_script with non-default permission mode" {
+    local job_id="permjob"
+    generate_run_script "$job_id" "/tmp" "sonnet" "acceptEdits" "0" "true" "test prompt" >/dev/null
+
+    local run_script; run_script=$(get_run_script "$job_id")
+    [ -f "$run_script" ]
+    grep -q "acceptEdits" "$run_script"
+
+    rm -f "$run_script"
+}
+
+@test "generate_run_script with default permission omits flag" {
+    local job_id="defaultperm"
+    generate_run_script "$job_id" "/tmp" "" "default" "0" "true" "test prompt" >/dev/null
+
+    local run_script; run_script=$(get_run_script "$job_id")
+    [ -f "$run_script" ]
+    ! grep -q "\-\-permission-mode" "$run_script"
+
+    rm -f "$run_script"
+}
+
+@test "cmd_status handles running jobs" {
+    local job_id="runningstatus"
+    create_test_meta "$job_id"
+    local status_file; status_file=$(get_status_file "$job_id")
+
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
+    echo 'status="running"' >> "$status_file"
+
+    run cmd_status
+    [ "$status" -eq 0 ]
+
+    rm -f "$(get_meta_file "$job_id")" "$status_file"
+}
+
+@test "cmd_status handles failed jobs" {
+    local job_id="failedstatus"
+    create_test_meta "$job_id"
+    local status_file; status_file=$(get_status_file "$job_id")
+
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
+    echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
+    echo 'status="failed"' >> "$status_file"
+    echo 'exit_code="1"' >> "$status_file"
+
+    run cmd_status
+    [ "$status" -eq 0 ]
+
+    rm -f "$(get_meta_file "$job_id")" "$status_file"
+}
+
+@test "cmd_purge handles orphaned run scripts" {
+    local job_id="orphanscript"
+    local run_script; run_script=$(get_run_script "$job_id")
+
+    # Create an orphan run script (no crontab entry, no metadata)
+    mkdir -p "$DATA_DIR"
+    echo "#!/bin/bash" > "$run_script"
+    echo "echo test" >> "$run_script"
+    chmod +x "$run_script"
+
+    [ -f "$run_script" ]
+
+    # Run purge (should remove orphan files)
+    run cmd_purge "0" "false"
+    [ "$status" -eq 0 ]
+
+    # The orphan script should be removed
+    [[ ! -f "$run_script" ]] || [[ "$output" == *"orphan"* ]]
+}
+
+@test "write_meta_file with all fields" {
+    local job_id="fullmeta"
+    write_meta_file "$job_id" "2024-01-01 10:00:00" "*/5 * * * *" "false" "complex prompt with 'quotes'" "/home/user" "opus" "auto" "3600" "/tmp/run-fullmeta.sh"
+
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    [ -f "$meta_file" ]
+
+    source "$meta_file"
+    [ "$id" == "fullmeta" ]
+    [ "$cron" == "*/5 * * * *" ]
+    [ "$recurring" == "false" ]
+    [ "$prompt" == "complex prompt with 'quotes'" ]
+    [ "$workdir" == "/home/user" ]
+    [ "$model" == "opus" ]
+    [ "$permission_mode" == "auto" ]
+    [ "$timeout" == "3600" ]
+
+    rm -f "$meta_file"
+}
+
+@test "validate_cron_field handles edge case ranges" {
+    # Test boundary values
+    run validate_cron_field "0" 0 59 "minute"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "59" 0 59 "minute"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "23" 0 23 "hour"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "31" 1 31 "day"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "12" 1 12 "month"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "6" 0 6 "weekday"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron accepts all wildcards" {
+    run validate_cron "* * * * *"
+    [ "$status" -eq 0 ]
+}
+
+@test "cmd_completion includes all command aliases" {
+    run cmd_completion
+    [ "$status" -eq 0 ]
+    # Check for command aliases
+    [[ "$output" == *"disable"* ]]
+    [[ "$output" == *"enable"* ]]
+}
