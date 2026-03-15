@@ -34,6 +34,7 @@ eval "$(cc-cron completion)"
 | `--model <name>` | 使用的模型：sonnet、opus、haiku 等 |
 | `--permission-mode <mode>` | 权限模式：acceptEdits、auto、default |
 | `--timeout <seconds>` | 任务执行超时时间（0 = 不超时，默认） |
+| `--tags <tags>` | 逗号分隔的标签，用于组织任务（如 'prod,backup'） |
 | `--quiet, -q` | 仅输出任务 ID（用于脚本编程） |
 
 **示例：**
@@ -48,6 +49,9 @@ eval "$(cc-cron completion)"
 # 一次性提醒，并指定权限模式
 ./cc-cron.sh add "30 14 28 2 *" "Quarterly review reminder" --once --permission-mode auto
 
+# 带标签的任务，便于组织
+./cc-cron.sh add "0 0 * * *" "Daily backup" --tags prod,backup
+
 # 安静模式用于脚本编程
 JOB_ID=$(./cc-cron.sh add "0 0 * * *" "Daily backup" --quiet)
 echo "Created job: $JOB_ID"
@@ -56,7 +60,17 @@ echo "Created job: $JOB_ID"
 ### 列出任务
 
 ```bash
+./cc-cron.sh list [tag]
+```
+
+列出所有计划任务，或按标签筛选：
+
+```bash
+# 列出所有任务
 ./cc-cron.sh list
+
+# 只列出带有 'prod' 标签的任务
+./cc-cron.sh list prod
 ```
 
 ### 查看日志

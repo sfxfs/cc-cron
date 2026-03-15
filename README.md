@@ -34,6 +34,7 @@ eval "$(cc-cron completion)"
 | `--model <name>` | Model to use: sonnet, opus, haiku, etc. |
 | `--permission-mode <mode>` | Permission mode: acceptEdits, auto, default |
 | `--timeout <seconds>` | Timeout for job execution (0 = no timeout, default) |
+| `--tags <tags>` | Comma-separated tags for organization (e.g., 'prod,backup') |
 | `--quiet, -q` | Only output the job ID (useful for scripting) |
 
 **Examples:**
@@ -48,6 +49,9 @@ eval "$(cc-cron completion)"
 # One-time reminder with custom permission mode
 ./cc-cron.sh add "30 14 28 2 *" "Quarterly review reminder" --once --permission-mode auto
 
+# Job with tags for organization
+./cc-cron.sh add "0 0 * * *" "Daily backup" --tags prod,backup
+
 # Quiet mode for scripting
 JOB_ID=$(./cc-cron.sh add "0 0 * * *" "Daily backup" --quiet)
 echo "Created job: $JOB_ID"
@@ -56,7 +60,17 @@ echo "Created job: $JOB_ID"
 ### List Jobs
 
 ```bash
+./cc-cron.sh list [tag]
+```
+
+List all scheduled jobs, or filter by tag:
+
+```bash
+# List all jobs
 ./cc-cron.sh list
+
+# List only jobs with 'prod' tag
+./cc-cron.sh list prod
 ```
 
 ### View Logs
