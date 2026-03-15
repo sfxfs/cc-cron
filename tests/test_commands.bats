@@ -1374,19 +1374,7 @@ EOF
     local job_id="editmodel"
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    # Create initial metadata with model
-    cat > "$meta_file" << EOF
-id="${job_id}"
-created="2024-01-01 10:00:00"
-cron="0 9 * * *"
-recurring="true"
-prompt="test prompt"
-workdir="/tmp"
-model="sonnet"
-permission_mode="bypassPermissions"
-timeout="0"
-run_script="/tmp/run.sh"
-EOF
+    create_test_meta "$job_id" "/tmp" "sonnet"
 
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
@@ -1404,16 +1392,8 @@ EOF
 @test "cmd_clone with model override" {
     local source_id="clonemodel"
     local meta_file; meta_file=$(get_meta_file "$source_id")
-    echo 'id="clonemodel"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="model job"' >> "$meta_file"
-    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
-    echo 'model="opus"' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
 
     cmd_clone "$source_id" --model "haiku" >/dev/null
 
@@ -1430,16 +1410,8 @@ EOF
 @test "cmd_clone with empty model override clears model" {
     local source_id="clonemodel2"
     local meta_file; meta_file=$(get_meta_file "$source_id")
-    echo 'id="clonemodel2"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="model job"' >> "$meta_file"
-    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
-    echo 'model="opus"' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
 
     cmd_clone "$source_id" --model "" >/dev/null
 
@@ -1504,21 +1476,8 @@ EOF
 @test "cmd_show displays tags when set" {
     local job_id="taggedjob"
     local meta_file; meta_file=$(get_meta_file "$job_id")
-    local run_script; run_script=$(get_run_script "$job_id")
 
-    cat > "$meta_file" << EOF
-id="${job_id}"
-created="2024-01-01 10:00:00"
-cron="0 9 * * *"
-recurring="true"
-prompt="test prompt"
-workdir="/tmp"
-model=""
-permission_mode="bypassPermissions"
-timeout="0"
-tags="prod,backup"
-run_script="${run_script}"
-EOF
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     run cmd_show "$job_id"
     [ "$status" -eq 0 ]
@@ -1604,19 +1563,7 @@ EOF
     local job_id="edittagjob"
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    # Create initial metadata
-    cat > "$meta_file" << EOF
-id="${job_id}"
-created="2024-01-01 10:00:00"
-cron="0 9 * * *"
-recurring="true"
-prompt="test prompt"
-workdir="/tmp"
-model=""
-permission_mode="bypassPermissions"
-timeout="0"
-run_script="/tmp/run.sh"
-EOF
+    create_test_meta "$job_id" "/tmp"
 
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
@@ -1636,20 +1583,7 @@ EOF
     local job_id="edittagjob2"
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    # Create initial metadata with tags
-    cat > "$meta_file" << EOF
-id="${job_id}"
-created="2024-01-01 10:00:00"
-cron="0 9 * * *"
-recurring="true"
-prompt="test prompt"
-workdir="/tmp"
-model=""
-permission_mode="bypassPermissions"
-timeout="0"
-run_script="/tmp/run.sh"
-tags="prod,backup"
-EOF
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
