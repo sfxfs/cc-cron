@@ -1458,3 +1458,32 @@ EOF
     [[ "$output" == *"disable"* ]]
     [[ "$output" == *"enable"* ]]
 }
+
+@test "cmd_add --quiet outputs only job ID" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" "true" >/dev/null
+
+    # Verify job was created
+    [[ -n "$LAST_CREATED_JOB_ID" ]]
+
+    # Verify the output is just the job ID (8 chars)
+    run cmd_add "0 10 * * *" "quiet test" "true" "$job_workdir" "" "bypassPermissions" "0" "true"
+    [ "$status" -eq 0 ]
+    [[ "$output" =~ ^[a-z0-9]{8}$ ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+}
+
+@test "cmd_add normal output includes SUCCESS message" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    run cmd_add "0 11 * * *" "normal test" "true" "$job_workdir" "" "bypassPermissions" "0" "false"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"SUCCESS"* ]]
+    [[ "$output" == *"Created cron job"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+}

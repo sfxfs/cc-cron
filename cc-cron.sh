@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.8.6"
+readonly VERSION="1.9.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -544,6 +544,7 @@ cmd_add() {
     local job_model="${5:-$CC_MODEL}"
     local job_permission="${6:-$CC_PERMISSION_MODE}"
     local job_timeout="${7:-${CC_TIMEOUT:-0}}"
+    local quiet="${8:-false}"
     # Ensure timeout is numeric
     job_timeout=$(safe_numeric "$job_timeout" "0")
 
@@ -567,19 +568,24 @@ cmd_add() {
     # Save job metadata using helper
     write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script"
 
-    success "Created cron job: ${job_id}"
-    info "Schedule: ${cron_expr}"
-    info "Recurring: ${recurring}"
-    info "Workdir: ${job_workdir}"
-    [[ -n "$job_model" ]] && info "Model: ${job_model}"
-    info "Permission: ${job_permission}"
-    [[ "$job_timeout" -gt 0 ]] && info "Timeout: ${job_timeout}s"
-    info "Prompt: ${prompt}"
-    info "Log file: $(get_log_file "$job_id")"
-    [[ "$recurring" == "false" ]] && info "One-shot job: will auto-remove after successful execution"
-
     # Store job ID for programmatic use (e.g., import)
     LAST_CREATED_JOB_ID="$job_id"
+
+    # Output based on quiet mode
+    if [[ "$quiet" == "true" ]]; then
+        echo "$job_id"
+    else
+        success "Created cron job: ${job_id}"
+        info "Schedule: ${cron_expr}"
+        info "Recurring: ${recurring}"
+        info "Workdir: ${job_workdir}"
+        [[ -n "$job_model" ]] && info "Model: ${job_model}"
+        info "Permission: ${job_permission}"
+        [[ "$job_timeout" -gt 0 ]] && info "Timeout: ${job_timeout}s"
+        info "Prompt: ${prompt}"
+        info "Log file: $(get_log_file "$job_id")"
+        [[ "$recurring" == "false" ]] && info "One-shot job: will auto-remove after successful execution"
+    fi
 }
 
 # List all cc-cron jobs (optimized: single crontab read)
@@ -1617,11 +1623,13 @@ OPTIONS:
     --model <name>              Model to use: sonnet, opus, haiku, etc.
     --permission-mode <mode>    Permission mode: bypassPermissions, acceptEdits, auto, default
     --timeout <seconds>         Timeout for job execution (0 = no timeout, default)
+    --quiet, -q                 Only output the job ID (useful for scripting)
 
 EXAMPLES:
     cc-cron add "0 9 * * 1-5" "Run daily tests"
     cc-cron add "0 * * * *" "Check status" --model sonnet
     cc-cron add "30 14 28 2 *" "Reminder" --once
+    cc-cron add "0 0 * * *" "Daily task" --quiet
 HELP
 }
 
@@ -1965,13 +1973,13 @@ _cc_cron_completion() {
                     COMPREPLY=($(compgen -W '"0 9 * * 1-5" "0 * * * *" "*/5 * * * *" "0 0 * * *"' -- "${cur}"))
                     ;;
                 *)
-                    COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout" -- "${cur}"))
+                    COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --quiet -q" -- "${cur}"))
                     ;;
             esac
             ;;
         *)
             if [[ " ${words[@]} " =~ " add " ]]; then
-                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout" -- "${cur}"))
+                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --quiet -q" -- "${cur}"))
             fi
             ;;
     esac
@@ -1996,7 +2004,8 @@ Options:
   --workdir <path>            Working directory (default: \$CC_WORKDIR or \$HOME)
   --model <name>              Model to use: sonnet, opus, etc. (default: \$CC_MODEL)
   --permission-mode <mode>    Permission mode (default: \$CC_PERMISSION_MODE or bypassPermissions)
-  --timeout <seconds>         Timeout for job execution (default: \$CC_TIMEOUT or 0, no timeout)"
+  --timeout <seconds>         Timeout for job execution (default: \$CC_TIMEOUT or 0, no timeout)
+  --quiet, -q                 Only output the job ID (useful for scripting)"
             fi
             local cron_expr="$1"
             local prompt="$2"
@@ -2009,6 +2018,7 @@ Options:
             local job_permission="$CC_PERMISSION_MODE"
             local job_timeout
             job_timeout=$(safe_numeric "${CC_TIMEOUT:-0}" "0")
+            local quiet="false"
 
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -2039,13 +2049,17 @@ Options:
                         job_timeout="$2"
                         shift 2
                         ;;
+                    --quiet|-q)
+                        quiet="true"
+                        shift
+                        ;;
                     *)
                         error "Unknown option: $1"
                         ;;
                 esac
             done
 
-            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout"
+            cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$quiet"
             ;;
         list)
             cmd_list
