@@ -129,6 +129,113 @@ teardown() {
     [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
+@test "cmd_remove removes job and all related files" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create a job
+    cmd_add "0 9 * * *" "test job to remove" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    local job_id="$LAST_CREATED_JOB_ID"
+
+    # Create a log file for the job
+    local log_file; log_file=$(get_log_file "$job_id")
+    echo "Test log" > "$log_file"
+
+    # Create a history file
+    local history_file; history_file=$(get_history_file "$job_id")
+    echo "2024-01-01 10:00:00|2024-01-01 10:05:00|success|0" > "$history_file"
+
+    # Verify files exist
+    [[ -f "$(get_meta_file "$job_id")" ]]
+    [[ -f "$(get_run_script "$job_id")" ]]
+    [[ -f "$log_file" ]]
+    [[ -f "$history_file" ]]
+
+    # Remove the job
+    run cmd_remove "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Removed cron job"* ]]
+
+    # Verify all files are removed
+    [[ ! -f "$(get_meta_file "$job_id")" ]]
+    [[ ! -f "$(get_run_script "$job_id")" ]]
+    [[ ! -f "$log_file" ]]
+    [[ ! -f "$history_file" ]]
+    [[ ! -f "$(get_status_file "$job_id")" ]]
+}
+
+@test "cmd_pause pauses active job" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create a job
+    cmd_add "0 9 * * *" "job to pause" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    local job_id="$LAST_CREATED_JOB_ID"
+
+    # Verify job is in crontab
+    crontab_has_entry "CC-CRON:${job_id}"
+
+    # Pause the job
+    run cmd_pause "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Paused job"* ]]
+
+    # Verify paused file exists
+    [[ -f "${DATA_DIR}/${job_id}.paused" ]]
+
+    # Verify job is NOT in crontab
+    ! crontab_has_entry "CC-CRON:${job_id}"
+
+    # Cleanup
+    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")" "${DATA_DIR}/${job_id}.paused"
+}
+
+@test "cmd_pause on already paused job shows warning" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create a job
+    cmd_add "0 9 * * *" "job to pause" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    local job_id="$LAST_CREATED_JOB_ID"
+
+    # Pause the job
+    cmd_pause "$job_id" >/dev/null
+
+    # Try to pause again
+    run cmd_pause "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"already paused"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")" "${DATA_DIR}/${job_id}.paused"
+}
+
+@test "cmd_resume resumes paused job" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+
+    # Create a job
+    cmd_add "0 9 * * *" "job to resume" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    local job_id="$LAST_CREATED_JOB_ID"
+
+    # Pause the job
+    cmd_pause "$job_id" >/dev/null
+
+    # Verify job is NOT in crontab
+    ! crontab_has_entry "CC-CRON:${job_id}"
+
+    # Resume the job
+    run cmd_resume "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Resumed job"* ]]
+
+    # Verify paused file is removed
+    [[ ! -f "${DATA_DIR}/${job_id}.paused" ]]
+
+    # Verify job is back in crontab
+    crontab_has_entry "CC-CRON:${job_id}"
+
+    # Cleanup
+    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")"
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+}
+
 @test "get_history_file returns correct path" {
     run get_history_file "testjob"
     [ "$output" == "${LOG_DIR}/testjob.history" ]

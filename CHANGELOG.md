@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.6] - 2025-03-16
+
+### Fixed
+- Fix cmd_pause to correctly detect already-paused jobs (previously failed with "Job not found" because paused jobs aren't in crontab)
+
+### Tests
+- Add test for cmd_remove removing all related files
+- Add tests for cmd_pause and cmd_resume workflows
+
 ## [2.3.5] - 2025-03-16
 
 ### Fixed

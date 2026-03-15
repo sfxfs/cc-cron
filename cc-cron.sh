@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.3.5"
+readonly VERSION="2.3.6"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -755,18 +755,23 @@ cmd_logs() {
 # Pause a job (comment out in crontab)
 cmd_pause() {
     local job_id="$1"
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    # Check if job exists
-    if ! crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
+    # Check if job exists (either in crontab or paused)
+    if [[ ! -f "$meta_file" ]]; then
         error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     fi
 
     # Check if already paused
-    local paused_file="${DATA_DIR}/${job_id}.paused"
-
     if [[ -f "$paused_file" ]]; then
         warn "Job ${job_id} is already paused"
         return 0
+    fi
+
+    # Check if job is in crontab (it should be if not paused)
+    if ! crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
+        error "Job ${job_id} has no crontab entry (may be orphaned)" "$EXIT_ERROR"
     fi
 
     # Remove from crontab but keep metadata
