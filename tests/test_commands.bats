@@ -1148,6 +1148,33 @@ EOF
     [[ "$output" == *"--prompt"* ]]
 }
 
+@test "cmd_help clone shows detailed help" {
+    run cmd_help "clone"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron clone"* ]]
+    [[ "$output" == *"Override"* ]]
+}
+
+@test "cmd_help purge shows detailed help" {
+    run cmd_help "purge"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron purge"* ]]
+    [[ "$output" == *"--dry-run"* ]]
+}
+
+@test "cmd_help list shows detailed help" {
+    run cmd_help "list"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron list"* ]]
+    [[ "$output" == *"tag"* ]]
+}
+
+@test "cmd_help status shows detailed help" {
+    run cmd_help "status"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"cc-cron status"* ]]
+}
+
 @test "cmd_help unknown topic returns error" {
     run cmd_help "unknowncommand"
     [ "$status" -ne 0 ]
