@@ -280,6 +280,57 @@ teardown() {
     rm -rf "$test_dir"
 }
 
+@test "load_config loads settings from file" {
+    # Create a temp config file
+    local config_file="${BATS_TEST_TMPDIR}/config"
+    echo 'workdir="/tmp"' > "$config_file"
+    echo 'model="sonnet"' >> "$config_file"
+    echo 'permission_mode="auto"' >> "$config_file"
+    echo 'timeout="60"' >> "$config_file"
+
+    # Save original CONFIG_FILE
+    local orig_config="$CONFIG_FILE"
+    CONFIG_FILE="$config_file"
+
+    # Run load_config
+    load_config
+
+    # Verify values were set
+    [ "$CC_WORKDIR" == "/tmp" ]
+    [ "$CC_MODEL" == "sonnet" ]
+    [ "$CC_PERMISSION_MODE" == "auto" ]
+    [ "$CC_TIMEOUT" == "60" ]
+
+    # Restore
+    CONFIG_FILE="$orig_config"
+}
+
+@test "load_config handles missing file gracefully" {
+    local orig_config="$CONFIG_FILE"
+    CONFIG_FILE="/nonexistent/config/file"
+
+    # Should not error
+    load_config
+
+    CONFIG_FILE="$orig_config"
+}
+
+@test "load_config skips comments and empty lines" {
+    local config_file="${BATS_TEST_TMPDIR}/config_comments"
+    echo '# This is a comment' > "$config_file"
+    echo '' >> "$config_file"
+    echo 'workdir="/tmp"' >> "$config_file"
+
+    local orig_config="$CONFIG_FILE"
+    CONFIG_FILE="$config_file"
+
+    load_config
+
+    [ "$CC_WORKDIR" == "/tmp" ]
+
+    CONFIG_FILE="$orig_config"
+}
+
 @test "cmd_config list works" {
     run cmd_config list
     [ "$status" -eq 0 ]
