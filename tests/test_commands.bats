@@ -1084,20 +1084,10 @@ EOF
 }
 
 @test "cmd_clone preserves tags from source" {
-    # Create source job with tags
     local source_id="clonetags"
     local meta_file; meta_file=$(get_meta_file "$source_id")
-    echo 'id="clonetags"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="tagged job"' >> "$meta_file"
-    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'tags="prod,backup"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" >/dev/null
 
@@ -1112,20 +1102,10 @@ EOF
 }
 
 @test "cmd_clone with tags override" {
-    # Create source job with tags
     local source_id="clonetags2"
     local meta_file; meta_file=$(get_meta_file "$source_id")
-    echo 'id="clonetags2"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="tagged job"' >> "$meta_file"
-    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'tags="prod,backup"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" --tags "dev,test" >/dev/null
 
@@ -1140,20 +1120,10 @@ EOF
 }
 
 @test "cmd_clone with empty tags override clears tags" {
-    # Create source job with tags
     local source_id="clonetags3"
     local meta_file; meta_file=$(get_meta_file "$source_id")
-    echo 'id="clonetags3"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="tagged job"' >> "$meta_file"
-    echo 'workdir="'"${BATS_TEST_TMPDIR}"'"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-    echo 'tags="prod,backup"' >> "$meta_file"
-    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" --tags "" >/dev/null
 
