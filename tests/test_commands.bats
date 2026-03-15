@@ -449,3 +449,86 @@ teardown() {
     [ "$status" -eq 0 ]
     [ "$output" == "999999999" ]
 }
+
+@test "build_cron_entry creates correct format" {
+    run build_cron_entry "abc123" "0 9 * * *" "/tmp/run.sh" "true" "Test prompt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == "0 9 * * * /tmp/run.sh  # CC-CRON:abc123:"* ]]
+    [[ "$output" == *"recurring=true"* ]]
+    [[ "$output" == *"prompt=Test prompt"* ]]
+}
+
+@test "build_cron_entry truncates long prompts" {
+    local long_prompt="This is a very long prompt that should be truncated to 30 characters for display in crontab"
+    run build_cron_entry "xyz789" "0 * * * *" "/tmp/run.sh" "false" "$long_prompt"
+    [ "$status" -eq 0 ]
+    # The prompt in the output should be truncated to 30 chars
+    [[ "$output" == *"prompt=This is a very long prompt tha"* ]]
+}
+
+@test "crontab_has_entry detects existing entry" {
+    # Skip if crontab is not available
+    if ! crontab -l &>/dev/null; then
+        skip "crontab not available in test environment"
+    fi
+    # Add a test entry to crontab
+    local test_entry="0 9 * * * /tmp/test.sh  # CC-CRON:test123:recurring=true"
+    crontab_add_entry "$test_entry"
+
+    run crontab_has_entry "CC-CRON:test123"
+    [ "$status" -eq 0 ]
+
+    # Cleanup
+    crontab_remove_entry "CC-CRON:test123"
+}
+
+@test "crontab_has_entry returns false for missing entry" {
+    run crontab_has_entry "CC-CRON:nonexistent999"
+    [ "$status" -ne 0 ]
+}
+
+@test "crontab_remove_entry removes entry" {
+    # Skip if crontab is not available
+    if ! crontab -l &>/dev/null; then
+        skip "crontab not available in test environment"
+    fi
+    # Add a test entry
+    local test_entry="0 9 * * * /tmp/test.sh  # CC-CRON:removeme:recurring=true"
+    crontab_add_entry "$test_entry"
+
+    # Verify it exists
+    crontab_has_entry "CC-CRON:removeme"
+
+    # Remove it
+    run crontab_remove_entry "CC-CRON:removeme"
+    [ "$status" -eq 0 ]
+
+    # Verify it's gone
+    run crontab_has_entry "CC-CRON:removeme"
+    [ "$status" -ne 0 ]
+}
+
+@test "get_crontab returns content or empty" {
+    _CRONTAB_CACHE=""
+    run get_crontab
+    # Should succeed (may be empty if no crontab)
+    [ "$status" -eq 0 ]
+}
+
+@test "write_meta_file creates valid metadata" {
+    local job_id="testwrite"
+    run write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "sonnet" "auto" "0" "/tmp/run.sh"
+    [ "$status" -eq 0 ]
+
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    [ -f "$meta_file" ]
+
+    # Verify content
+    source "$meta_file"
+    [ "$id" == "testwrite" ]
+    [ "$cron" == "0 9 * * *" ]
+    [ "$recurring" == "true" ]
+    [ "$prompt" == "test prompt" ]
+
+    rm -f "$meta_file"
+}
