@@ -1169,6 +1169,25 @@ EOF
     [[ "$output" == *"Skipping invalid cron"* ]]
 }
 
+@test "cmd_import preserves tags" {
+    command -v jq &>/dev/null || skip "jq not installed"
+    local json_file="${BATS_TEST_TMPDIR}/tags_import.json"
+    cat > "$json_file" << EOF
+{"version":"1.0","jobs":[{"id":"tagtest","created":"2024-01-01","cron":"0 9 * * *","recurring":true,"prompt":"test job with tags","workdir":"${BATS_TEST_TMPDIR}","model":"","permission_mode":"bypassPermissions","timeout":0,"paused":false,"tags":"prod,backup"}]}
+EOF
+
+    cmd_import "$json_file" >/dev/null
+
+    # Verify the job was created with tags (use the ID from LAST_CREATED_JOB_ID)
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local meta_file; meta_file=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$meta_file" ]]
+    grep -q 'tags="prod,backup"' "$meta_file"
+
+    # Cleanup
+    rm -f "$meta_file"
+}
+
 @test "cmd_export escapes quotes in prompt" {
     local job_id="quotejob"
     local meta_file; meta_file=$(get_meta_file "$job_id")
