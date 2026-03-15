@@ -796,6 +796,58 @@ teardown() {
     [[ "$output" == *"Summary"* ]]
 }
 
+@test "cmd_add creates job with defaults" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    LAST_CREATED_JOB_ID=""
+    cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null
+    [[ -n "$LAST_CREATED_JOB_ID" ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
+    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+}
+
+@test "cmd_add validates cron expression" {
+    run cmd_add "invalid" "test" "true" "$BATS_TEST_TMPDIR" "" "bypassPermissions" "0"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_add validates workdir" {
+    run cmd_add "0 9 * * *" "test" "true" "/nonexistent/path" "" "bypassPermissions" "0"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_add validates permission mode" {
+    run cmd_add "0 9 * * *" "test" "true" "$BATS_TEST_TMPDIR" "" "invalid_mode" "0"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_add creates one-shot job" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    run cmd_add "0 9 * * *" "one shot" "false" "$job_workdir" "" "bypassPermissions" "0"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"One-shot job"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
+    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+}
+
+@test "cmd_add with model and timeout" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    run cmd_add "0 9 * * *" "with model" "true" "$job_workdir" "sonnet" "auto" "300"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Model: sonnet"* ]]
+    [[ "$output" == *"Timeout: 300s"* ]]
+
+    # Cleanup
+    rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
+    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+}
+
 @test "cmd_help shows command list" {
     run cmd_help
     [ "$status" -eq 0 ]
