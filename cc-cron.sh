@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.2"
+readonly VERSION="2.4.3"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -202,6 +202,14 @@ get_stat() {
             *) return 1 ;;
         esac
     fi
+}
+
+# Escape string for safe embedding in shell variable assignment
+# Escapes backslashes and double quotes
+escape_shell_string() {
+    local s="${1//\\/\\\\}"  # Escape backslashes first
+    s="${s//\"/\\\"}"        # Then escape double quotes
+    echo "$s"
 }
 
 # Generate unique job ID with collision detection (optimized)
@@ -543,35 +551,18 @@ write_meta_file() {
 
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    # Escape double quotes and backslashes in string values for proper shell sourcing
-    local safe_prompt="${prompt//\\/\\\\}"  # Escape backslashes first
-    safe_prompt="${safe_prompt//\"/\\\"}"    # Then escape double quotes
-
-    local safe_workdir="${workdir//\\/\\\\}"
-    safe_workdir="${safe_workdir//\"/\\\"}"
-
-    local safe_model="${model//\\/\\\\}"
-    safe_model="${safe_model//\"/\\\"}"
-
-    local safe_permission="${permission//\\/\\\\}"
-    safe_permission="${safe_permission//\"/\\\"}"
-
-    local safe_tags=""
-    if [[ -n "$tags" ]]; then
-        safe_tags="${tags//\\/\\\\}"
-        safe_tags="${safe_tags//\"/\\\"}"
-    fi
-
-    local safe_run_script="${run_script//\\/\\\\}"
-    safe_run_script="${safe_run_script//\"/\\\"}"
+    # Escape string values for proper shell sourcing
+    local safe_prompt; safe_prompt=$(escape_shell_string "$prompt")
+    local safe_workdir; safe_workdir=$(escape_shell_string "$workdir")
+    local safe_model; safe_model=$(escape_shell_string "$model")
+    local safe_permission; safe_permission=$(escape_shell_string "$permission")
+    local safe_run_script; safe_run_script=$(escape_shell_string "$run_script")
 
     {
         echo "id=\"${job_id}\""
         echo "created=\"${created}\""
         if [[ -n "$modified" ]]; then
-            local safe_modified="${modified//\\/\\\\}"
-            safe_modified="${safe_modified//\"/\\\"}"
-            echo "modified=\"${safe_modified}\""
+            echo "modified=\"$(escape_shell_string "$modified")\""
         fi
         echo "cron=\"${cron}\""
         echo "recurring=\"${recurring}\""
@@ -581,7 +572,7 @@ write_meta_file() {
         echo "permission_mode=\"${safe_permission}\""
         echo "timeout=\"${timeout}\""
         if [[ -n "$tags" ]]; then
-            echo "tags=\"${safe_tags}\""
+            echo "tags=\"$(escape_shell_string "$tags")\""
         fi
         echo "run_script=\"${safe_run_script}\""
     } > "$meta_file"

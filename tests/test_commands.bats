@@ -2877,6 +2877,37 @@ EOF
     [[ "$output" == *"Created cron job"* ]]
 }
 
+# Tests for escape_shell_string helper function
+@test "escape_shell_string escapes double quotes" {
+    run escape_shell_string 'He said "hello"'
+    [ "$status" -eq 0 ]
+    [ "$output" == 'He said \"hello\"' ]
+}
+
+@test "escape_shell_string escapes backslashes" {
+    run escape_shell_string 'C:\Users\test'
+    [ "$status" -eq 0 ]
+    [ "$output" == 'C:\\Users\\test' ]
+}
+
+@test "escape_shell_string escapes both quotes and backslashes" {
+    run escape_shell_string 'Test "path" C:\folder'
+    [ "$status" -eq 0 ]
+    [ "$output" == 'Test \"path\" C:\\folder' ]
+}
+
+@test "escape_shell_string handles empty string" {
+    run escape_shell_string ""
+    [ "$status" -eq 0 ]
+    [ "$output" == "" ]
+}
+
+@test "escape_shell_string handles string without special chars" {
+    run escape_shell_string "normal string"
+    [ "$status" -eq 0 ]
+    [ "$output" == "normal string" ]
+}
+
 # Tests for write_meta_file special character escaping
 @test "write_meta_file escapes double quotes in prompt" {
     local job_id="escquote"
