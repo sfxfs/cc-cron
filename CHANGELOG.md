@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Tests
 - Add tests for clearing tags via `cmd_edit --tags ""`
 - Add tests for overriding and clearing tags in `cmd_clone`
+- Add edge case tests for `cmd_list` tag filtering (non-existent tags, multiple tags)
 
 ## [2.3.4] - 2025-03-16
 
