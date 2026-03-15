@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.2.0"
+readonly VERSION="1.3.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -597,6 +597,236 @@ cmd_history() {
     fi
 }
 
+# Run a job immediately (for testing)
+cmd_run() {
+    local job_id="$1"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    if [[ ! -f "$meta_file" ]]; then
+        error "Job not found: ${job_id}"
+    fi
+
+    # Load metadata
+    source "$meta_file"
+
+    local run_script; run_script=$(get_run_script "$job_id")
+
+    if [[ ! -f "$run_script" ]]; then
+        error "Run script not found for job: ${job_id}"
+    fi
+
+    info "Running job ${job_id} immediately..."
+    info "Workdir: ${workdir}"
+    info "Prompt: ${prompt}"
+    echo
+
+    # Execute the run script
+    "$run_script"
+    local exit_code=$?
+
+    echo
+    if [[ $exit_code -eq 0 ]]; then
+        success "Job completed successfully"
+    else
+        warn "Job exited with code: ${exit_code}"
+    fi
+
+    return $exit_code
+}
+
+# Edit a job's schedule or prompt
+cmd_edit() {
+    local job_id="$1"
+    shift || true
+
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    if [[ ! -f "$meta_file" ]]; then
+        error "Job not found: ${job_id}"
+    fi
+
+    # Load current metadata
+    source "$meta_file"
+
+    local new_cron="${cron}"
+    local new_prompt="${prompt}"
+    local new_workdir="${workdir}"
+    local new_model="${model:-}"
+    local new_permission="${permission_mode}"
+    local new_timeout="${timeout:-0}"
+    local has_changes=0
+
+    # Parse options
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --cron)
+                [[ -z "${2:-}" ]] && error "--cron requires a cron expression"
+                validate_cron "$2"
+                new_cron="$2"
+                has_changes=1
+                shift 2
+                ;;
+            --prompt)
+                [[ -z "${2:-}" ]] && error "--prompt requires a prompt text"
+                new_prompt="$2"
+                has_changes=1
+                shift 2
+                ;;
+            --workdir)
+                [[ -z "${2:-}" ]] && error "--workdir requires a path"
+                validate_workdir "$2"
+                new_workdir="$2"
+                has_changes=1
+                shift 2
+                ;;
+            --model)
+                if [[ -n "${2:-}" ]]; then
+                    new_model="$2"
+                else
+                    new_model=""
+                fi
+                has_changes=1
+                shift 2
+                ;;
+            --permission-mode)
+                [[ -z "${2:-}" ]] && error "--permission-mode requires a mode"
+                new_permission="$2"
+                has_changes=1
+                shift 2
+                ;;
+            --timeout)
+                [[ -z "${2:-}" ]] && error "--timeout requires seconds"
+                new_timeout="$2"
+                has_changes=1
+                shift 2
+                ;;
+            *)
+                error "Unknown option: $1"
+                ;;
+        esac
+    done
+
+    if [[ "$has_changes" -eq 0 ]]; then
+        warn "No changes specified. Use --cron, --prompt, --workdir, --model, --permission-mode, or --timeout"
+        return 0
+    fi
+
+    # Check if job is paused
+    local paused_file="${DATA_DIR}/${job_id}.paused"
+    local was_paused=0
+    [[ -f "$paused_file" ]] && was_paused=1
+
+    # Remove old crontab entry if not paused
+    if [[ "$was_paused" -eq 0 ]]; then
+        crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
+    fi
+
+    # Update metadata file
+    local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    cat > "$meta_file" << EOF
+id="${job_id}"
+created="${created}"
+modified="${timestamp}"
+cron="${new_cron}"
+recurring="${recurring}"
+prompt="${new_prompt}"
+workdir="${new_workdir}"
+model="${new_model}"
+permission_mode="${new_permission}"
+timeout="${new_timeout}"
+run_script="${run_script}"
+EOF
+
+    # Update run script with new settings
+    local log_file; log_file=$(get_log_file "$job_id")
+    local status_file; status_file=$(get_status_file "$job_id")
+    local lock_file; lock_file=$(get_lock_file "$new_workdir")
+
+    # Build the command with options
+    local claude_opts="-p"
+    [[ -n "$new_model" ]] && claude_opts="$claude_opts --model $new_model"
+    [[ "$new_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $new_permission"
+
+    local safe_prompt="${new_prompt//\'/\'\\\'\'}"
+    local current_path="$PATH"
+
+    cat > "$run_script" << RUNEOF
+#!/usr/bin/env bash
+# Auto-generated job runner for ${job_id}
+set -e
+
+# Set PATH for cron environment (captured at job creation time)
+export PATH="${current_path}"
+
+LOG_FILE="${log_file}"
+STATUS_FILE="${status_file}"
+HISTORY_FILE="${LOG_DIR}/${job_id}.history"
+LOCK_FILE="${lock_file}"
+WORKDIR="${new_workdir}"
+JOB_ID="${job_id}"
+RECURRING="${recurring}"
+TIMEOUT="${new_timeout}"
+
+# Cleanup function to release lock
+cleanup() {
+    exec 9>&-
+}
+trap cleanup EXIT
+
+# Acquire lock for this directory (non-blocking)
+exec 9>"\$LOCK_FILE"
+if ! flock -n 9; then
+    echo "[\$(date '+%Y-%m-%d %H:%M:%S')] SKIPPED: Another job is running in \$WORKDIR" >> "\$LOG_FILE"
+    exit 0
+fi
+
+# Record start time
+echo "start_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" > "\$STATUS_FILE"
+echo "status=\"running\"" >> "\$STATUS_FILE"
+
+# Run the job
+cd "\$WORKDIR"
+if [[ "\${TIMEOUT:-0}" -gt 0 ]]; then
+    timeout "\${TIMEOUT}" claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
+else
+    claude ${claude_opts} '${safe_prompt}' >> "\$LOG_FILE" 2>&1
+fi
+EXIT_CODE=\$?
+
+# Record end time and status
+echo "end_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" >> "\$STATUS_FILE"
+echo "exit_code=\"\${EXIT_CODE}\"" >> "\$STATUS_FILE"
+
+if [[ \$EXIT_CODE -eq 0 ]]; then
+    echo "status=\"success\"" >> "\$STATUS_FILE"
+    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"success\" exit_code=\"0\"" >> "\$HISTORY_FILE"
+    if [[ "\$RECURRING" == "false" ]]; then
+        echo "[\$(date '+%Y-%m-%d %H:%M:%S')] AUTO-REMOVED: One-shot job completed successfully" >> "\$LOG_FILE"
+        (crontab -l 2>/dev/null | grep -v "CC-CRON:\${JOB_ID}:" || true) | crontab -
+        rm -f "\$LOG_FILE" "\$STATUS_FILE" "${meta_file}" "\$HISTORY_FILE" "\$0"
+    fi
+else
+    echo "status=\"failed\"" >> "\$STATUS_FILE"
+    echo "start=\"\${start_time}\" end=\"\$(date '+%Y-%m-%d %H:%M:%S')\" status=\"failed\" exit_code=\"\${EXIT_CODE}\"" >> "\$HISTORY_FILE"
+    if [[ "\$RECURRING" == "false" ]]; then
+        echo "[\$(date '+%Y-%m-%d %H:%M:%S')] One-shot job failed - keeping job for retry. Run 'cc-cron remove \${JOB_ID}' to clean up." >> "\$LOG_FILE"
+    fi
+fi
+RUNEOF
+    chmod +x "$run_script"
+
+    # Re-add to crontab if not paused
+    if [[ "$was_paused" -eq 0 ]]; then
+        local cron_entry="${new_cron} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${new_prompt:0:30}"
+        crontab_add_entry "$cron_entry"
+    fi
+
+    success "Updated job: ${job_id}"
+    [[ "$cron" != "$new_cron" ]] && info "Schedule: ${cron} → ${new_cron}"
+    [[ "$prompt" != "$new_prompt" ]] && info "Prompt updated"
+    [[ "$workdir" != "$new_workdir" ]] && info "Workdir: ${workdir} → ${new_workdir}"
+}
+
 # Show status of all jobs and recent executions
 cmd_status() {
     info "CC-Cron Status Report"
@@ -712,6 +942,14 @@ COMMANDS:
     resume <job-id>                 Resume a paused job
     show <job-id>                   Show detailed information for a job
     history <job-id> [lines]        Show execution history for a job
+    run <job-id>                    Run a job immediately (for testing)
+    edit <job-id> [options]         Edit a job's settings
+        --cron <expr>               Update cron schedule
+        --prompt <text>             Update prompt
+        --workdir <path>            Update working directory
+        --model <name>              Update model
+        --permission-mode <mode>    Update permission mode
+        --timeout <seconds>         Update timeout
     completion                      Output bash completion script
     version                         Show version information
     help                            Show this help message
@@ -751,10 +989,17 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit version completion help" -- "${cur}"))
             ;;
-        remove|logs|pause|resume|show|history)
+        remove|logs|pause|resume|show|history|run)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            ;;
+        edit)
+            if [[ ${#words[@]} -eq 3 ]]; then
+                COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            else
+                COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout" -- "${cur}"))
+            fi
             ;;
         --model)
             COMPREPLY=($(compgen -W "sonnet opus haiku" -- "${cur}"))
@@ -897,6 +1142,22 @@ Options:
                 error "Usage: cc-cron history <job-id> [lines]"
             fi
             cmd_history "$1" "${2:-20}"
+            ;;
+        run)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron run <job-id>"
+            fi
+            cmd_run "$1"
+            ;;
+        edit)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron edit <job-id> [--cron <expr>] [--prompt <text>] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]"
+            fi
+            local edit_job_id="$1"
+            shift
+            cmd_edit "$edit_job_id" "$@"
             ;;
         version|--version|-v)
             cmd_version

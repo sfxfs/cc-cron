@@ -106,6 +106,44 @@ Show execution history for a job:
 
 Default is 20 lines. Each entry shows start time, end time, and status.
 
+### Run a Job Immediately
+
+Execute a job right now (useful for testing):
+
+```bash
+./cc-cron.sh run <job-id>
+```
+
+This runs the job synchronously and displays the output.
+
+### Edit a Job
+
+Modify an existing job's settings:
+
+```bash
+./cc-cron.sh edit <job-id> [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--cron <expr>` | Update cron schedule |
+| `--prompt <text>` | Update prompt |
+| `--workdir <path>` | Update working directory |
+| `--model <name>` | Update model |
+| `--permission-mode <mode>` | Update permission mode |
+| `--timeout <seconds>` | Update timeout |
+
+**Example:**
+```bash
+# Change schedule to run every hour
+./cc-cron.sh edit myjob --cron "0 * * * *"
+
+# Update the prompt
+./cc-cron.sh edit myjob --prompt "New prompt text"
+```
+
 ### Check Version
 
 ```bash
@@ -122,8 +160,8 @@ eval "$(cc-cron completion)"
 ```
 
 **Features:**
-- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `version`, `completion`
-- Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, and `history` commands
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `version`, `completion`
+- Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, `history`, `run`, and `edit` commands
 - Model names: `sonnet`, `opus`, `haiku`
 - Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`
 - Directory completion for `--workdir`

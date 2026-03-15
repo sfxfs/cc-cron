@@ -106,3 +106,36 @@ teardown() {
     run get_history_file "testjob"
     [ "$output" == "${LOG_DIR}/testjob.history" ]
 }
+
+@test "cmd_run fails for non-existent job" {
+    run cmd_run "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_edit fails for non-existent job" {
+    run cmd_edit "nonexistent" --cron "0 0 * * *"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_edit with no options shows warning" {
+    # Create a temp meta file for testing
+    local job_id="testedit"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    echo 'id="testedit"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 0 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    run cmd_edit "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No changes specified"* ]]
+
+    # Cleanup
+    rm -f "$meta_file"
+}

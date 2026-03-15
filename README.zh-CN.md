@@ -106,6 +106,44 @@ eval "$(cc-cron completion)"
 
 默认显示 20 行。每条记录显示开始时间、结束时间和状态。
 
+### 立即运行任务
+
+立即执行一次任务（用于测试）：
+
+```bash
+./cc-cron.sh run <job-id>
+```
+
+此命令同步运行任务并显示输出。
+
+### 编辑任务
+
+修改已有任务的设置：
+
+```bash
+./cc-cron.sh edit <job-id> [选项]
+```
+
+**选项：**
+
+| 选项 | 说明 |
+|--------|-------------|
+| `--cron <表达式>` | 更新调度时间 |
+| `--prompt <文本>` | 更新提示文本 |
+| `--workdir <路径>` | 更新工作目录 |
+| `--model <名称>` | 更新模型 |
+| `--permission-mode <模式>` | 更新权限模式 |
+| `--timeout <秒数>` | 更新超时时间 |
+
+**示例：**
+```bash
+# 将调度改为每小时执行
+./cc-cron.sh edit myjob --cron "0 * * * *"
+
+# 更新提示文本
+./cc-cron.sh edit myjob --prompt "新的提示文本"
+```
+
 ### 查看版本
 
 ```bash
@@ -122,8 +160,8 @@ eval "$(cc-cron completion)"
 ```
 
 **功能：**
-- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`version`、`completion`
-- `remove`、`logs`、`pause`、`resume`、`show`、`history` 的任务 ID 补全
+- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`version`、`completion`
+- `remove`、`logs`、`pause`、`resume`、`show`、`history`、`run`、`edit` 的任务 ID 补全
 - 模型名：`sonnet`、`opus`、`haiku`
 - 权限模式：`bypassPermissions`、`acceptEdits`、`auto`、`default`
 - `--workdir` 的目录补全
