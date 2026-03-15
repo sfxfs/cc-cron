@@ -108,6 +108,16 @@ get_status_file() { echo "${LOG_DIR}/${1}.status"; }
 get_history_file() { echo "${LOG_DIR}/${1}.history"; }
 get_run_script() { echo "${DATA_DIR}/run-${1}.sh"; }
 
+# Helper to load job metadata, returns error if not found
+load_job_meta() {
+    local job_id="$1"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    if [[ ! -f "$meta_file" ]]; then
+        error "Job not found: ${job_id}"
+    fi
+    source "$meta_file"
+}
+
 # Helper to validate a number is within range
 validate_range() {
     local value="$1" min="$2" max="$3" context="$4"
@@ -586,14 +596,9 @@ cmd_resume() {
 # Show detailed information for a specific job
 cmd_show() {
     local job_id="$1"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    if [[ ! -f "$meta_file" ]]; then
-        error "Job not found: ${job_id}"
-    fi
-
-    # Load metadata
-    source "$meta_file"
+    # Load metadata (errors if not found)
+    load_job_meta "$job_id"
 
     echo "Job Details: ${id}"
     echo "===================="
@@ -699,14 +704,9 @@ cmd_history() {
 # Run a job immediately (for testing)
 cmd_run() {
     local job_id="$1"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    if [[ ! -f "$meta_file" ]]; then
-        error "Job not found: ${job_id}"
-    fi
-
-    # Load metadata
-    source "$meta_file"
+    # Load metadata (errors if not found)
+    load_job_meta "$job_id"
 
     local run_script; run_script=$(get_run_script "$job_id")
 
@@ -738,14 +738,8 @@ cmd_edit() {
     local job_id="$1"
     shift || true
 
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-
-    if [[ ! -f "$meta_file" ]]; then
-        error "Job not found: ${job_id}"
-    fi
-
-    # Load current metadata
-    source "$meta_file"
+    # Load current metadata (errors if not found)
+    load_job_meta "$job_id"
 
     local new_cron="${cron}"
     local new_prompt="${prompt}"
@@ -928,9 +922,8 @@ cmd_export() {
     local export_count=0
 
     if [[ -n "$job_id" ]]; then
-        # Export specific job
-        local meta_file; meta_file=$(get_meta_file "$job_id")
-        if [[ ! -f "$meta_file" ]]; then
+        # Export specific job - validate existence
+        if [[ ! -f "$(get_meta_file "$job_id")" ]]; then
             error "Job not found: ${job_id}"
         fi
         jobs+=("$job_id")

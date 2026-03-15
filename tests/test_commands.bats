@@ -107,6 +107,25 @@ teardown() {
     [ "$output" == "${LOG_DIR}/testjob.history" ]
 }
 
+@test "load_job_meta fails for non-existent job" {
+    run load_job_meta "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
+@test "load_job_meta loads existing job" {
+    local job_id="testmeta"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    echo 'id="testmeta"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+
+    # Run in a subshell to test variable setting
+    local result
+    result=$(load_job_meta "$job_id" && echo "$id")
+    [ "$result" == "testmeta" ]
+
+    rm -f "$meta_file"
+}
+
 @test "cmd_run fails for non-existent job" {
     run cmd_run "nonexistent"
     [ "$status" -ne 0 ]
