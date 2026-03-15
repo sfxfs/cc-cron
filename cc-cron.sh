@@ -654,7 +654,6 @@ cmd_logs() {
 # Pause a job (comment out in crontab)
 cmd_pause() {
     local job_id="$1"
-    local found=0
 
     # Check if job exists
     if ! crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
@@ -662,7 +661,6 @@ cmd_pause() {
     fi
 
     # Check if already paused
-    local meta_file; meta_file=$(get_meta_file "$job_id")
     local paused_file="${DATA_DIR}/${job_id}.paused"
 
     if [[ -f "$paused_file" ]]; then
