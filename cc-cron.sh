@@ -2312,6 +2312,45 @@ EXAMPLES:
 HELP
 }
 
+help_list() {
+    cat << 'HELP'
+cc-cron list - List scheduled jobs
+
+USAGE:
+    cc-cron list [tag]
+
+ARGUMENTS:
+    tag      Filter jobs by tag (optional)
+
+DESCRIPTION:
+    Lists all scheduled jobs with their details.
+    Can filter to show only jobs with a specific tag.
+
+EXAMPLES:
+    cc-cron list              # List all jobs
+    cc-cron list prod         # List only jobs tagged 'prod'
+    cc-cron list backup       # List only jobs tagged 'backup'
+HELP
+}
+
+help_status() {
+    cat << 'HELP'
+cc-cron status - Show status overview
+
+USAGE:
+    cc-cron status
+
+DESCRIPTION:
+    Shows an overview of all scheduled jobs including:
+    - Total job count
+    - Recent execution status
+    - Running/success/failed counts
+
+EXAMPLES:
+    cc-cron status
+HELP
+}
+
 # Show help
 cmd_help() {
     local topic="${1:-}"
@@ -2354,12 +2393,20 @@ cmd_help() {
             help_history
             return 0
             ;;
+        list)
+            help_list
+            return 0
+            ;;
         next)
             help_next
             return 0
             ;;
         stats)
             help_stats
+            return 0
+            ;;
+        status)
+            help_status
             return 0
             ;;
         "")
