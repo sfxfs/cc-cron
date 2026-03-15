@@ -144,6 +144,39 @@ Modify an existing job's settings:
 ./cc-cron.sh edit myjob --prompt "New prompt text"
 ```
 
+### Export Jobs
+
+Export jobs to JSON format for backup or migration:
+
+```bash
+# Export all jobs to stdout
+./cc-cron.sh export
+
+# Export all jobs to a file
+./cc-cron.sh export "" backup.json
+
+# Export a specific job
+./cc-cron.sh export myjob myjob.json
+```
+
+The exported JSON includes:
+- Job metadata (ID, created, schedule, recurring, etc.)
+- Full prompt text
+- Configuration (workdir, model, permission mode, timeout)
+- Pause state
+
+### Import Jobs
+
+Import jobs from a JSON file:
+
+```bash
+./cc-cron.sh import backup.json
+```
+
+**Note:** Requires `jq` for JSON parsing. Install with:
+- Ubuntu/Debian: `apt-get install jq`
+- macOS: `brew install jq`
+
 ### Check Version
 
 ```bash
@@ -160,8 +193,8 @@ eval "$(cc-cron completion)"
 ```
 
 **Features:**
-- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `version`, `completion`
-- Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, `history`, `run`, and `edit` commands
+- Command completion: `add`, `list`, `remove`, `logs`, `status`, `pause`, `resume`, `show`, `history`, `run`, `edit`, `export`, `import`, `version`, `completion`
+- Job ID completion for `remove`, `logs`, `pause`, `resume`, `show`, `history`, `run`, `edit`, and `export` commands
 - Model names: `sonnet`, `opus`, `haiku`
 - Permission modes: `bypassPermissions`, `acceptEdits`, `auto`, `default`
 - Directory completion for `--workdir`

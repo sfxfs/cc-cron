@@ -139,3 +139,44 @@ teardown() {
     # Cleanup
     rm -f "$meta_file"
 }
+
+@test "cmd_export outputs empty array when no jobs" {
+    run cmd_export
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"No jobs to export"* ]]
+}
+
+@test "cmd_export fails for non-existent job" {
+    run cmd_export "nonexistent"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_import fails for non-existent file" {
+    run cmd_import "/nonexistent/file.json"
+    [ "$status" -ne 0 ]
+}
+
+@test "cmd_export creates valid JSON structure" {
+    # Create a temp meta file for testing
+    local job_id="testexp"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    echo 'id="testexp"' > "$meta_file"
+    echo 'created="2024-01-01"' >> "$meta_file"
+    echo 'cron="0 0 * * *"' >> "$meta_file"
+    echo 'recurring="true"' >> "$meta_file"
+    echo 'prompt="test prompt"' >> "$meta_file"
+    echo 'workdir="/tmp"' >> "$meta_file"
+    echo 'model=""' >> "$meta_file"
+    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
+    echo 'timeout="0"' >> "$meta_file"
+    echo 'run_script="/tmp/run.sh"' >> "$meta_file"
+
+    run cmd_export "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'"version":"1.0"'* ]]
+    [[ "$output" == *'"jobs":['* ]]
+    [[ "$output" == *'"id":"testexp"'* ]]
+
+    # Cleanup
+    rm -f "$meta_file"
+}

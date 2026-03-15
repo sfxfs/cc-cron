@@ -144,6 +144,39 @@ eval "$(cc-cron completion)"
 ./cc-cron.sh edit myjob --prompt "新的提示文本"
 ```
 
+### 导出任务
+
+将任务导出为 JSON 格式，用于备份或迁移：
+
+```bash
+# 导出所有任务到标准输出
+./cc-cron.sh export
+
+# 导出所有任务到文件
+./cc-cron.sh export "" backup.json
+
+# 导出指定任务
+./cc-cron.sh export myjob myjob.json
+```
+
+导出的 JSON 包含：
+- 任务元数据（ID、创建时间、调度、是否循环等）
+- 完整的提示文本
+- 配置（工作目录、模型、权限模式、超时时间）
+- 暂停状态
+
+### 导入任务
+
+从 JSON 文件导入任务：
+
+```bash
+./cc-cron.sh import backup.json
+```
+
+**注意：** 需要 `jq` 来解析 JSON。安装方式：
+- Ubuntu/Debian：`apt-get install jq`
+- macOS：`brew install jq`
+
 ### 查看版本
 
 ```bash
@@ -160,8 +193,8 @@ eval "$(cc-cron completion)"
 ```
 
 **功能：**
-- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`version`、`completion`
-- `remove`、`logs`、`pause`、`resume`、`show`、`history`、`run`、`edit` 的任务 ID 补全
+- 命令补全：`add`、`list`、`remove`、`logs`、`status`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export`、`import`、`version`、`completion`
+- `remove`、`logs`、`pause`、`resume`、`show`、`history`、`run`、`edit`、`export` 的任务 ID 补全
 - 模型名：`sonnet`、`opus`、`haiku`
 - 权限模式：`bypassPermissions`、`acceptEdits`、`auto`、`default`
 - `--workdir` 的目录补全

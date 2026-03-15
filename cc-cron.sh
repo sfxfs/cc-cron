@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="1.3.0"
+readonly VERSION="1.4.0"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -909,6 +909,170 @@ cmd_status() {
     echo -e "Summary: ${GREEN}${success_count} succeeded${NC}, ${RED}${failed_count} failed${NC}, ${YELLOW}${running_count} running${NC}, ${unknown_count} unknown${NC}"
 }
 
+# Export jobs to JSON format
+cmd_export() {
+    local job_id="${1:-}"
+    local output_file="${2:-}"
+
+    # Collect jobs to export
+    local -a jobs=()
+    local export_count=0
+
+    if [[ -n "$job_id" ]]; then
+        # Export specific job
+        local meta_file; meta_file=$(get_meta_file "$job_id")
+        if [[ ! -f "$meta_file" ]]; then
+            error "Job not found: ${job_id}"
+        fi
+        jobs+=("$job_id")
+    else
+        # Export all jobs
+        for meta_file in "${LOG_DIR}"/*.meta; do
+            [[ -f "$meta_file" ]] || continue
+            local id
+            id=$(basename "$meta_file" .meta)
+            jobs+=("$id")
+        done
+    fi
+
+    if [[ ${#jobs[@]} -eq 0 ]]; then
+        warn "No jobs to export"
+        return 0
+    fi
+
+    # Build JSON output
+    local json_output
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    json_output='{"version":"1.0","exported_at":"'"${timestamp}"'","jobs":['
+    local first=1
+
+    for job_id in "${jobs[@]}"; do
+        local meta_file; meta_file=$(get_meta_file "$job_id")
+        [[ -f "$meta_file" ]] || continue
+        source "$meta_file"
+
+        # Check if paused
+        local paused_file="${DATA_DIR}/${job_id}.paused"
+        local is_paused="false"
+        [[ -f "$paused_file" ]] && is_paused="true"
+
+        if [[ "$first" -eq 1 ]]; then
+            first=0
+        else
+            json_output+=","
+        fi
+
+        # Escape quotes in prompt for JSON
+        local escaped_prompt="${prompt//\"/\\\"}"
+        local escaped_workdir="${workdir//\"/\\\"}"
+        local escaped_model="${model:-}"
+        escaped_model="${escaped_model//\"/\\\"}"
+        local escaped_permission="${permission_mode//\"/\\\"}"
+
+        json_output+='{'
+        json_output+='"id":"'"${id}"'",'
+        json_output+='"created":"'"${created}"'",'
+        json_output+='"cron":"'"${cron}"'",'
+        json_output+='"recurring":'"${recurring}"','
+        json_output+='"prompt":"'"${escaped_prompt}"'",'
+        json_output+='"workdir":"'"${escaped_workdir}"'",'
+        json_output+='"model":"'"${escaped_model}"'",'
+        json_output+='"permission_mode":"'"${escaped_permission}"'",'
+        json_output+='"timeout":'"${timeout:-0}"','
+        json_output+='"paused":'"${is_paused}"''
+        json_output+='}'
+
+        ((export_count++)) || true
+    done
+
+    json_output+=']}'
+
+    # Output to file or stdout
+    if [[ -n "$output_file" ]]; then
+        echo "$json_output" > "$output_file"
+        success "Exported ${export_count} job(s) to ${output_file}"
+    else
+        echo "$json_output"
+        info "Exported ${export_count} job(s)"
+    fi
+}
+
+# Import jobs from JSON file
+cmd_import() {
+    local input_file="$1"
+
+    if [[ ! -f "$input_file" ]]; then
+        error "File not found: ${input_file}"
+    fi
+
+    # Check for jq
+    if ! command -v jq &>/dev/null; then
+        error "jq is required for import. Install with: apt-get install jq or brew install jq"
+    fi
+
+    # Parse JSON
+    local job_count
+    job_count=$(jq '.jobs | length' "$input_file")
+
+    if [[ "$job_count" -eq 0 ]]; then
+        warn "No jobs found in import file"
+        return 0
+    fi
+
+    info "Found ${job_count} job(s) to import"
+
+    local imported=0
+    local skipped=0
+    local i
+
+    for ((i = 0; i < job_count; i++)); do
+        local job_json
+        job_json=$(jq -c ".jobs[$i]" "$input_file")
+
+        local job_cron job_prompt job_recurring job_workdir job_model job_permission job_timeout job_paused
+        job_cron=$(jq -r '.cron' <<< "$job_json")
+        job_prompt=$(jq -r '.prompt' <<< "$job_json")
+        job_recurring=$(jq -r '.recurring' <<< "$job_json")
+        job_workdir=$(jq -r '.workdir' <<< "$job_json")
+        job_model=$(jq -r '.model' <<< "$job_json")
+        job_permission=$(jq -r '.permission_mode' <<< "$job_json")
+        job_timeout=$(jq -r '.timeout' <<< "$job_json")
+        job_paused=$(jq -r '.paused' <<< "$job_json")
+
+        # Validate cron expression
+        if ! validate_cron "$job_cron" 2>/dev/null; then
+            warn "Skipping invalid cron expression: ${job_cron}"
+            ((skipped++)) || true
+            continue
+        fi
+
+        # Validate workdir
+        if [[ ! -d "$job_workdir" ]]; then
+            warn "Skipping job with missing workdir: ${job_workdir}"
+            ((skipped++)) || true
+            continue
+        fi
+
+        # Create the job
+        cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout"
+
+        # Pause if needed
+        if [[ "$job_paused" == "true" ]]; then
+            local new_job_id
+            # Get the most recently created job ID from crontab
+            new_job_id=$(crontab -l 2>/dev/null | grep "${CRON_COMMENT_PREFIX}" | tail -1 | sed "s/.*${CRON_COMMENT_PREFIX}\\([^:]*\\):.*/\\1/")
+            if [[ -n "$new_job_id" ]]; then
+                cmd_pause "$new_job_id"
+            fi
+        fi
+
+        ((imported++)) || true
+    done
+
+    success "Imported ${imported} job(s), skipped ${skipped}"
+}
+
 # Show version
 cmd_version() {
     echo "cc-cron version ${VERSION}"
@@ -950,6 +1114,8 @@ COMMANDS:
         --model <name>              Update model
         --permission-mode <mode>    Update permission mode
         --timeout <seconds>         Update timeout
+    export [job-id] [file]          Export job(s) to JSON (to file or stdout)
+    import <file>                   Import jobs from JSON file
     completion                      Output bash completion script
     version                         Show version information
     help                            Show this help message
@@ -989,9 +1155,12 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit version completion help" -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume show history run edit export import version completion help" -- "${cur}"))
             ;;
         remove|logs|pause|resume|show|history|run)
+            COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            ;;
+        export)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         edit)
@@ -1158,6 +1327,17 @@ Options:
             local edit_job_id="$1"
             shift
             cmd_edit "$edit_job_id" "$@"
+            ;;
+        export)
+            ensure_data_dir
+            cmd_export "${1:-}" "${2:-}"
+            ;;
+        import)
+            ensure_data_dir
+            if [[ $# -lt 1 ]]; then
+                error "Usage: cc-cron import <file>"
+            fi
+            cmd_import "$1"
             ;;
         version|--version|-v)
             cmd_version
