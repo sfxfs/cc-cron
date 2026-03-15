@@ -194,7 +194,7 @@ teardown() {
     create_test_meta "$job_id"
 
     run cmd_run "$job_id"
-    [ "$status" -ne 0 ]
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
     [[ "$output" == *"Run script not found"* ]]
 
     rm -f "$meta_file"
@@ -1650,6 +1650,20 @@ EOF
     [[ "$output" == *"not found"* ]]
 
     rm -f "$paused_file"
+}
+
+@test "cmd_resume fails when job is not paused" {
+    local job_id="notpaused"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    # Create metadata but no paused file
+    create_test_meta "$job_id"
+
+    run cmd_resume "$job_id"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"is not paused"* ]]
+
+    rm -f "$meta_file"
 }
 
 @test "crontab_add_entry and remove work together" {
