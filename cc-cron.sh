@@ -1771,33 +1771,19 @@ Options:
             ensure_data_dir
             cmd_status
             ;;
-        pause)
+        pause|disable)
             ensure_data_dir
             if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron pause <job-id>"
+                error "Usage: cc-cron ${command} <job-id>"
             fi
             cmd_pause "$1"
             ;;
-        resume)
+        resume|enable)
             ensure_data_dir
             if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron resume <job-id>"
+                error "Usage: cc-cron ${command} <job-id>"
             fi
             cmd_resume "$1"
-            ;;
-        enable)
-            ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron enable <job-id>"
-            fi
-            cmd_resume "$1"
-            ;;
-        disable)
-            ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron disable <job-id>"
-            fi
-            cmd_pause "$1"
             ;;
         show)
             ensure_data_dir
