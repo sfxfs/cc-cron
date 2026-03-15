@@ -439,8 +439,12 @@ generate_run_script() {
 
     # Build claude options
     local claude_opts="-p"
-    [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
-    [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
+    if [[ -n "$job_model" ]]; then
+        claude_opts="$claude_opts --model $job_model"
+    fi
+    if [[ "$job_permission" != "default" ]]; then
+        claude_opts="$claude_opts --permission-mode $job_permission"
+    fi
 
     # Sanitize prompt for safe shell embedding
     local safe_prompt="${prompt//\'/\'\\\'\'}"
@@ -523,7 +527,9 @@ write_meta_file() {
     {
         echo "id=\"${job_id}\""
         echo "created=\"${created}\""
-        [[ -n "$modified" ]] && echo "modified=\"${modified}\""
+        if [[ -n "$modified" ]]; then
+            echo "modified=\"${modified}\""
+        fi
         echo "cron=\"${cron}\""
         echo "recurring=\"${recurring}\""
         echo "prompt=\"${prompt}\""
@@ -621,7 +627,9 @@ cmd_list() {
                 echo "  Schedule: ${cron}"
                 echo "  Recurring: ${recurring}"
                 echo "  Workdir: ${workdir:-$CC_WORKDIR}"
-                [[ -n "${model:-}" ]] && echo "  Model: ${model}"
+                if [[ -n "${model:-}" ]]; then
+                    echo "  Model: ${model}"
+                fi
                 echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
                 echo "  Prompt: ${prompt}"
                 echo
@@ -744,9 +752,13 @@ cmd_show() {
     echo "  Schedule:     ${cron}"
     echo "  Recurring:    ${recurring}"
     echo "  Workdir:      ${workdir}"
-    [[ -n "${model:-}" ]] && echo "  Model:        ${model}"
+    if [[ -n "${model:-}" ]]; then
+        echo "  Model:        ${model}"
+    fi
     echo "  Permission:   ${permission_mode}"
-    [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s"
+    if [[ "${timeout:-0}" -gt 0 ]]; then
+        echo "  Timeout:      ${timeout}s"
+    fi
     echo
     echo "  Prompt:"
     echo "    ${prompt}"
@@ -897,7 +909,9 @@ cmd_edit() {
     # Check if job is paused
     local paused_file="${DATA_DIR}/${job_id}.paused"
     local was_paused=0
-    [[ -f "$paused_file" ]] && was_paused=1
+    if [[ -f "$paused_file" ]]; then
+        was_paused=1
+    fi
 
     # Remove old crontab entry if not paused
     if [[ "$was_paused" -eq 0 ]]; then
@@ -1015,7 +1029,9 @@ cmd_status() {
                 echo -e "  ${id}: ${status_icon}"
                 echo "    Start: ${start_time:-unknown}"
                 echo "    End:   ${end_time:-unknown}"
-                [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}"
+                if [[ -n "${exit_code:-}" ]]; then
+                    echo "    Exit code: ${exit_code}"
+                fi
                 echo "    Workdir: ${workdir}"
                 echo
             fi
@@ -1078,7 +1094,9 @@ cmd_export() {
         # Check if paused
         local paused_file="${DATA_DIR}/${job_id}.paused"
         local is_paused="false"
-        [[ -f "$paused_file" ]] && is_paused="true"
+        if [[ -f "$paused_file" ]]; then
+            is_paused="true"
+        fi
 
         if [[ "$first" -eq 1 ]]; then
             first=0
