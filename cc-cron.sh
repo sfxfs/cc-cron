@@ -1738,14 +1738,7 @@ _cc_cron_completion() {
                 COMPREPLY=($(compgen -W "workdir model permission_mode timeout" -- "${cur}"))
             fi
             ;;
-        edit)
-            if [[ ${#words[@]} -eq 3 ]]; then
-                COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
-            else
-                COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout" -- "${cur}"))
-            fi
-            ;;
-        clone)
+        edit|clone)
             if [[ ${#words[@]} -eq 3 ]]; then
                 COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             else
