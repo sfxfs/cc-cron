@@ -28,6 +28,16 @@ teardown() {
     [ "$output" == "${LOG_DIR}/myjob.status" ]
 }
 
+@test "get_run_script returns correct path" {
+    run get_run_script "testjob"
+    [ "$output" == "${DATA_DIR}/run-testjob.sh" ]
+}
+
+@test "get_history_file returns correct path" {
+    run get_history_file "myjob"
+    [ "$output" == "${LOG_DIR}/myjob.history" ]
+}
+
 @test "get_lock_file generates consistent hash" {
     run get_lock_file "/home/user/project"
     local expected_hash
@@ -234,11 +244,6 @@ teardown() {
     # Cleanup
     rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")"
     crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
-}
-
-@test "get_history_file returns correct path" {
-    run get_history_file "testjob"
-    [ "$output" == "${LOG_DIR}/testjob.history" ]
 }
 
 @test "load_job_meta fails for non-existent job" {
@@ -3056,15 +3061,14 @@ EOF
 @test "cmd_list --json escapes backslashes in prompt" {
     local job_id="jsonbackslash"
     local meta_file; meta_file=$(get_meta_file "$job_id")
-    local prompt='Path: C:\Users\test'
 
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "" "$prompt"
     echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
 
     run cmd_list "" "true"
     [ "$status" -eq 0 ]
-    # Check that backslash is escaped in JSON output
-    [[ "$output" == *'Path: C:\\\\Users\\\\test'* ]]
+    # Check that backslash is escaped in JSON output (single \ becomes \\)
+    [[ "$output" == *'Path: C:\\Users\\test'* ]]
 
     rm -f "$meta_file"
 }
@@ -3072,15 +3076,14 @@ EOF
 @test "cmd_export escapes backslashes in prompt" {
     local job_id="exportback"
     local meta_file; meta_file=$(get_meta_file "$job_id")
-    local prompt='Path: C:\Users\test'
 
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "" "$prompt"
     echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
 
     run cmd_export "$job_id"
     [ "$status" -eq 0 ]
-    # Check that backslash is escaped in JSON output
-    [[ "$output" == *'C:\\\\Users\\\\test'* ]]
+    # Check that backslash is escaped in JSON output (single \ becomes \\)
+    [[ "$output" == *'C:\\Users\\test'* ]]
 
     rm -f "$meta_file"
 }
