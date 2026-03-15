@@ -2654,7 +2654,7 @@ Options:
                         shift
                         ;;
                     *)
-                        error "Unknown option: $1"
+                        error "Unknown option: $1" "$EXIT_INVALID_ARGS"
                         ;;
                 esac
             done
