@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.85"
+readonly VERSION="2.4.86"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -842,9 +842,7 @@ calculate_next_run() {
                 local current_minute; current_minute=$(date +%M)
                 current_minute=$((10#$current_minute))
                 local minutes_until=$(( (step - current_minute % step) % step ))
-                if [[ $minutes_until -eq 0 ]]; then
-                    minutes_until=$step
-                fi
+                [[ $minutes_until -eq 0 ]] && minutes_until=$step
                 next_time=$((now + minutes_until * 60))
                 schedule_desc="every ${step} minutes"
             else
@@ -859,9 +857,7 @@ calculate_next_run() {
             local target_minute=$((10#$minute))
 
             local minutes_until=$(( (target_minute - current_minute + 60) % 60 ))
-            if [[ $minutes_until -eq 0 ]]; then
-                minutes_until=60
-            fi
+            [[ $minutes_until -eq 0 ]] && minutes_until=60
             next_time=$((now + minutes_until * 60))
             schedule_desc="hourly at minute $minute"
         fi
@@ -879,12 +875,7 @@ calculate_next_run() {
                 local target_minute=$((10#$minute))
 
                 local hours_until=$(( (hour_step - current_hour % hour_step) % hour_step ))
-                if [[ $hours_until -eq 0 ]]; then
-                    # Check if we've passed the minute this hour
-                    if [[ $current_minute -ge $target_minute ]]; then
-                        hours_until=$hour_step
-                    fi
-                fi
+                [[ $hours_until -eq 0 && $current_minute -ge $target_minute ]] && hours_until=$hour_step
                 next_time=$((now + hours_until * 3600 + (target_minute - current_minute) * 60))
                 schedule_desc="every ${hour_step} hours at minute ${minute}"
             else
@@ -907,9 +898,7 @@ calculate_next_run() {
             local minutes_now=$((current_hour * 60 + current_minute))
 
             local minutes_until=$((minutes_today - minutes_now))
-            if [[ $minutes_until -le 0 ]]; then
-                minutes_until=$((minutes_until + 1440))  # Add 24 hours
-            fi
+            [[ $minutes_until -le 0 ]] && minutes_until=$((minutes_until + 1440))  # Add 24 hours
             next_time=$((now + minutes_until * 60))
             schedule_desc="daily at ${hour}:${minute}"
         fi
@@ -935,9 +924,7 @@ calculate_next_run() {
                 # Same day, check if time has passed
                 local minutes_target=$((target_hour * 60 + target_minute))
                 local minutes_now=$((current_hour * 60 + current_minute))
-                if [[ $minutes_target -le $minutes_now ]]; then
-                    days_until=7
-                fi
+                [[ $minutes_target -le $minutes_now ]] && days_until=7
             fi
 
             local minutes_until=$((days_until * 1440 + target_hour * 60 + target_minute
@@ -957,9 +944,7 @@ calculate_next_run() {
         next_time=0
     fi
 
-    if [[ $next_time -gt 0 ]]; then
-        date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null
-    fi
+    [[ $next_time -gt 0 ]] && date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null
 }
 
 # Show next scheduled run times
@@ -1168,10 +1153,7 @@ cmd_edit() {
     local new_tags; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
     local has_changes="$PARSED_HAS_CHANGES"
 
-    if [[ "$has_changes" -eq 0 ]]; then
-        warn "No changes specified. Use --cron, --prompt, --workdir, --model, --permission-mode, --timeout, or --tags"
-        return 0
-    fi
+    [[ "$has_changes" -eq 0 ]] && { warn "No changes specified. Use --cron, --prompt, --workdir, --model, --permission-mode, --timeout, or --tags"; return 0; }
 
     # Remove old crontab entry if not paused
     [[ -f "${DATA_DIR}/${job_id}.paused" ]] || crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
