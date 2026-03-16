@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.227"
+readonly VERSION="2.4.228"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -775,8 +775,7 @@ calculate_next_run() {
         fi
     else
         # Complex schedule - show cron expression
-        schedule_desc="custom schedule (${cron})"
-        next_time=0
+        schedule_desc="custom schedule (${cron})"; next_time=0
     fi
 
     [[ $next_time -gt 0 ]] && { date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null; } || true
