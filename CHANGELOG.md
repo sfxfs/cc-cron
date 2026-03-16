@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplify help by removing redundant MORE HELP section
 - Simplify cmd_resume by combining conditional checks
 - Simplify main() command routing (logs, edit, clone, import)
+- Combine key and value validation in cmd_config
+- Simplify tag filtering in cmd_list using string matching
 
 ## [2.4.54] - 2025-03-16
 
