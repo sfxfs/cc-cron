@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.81"
+readonly VERSION="2.4.82"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1547,18 +1547,18 @@ cmd_import() {
         job_tags=$(jq -r '.tags // ""' <<< "$job_json")
 
         # Validate cron expression
-        if ! is_valid_cron "$job_cron"; then
+        is_valid_cron "$job_cron" || {
             warn "Skipping invalid cron expression: ${job_cron}"
             ((skipped++)) || true
             continue
-        fi
+        }
 
         # Validate workdir
-        if [[ ! -d "$job_workdir" ]]; then
+        [[ -d "$job_workdir" ]] || {
             warn "Skipping job with missing workdir: ${job_workdir}"
             ((skipped++)) || true
             continue
-        fi
+        }
 
         # Create the job
         cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" \
@@ -1598,12 +1598,8 @@ purge_old_files() {
 
         local file_size; file_size=$(get_stat "$file" size || echo "0")
 
-        if [[ "$dry_run" == "true" ]]; then
-            echo "  [dry-run] Would remove ${label}: ${file}"
-        else
-            rm -f "$file"
-            echo "  Removed ${label}: ${file}"
-        fi
+        [[ "$dry_run" == "true" ]] && echo "  [dry-run] Would remove ${label}: ${file}" || \
+            { rm -f "$file"; echo "  Removed ${label}: ${file}"; }
         ((PURGE_COUNT++)) || true
         ((PURGE_BYTES += file_size)) || true
     done
@@ -1624,10 +1620,9 @@ cmd_purge() {
     # Get list of active job IDs from crontab
     local -A active_jobs
     while IFS= read -r line; do
-        if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            local job_id; job_id=$(extract_job_id "$line")
-            active_jobs["$job_id"]=1
-        fi
+        [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]] || continue
+        local job_id; job_id=$(extract_job_id "$line")
+        active_jobs["$job_id"]=1
     done < <(get_crontab)
 
     # Also check paused jobs

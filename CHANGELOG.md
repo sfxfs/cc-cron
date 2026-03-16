@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.82] - 2025-03-16
+
+### Refactor
+- Simplify if blocks in cmd_import using || { } pattern
+- Simplify if-else in purge_old_files to single-line conditional
+- Convert while-if to while-continue pattern in cmd_purge
+
 ## [2.4.81] - 2025-03-16
 
 ### Refactor
