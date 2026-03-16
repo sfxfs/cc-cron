@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.149"
+readonly VERSION="2.4.150"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -696,8 +696,8 @@ cmd_logs() {
 
 # Pause a job (comment out in crontab)
 cmd_pause() {
-    local job_id="$1"
-    local paused_file="${DATA_DIR}/${job_id}.paused" meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="$1" paused_file meta_file
+    paused_file="${DATA_DIR}/${job_id}.paused"; meta_file=$(get_meta_file "$job_id")
 
     # Check if job exists (either in crontab or paused)
     [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
