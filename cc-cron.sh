@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.143"
+readonly VERSION="2.4.144"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2507,13 +2507,11 @@ Options:
             cmd_list "$filter_tag" "$json_output"
             ;;
         remove)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_remove "$1"
             ;;
         logs)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_logs "$1" "$([[ "${2:-}" == "--tail" || "${2:-}" == "-f" ]] && echo true || echo false)"
             ;;
         status)
@@ -2523,41 +2521,34 @@ Options:
             ensure_data_dir; cmd_next "${1:-}" "${2:-}"
             ;;
         pause|disable)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_pause "$1"
             ;;
         resume|enable)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_resume "$1"
             ;;
         show)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_show "$1"
             ;;
         history)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_history "$1" "${2:-20}"
             ;;
         stats)
             ensure_data_dir; cmd_stats "${1:-}"
             ;;
         run)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_run "$1"
             ;;
         edit)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_edit "$1" "${@:2}"
             ;;
         clone)
-            ensure_data_dir
-            require_job_id "$command" "$@"
+            ensure_data_dir; require_job_id "$command" "$@"
             cmd_clone "$1" "${@:2}"
             ;;
         export)
