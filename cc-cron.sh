@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.106"
+readonly VERSION="2.4.107"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -207,11 +207,9 @@ escape_json_string() {
 
 # Generate unique job ID with collision detection (optimized)
 generate_job_id() {
-    local job_id
-    local random_bytes
+    local job_id random_bytes _
 
     # Pre-generate random bytes for better performance
-    local _
     for _ in {1..10}; do
         # Read more bytes at once for efficiency
         random_bytes=$(head -c 100 /dev/urandom | tr -dc 'a-z0-9')
@@ -441,8 +439,7 @@ generate_run_script() {
     [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
 
     # Sanitize prompt for safe shell embedding
-    local safe_prompt="${prompt//\'/\'\\\'\'}"
-    local current_path="$PATH"
+    local safe_prompt="${prompt//\'/\'\\\'\'}" current_path="$PATH"
 
     cat > "$run_script" << RUNEOF
 #!/usr/bin/env bash
@@ -918,8 +915,7 @@ cmd_next() {
             source "$meta_file"
 
             # Check if paused
-            local paused_file="${DATA_DIR}/${id}.paused"
-            local paused_status=""
+            local paused_file="${DATA_DIR}/${id}.paused" paused_status=""
             [[ -f "$paused_file" ]] && paused_status=" (PAUSED)"
 
             local next_run; next_run=$(calculate_next_run "$cron")
