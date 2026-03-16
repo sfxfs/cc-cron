@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.163"
+readonly VERSION="2.4.164"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1074,9 +1074,7 @@ cmd_status() {
     echo
 
     # Count jobs from crontab
-    local crontab_content; crontab_content=$(get_crontab) || { warn "No crontab configured for current user"; return; }
-
-    local job_count; job_count=$(echo "$crontab_content" | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
+    local crontab_content; crontab_content=$(get_crontab) || { warn "No crontab configured for current user"; return; }; local job_count; job_count=$(echo "$crontab_content" | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
     echo "Total scheduled jobs: ${job_count}"
     echo
 
