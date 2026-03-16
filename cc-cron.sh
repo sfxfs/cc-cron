@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.222"
+readonly VERSION="2.4.223"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1332,8 +1332,7 @@ cmd_purge() {
 
     # Clean up orphaned files (files for jobs not in crontab)
     # Reset counters for orphan tracking
-    PURGE_COUNT=0
-    PURGE_BYTES=0
+    PURGE_COUNT=0; PURGE_BYTES=0
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue
         local job_id; job_id=$(basename "$meta_file" .meta)
