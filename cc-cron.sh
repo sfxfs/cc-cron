@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.93"
+readonly VERSION="2.4.94"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1416,11 +1416,7 @@ cmd_export() {
         local paused_file="${DATA_DIR}/${job_id}.paused"
         local is_paused; is_paused="$([[ -f "$paused_file" ]] && echo true || echo false)"
 
-        if [[ "$first" -eq 1 ]]; then
-            first=0
-        else
-            json_output+=","
-        fi
+        [[ "$first" -eq 1 ]] && first=0 || json_output+=","
 
         # Escape values for JSON output
         local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt")
@@ -2504,9 +2500,7 @@ _cc_cron_completion() {
             fi
             ;;
         export)
-            if [[ ${#words[@]} -eq 3 ]]; then
-                COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
-            fi
+            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         config)
             if [[ ${#words[@]} -eq 3 ]]; then
