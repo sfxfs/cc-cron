@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.219"
+readonly VERSION="2.4.220"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1121,8 +1121,7 @@ _show_job_stats() {
                     end_ts=$(date -d "$h_end" +%s 2>/dev/null) || continue
                 fi
                 duration=$((end_ts - start_ts))
-                total_duration=$((total_duration + duration))
-                ((duration_count++)) || true
+                total_duration=$((total_duration + duration)); ((duration_count++)) || true
             fi
         done < "$history_file"
     fi
