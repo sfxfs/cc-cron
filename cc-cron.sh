@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.60"
+readonly VERSION="2.4.61"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -699,12 +699,8 @@ cmd_list() {
                     job_json+=",\"workdir\":\"${escaped_workdir}\""
                     job_json+=",\"permission\":\"${escaped_permission}\""
                     job_json+=",\"prompt\":\"${escaped_prompt}\""
-                    if [[ -n "${model:-}" ]]; then
-                        job_json+=",\"model\":\"$(escape_json_string "$model")\""
-                    fi
-                    if [[ -n "${tags:-}" ]]; then
-                        job_json+=",\"tags\":\"$(escape_json_string "$tags")\""
-                    fi
+                    [[ -n "${model:-}" ]] && job_json+=",\"model\":\"$(escape_json_string "$model")\""
+                    [[ -n "${tags:-}" ]] && job_json+=",\"tags\":\"$(escape_json_string "$tags")\""
                     job_json+="}"
                     jobs+=("$job_json")
                 else
@@ -713,13 +709,9 @@ cmd_list() {
                     echo "  Schedule: ${cron}"
                     echo "  Recurring: ${recurring}"
                     echo "  Workdir: ${workdir:-$CC_WORKDIR}"
-                    if [[ -n "${model:-}" ]]; then
-                        echo "  Model: ${model}"
-                    fi
+                    [[ -n "${model:-}" ]] && echo "  Model: ${model}"
                     echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
-                    if [[ -n "${tags:-}" ]]; then
-                        echo "  Tags: ${tags}"
-                    fi
+                    [[ -n "${tags:-}" ]] && echo "  Tags: ${tags}"
                     echo "  Prompt: ${prompt}"
                     echo
                 fi
@@ -1082,16 +1074,10 @@ cmd_show() {
     echo "  Schedule:     ${cron}"
     echo "  Recurring:    ${recurring}"
     echo "  Workdir:      ${workdir}"
-    if [[ -n "${model:-}" ]]; then
-        echo "  Model:        ${model}"
-    fi
+    [[ -n "${model:-}" ]] && echo "  Model:        ${model}"
     echo "  Permission:   ${permission_mode}"
-    if [[ "${timeout:-0}" -gt 0 ]]; then
-        echo "  Timeout:      ${timeout}s"
-    fi
-    if [[ -n "${tags:-}" ]]; then
-        echo "  Tags:         ${tags}"
-    fi
+    [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s"
+    [[ -n "${tags:-}" ]] && echo "  Tags:         ${tags}"
     echo
     echo "  Prompt:"
     echo "    ${prompt}"
@@ -1361,9 +1347,7 @@ cmd_status() {
                 echo -e "  ${id}: ${status_icon}"
                 echo "    Start: ${start_time:-unknown}"
                 echo "    End:   ${end_time:-unknown}"
-                if [[ -n "${exit_code:-}" ]]; then
-                    echo "    Exit code: ${exit_code}"
-                fi
+                [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}"
                 echo "    Workdir: ${workdir}"
                 echo
             fi
