@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.193"
+readonly VERSION="2.4.194"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1595,8 +1595,7 @@ cmd_doctor() {
     echo
     echo "8. Checking disk space..."
     local data_size available_space; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0"); available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
-    echo "   Data directory size: ${data_size}"
-    echo "   Available space: ${available_space}"
+    echo -e "   Data directory size: ${data_size}\n   Available space: ${available_space}"
 
     # Check 9: Permission issues
     echo
@@ -1611,13 +1610,11 @@ cmd_doctor() {
     [[ $perm_issues -eq 0 ]] && echo "   ✓ All directories are writable" || ((issues++)) || true
 
     # Summary
-    echo
-    echo "================================"
-    [[ $issues -eq 0 && $warnings -eq 0 ]] && echo -e "${GREEN}All checks passed!${NC}" || {
+    echo -e "\n================================"
+    [[ $issues -eq 0 && $warnings -eq 0 ]] && echo -e "${GREEN}All checks passed!${NC}\n" || {
         [[ $issues -gt 0 ]] && echo -e "${RED}Found ${issues} issue(s) that need attention${NC}"
-        [[ $warnings -gt 0 ]] && echo -e "${YELLOW}Found ${warnings} warning(s)${NC}"
+        [[ $warnings -gt 0 ]] && echo -e "${YELLOW}Found ${warnings} warning(s)${NC}\n"
     }
-    echo
 
     # Return non-zero if there are issues
     [[ $issues -eq 0 ]]
