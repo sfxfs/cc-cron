@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.125"
+readonly VERSION="2.4.126"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2464,8 +2464,7 @@ Options:
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     --once)
-                        recurring="false"
-                        shift
+                        recurring="false"; shift
                         ;;
                     --workdir)
                         [[ -z "${2:-}" ]] && error "--workdir requires a path" "$EXIT_INVALID_ARGS"
@@ -2496,8 +2495,7 @@ Options:
                         shift 2
                         ;;
                     --quiet|-q)
-                        quiet="true"
-                        shift
+                        quiet="true"; shift
                         ;;
                     *)
                         error "Unknown option: $1" "$EXIT_INVALID_ARGS"
