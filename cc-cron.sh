@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.192"
+readonly VERSION="2.4.193"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1413,9 +1413,7 @@ cmd_config() {
                 echo -e "Config file contents:\n----------------------"
                 cat "$CONFIG_FILE"
             else
-                echo "No config file exists. Create one with:"
-                echo "  cc-cron config set workdir /path/to/dir"
-                echo "  cc-cron config set model sonnet"
+                echo -e "No config file exists. Create one with:\n  cc-cron config set workdir /path/to/dir\n  cc-cron config set model sonnet"
             fi
             ;;
         set)
