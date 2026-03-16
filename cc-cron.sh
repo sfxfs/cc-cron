@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.171"
+readonly VERSION="2.4.172"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -481,7 +481,7 @@ write_meta_file() {
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Escape string values for proper shell sourcing
-    local safe_prompt; safe_prompt=$(escape_shell_string "$prompt"); local safe_workdir; safe_workdir=$(escape_shell_string "$workdir"); local safe_model; safe_model=$(escape_shell_string "$model"); local safe_permission; safe_permission=$(escape_shell_string "$permission"); local safe_run_script; safe_run_script=$(escape_shell_string "$run_script")
+    local safe_prompt safe_workdir safe_model safe_permission safe_run_script; safe_prompt=$(escape_shell_string "$prompt"); safe_workdir=$(escape_shell_string "$workdir"); safe_model=$(escape_shell_string "$model"); safe_permission=$(escape_shell_string "$permission"); safe_run_script=$(escape_shell_string "$run_script")
 
     {
         echo "id=\"${job_id}\""
@@ -510,7 +510,7 @@ cmd_add() {
     # Ensure timeout is numeric
     job_timeout=$(safe_numeric "$job_timeout" "0")
 
-    local job_id; job_id=$(generate_job_id); local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local job_id timestamp; job_id=$(generate_job_id); timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
     ensure_data_dir
 
@@ -559,7 +559,7 @@ cmd_list() {
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
             # Extract job ID from comment using helper
-            local job_id; job_id=$(extract_job_id "$line"); local meta_file; meta_file=$(get_meta_file "$job_id")
+            local job_id meta_file; job_id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$job_id")
             if [[ -f "$meta_file" ]]; then
                 # Reset optional fields to avoid persistence from previous iterations
                 local tags="" model="" modified=""
@@ -574,7 +574,7 @@ cmd_list() {
 
                 if [[ "$json_output" == "true" ]]; then
                     # Build JSON object for this job
-                    local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt"); local escaped_workdir; escaped_workdir=$(escape_json_string "${workdir:-$CC_WORKDIR}"); local escaped_permission; escaped_permission=$(escape_json_string "${permission_mode:-$CC_PERMISSION_MODE}")
+                    local escaped_prompt escaped_workdir escaped_permission; escaped_prompt=$(escape_json_string "$prompt"); escaped_workdir=$(escape_json_string "${workdir:-$CC_WORKDIR}"); escaped_permission=$(escape_json_string "${permission_mode:-$CC_PERMISSION_MODE}")
                     local job_json="{"
                     job_json+="\"id\":\"${id}\""
                     job_json+=",\"created\":\"${created}\""
@@ -694,7 +694,8 @@ cmd_pause() {
 
 # Resume a paused job
 cmd_resume() {
-    local job_id="$1"; local paused_file="${DATA_DIR}/${job_id}.paused"
+    local job_id="$1"
+    local paused_file="${DATA_DIR}/${job_id}.paused"
 
     [[ -f "$paused_file" ]] || {
         [[ -f "$(get_meta_file "$job_id")" ]] && \
@@ -763,8 +764,7 @@ calculate_next_run() {
             local hour_step="${hour#*/}"
             if [[ "$hour_step" =~ ^[0-9]+$ ]]; then
                 # Every N hours at specific minute
-                local current_hour current_minute
-                current_hour=$(date +%H); current_minute=$(date +%M)
+                local current_hour current_minute; current_hour=$(date +%H); current_minute=$(date +%M)
                 current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
                 local target_minute=$((10#$minute))
 
@@ -779,8 +779,7 @@ calculate_next_run() {
             fi
         else
             # Daily at specific time
-            local current_hour current_minute
-            current_hour=$(date +%H); current_minute=$(date +%M)
+            local current_hour current_minute; current_hour=$(date +%H); current_minute=$(date +%M)
             current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
 
             local target_hour=$((10#$hour)) target_minute=$((10#$minute))
@@ -800,7 +799,7 @@ calculate_next_run() {
 
             local target_weekday=$((10#$weekday))
 
-            local current_hour; current_hour=$(date +%H); local current_minute; current_minute=$(date +%M)
+            local current_hour current_minute; current_hour=$(date +%H); current_minute=$(date +%M)
             current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
 
             local target_hour=$((10#$hour)) target_minute=$((10#$minute))
@@ -844,7 +843,7 @@ cmd_next() {
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            local id; id=$(extract_job_id "$line"); local meta_file; meta_file=$(get_meta_file "$id")
+            local id meta_file; id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$id")
             [[ ! -f "$meta_file" ]] && continue
 
             # Reset optional fields to avoid persistence from previous iterations
@@ -1022,7 +1021,7 @@ cmd_edit() {
     [[ -f "${DATA_DIR}/${job_id}.paused" ]] || crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
 
     # Update metadata file using helper
-    local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S'); local new_run_script; new_run_script=$(get_run_script "$job_id")
+    local timestamp new_run_script; timestamp=$(date '+%Y-%m-%d %H:%M:%S'); new_run_script=$(get_run_script "$job_id")
     write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" \
         "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp" "$new_tags"
 
@@ -1087,7 +1086,7 @@ cmd_status() {
         local tags="" model="" modified=""
         source "$meta_file"
 
-        local status_file; status_file=$(get_status_file "$id"); local log_file; log_file=$(get_log_file "$id")
+        local status_file log_file; status_file=$(get_status_file "$id"); log_file=$(get_log_file "$id")
 
         if [[ -f "$status_file" ]]; then
             source "$status_file"
@@ -1179,9 +1178,7 @@ _show_job_stats() {
             local h_status; h_status="${line#*status=\"}" && h_status="${h_status%%\"*}"
 
             # Parse times for duration calculation
-            local h_start h_end
-            h_start="${line#*start=\"}" && h_start="${h_start%%\"*}"
-            h_end="${line#*end=\"}" && h_end="${h_end%%\"*}"
+            local h_start h_end; h_start="${line#*start=\"}" && h_start="${h_start%%\"*}"; h_end="${line#*end=\"}" && h_end="${h_end%%\"*}"
 
             case "$h_status" in
                 success)
@@ -1653,7 +1650,7 @@ cmd_doctor() {
     while IFS= read -r line; do
         [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]] || continue
         ((crontab_jobs++)) || true
-        local job_id; job_id=$(extract_job_id "$line"); local meta_file; meta_file=$(get_meta_file "$job_id")
+        local job_id meta_file; job_id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$job_id")
         [[ -f "$meta_file" ]] || {
             echo "   ! Missing metadata for job: ${job_id}"
             ((orphaned++)) || true
@@ -1678,7 +1675,7 @@ cmd_doctor() {
     # Check 8: Disk space
     echo
     echo "8. Checking disk space..."
-    local data_size; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0"); local available_space; available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
+    local data_size available_space; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0"); available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
     echo "   Data directory size: ${data_size}"
     echo "   Available space: ${available_space}"
 

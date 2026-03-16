@@ -141,7 +141,7 @@ teardown() {
     local job_id="$LAST_CREATED_JOB_ID"
 
     # Create a log file for the job
-    local log_file; log_file=$(get_log_file "$job_id"); local history_file; history_file=$(get_history_file "$job_id")
+    local log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
     echo "Test log" > "$log_file"
 
     # Create a history file
@@ -917,7 +917,7 @@ EOF
 }
 
 @test "cmd_history parses structured history" {
-    local job_id="histtest" log_file; log_file=$(get_log_file "$job_id"); local history_file; history_file=$(get_history_file "$job_id")
+    local job_id="histtest" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
 
     echo "Some log entry" > "$log_file"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
@@ -931,7 +931,7 @@ EOF
 }
 
 @test "cmd_history shows failed status" {
-    local job_id="histfail" log_file; log_file=$(get_log_file "$job_id"); local history_file; history_file=$(get_history_file "$job_id")
+    local job_id="histfail" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
 
     echo "Log entry" > "$log_file"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="failed" exit_code="1"' > "$history_file"
@@ -958,7 +958,7 @@ EOF
 }
 
 @test "cmd_history respects lines argument" {
-    local job_id="histlines" log_file; log_file=$(get_log_file "$job_id"); local history_file; history_file=$(get_history_file "$job_id")
+    local job_id="histlines" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
 
     echo "Log entry" > "$log_file"
     # Create multiple history entries
