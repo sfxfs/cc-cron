@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.95"
+readonly VERSION="2.4.96"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1380,9 +1380,7 @@ cmd_export() {
 
     if [[ -n "$job_id" ]]; then
         # Export specific job - validate existence
-        if [[ ! -f "$(get_meta_file "$job_id")" ]]; then
-            error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
-        fi
+        [[ ! -f "$(get_meta_file "$job_id")" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
         jobs+=("$job_id")
     else
         # Export all jobs

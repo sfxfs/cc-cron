@@ -38,9 +38,7 @@ create_test_meta() {
         echo "model=\"${model}\""
         echo "permission_mode=\"${permission}\""
         echo "timeout=\"${timeout}\""
-        if [[ -n "$tags" ]]; then
-            echo "tags=\"${tags}\""
-        fi
+        [[ -n "$tags" ]] && echo "tags=\"${tags}\""
         echo "run_script=\"\${DATA_DIR}/run-${job_id}.sh\""
     } > "$meta_file"
 }
@@ -53,9 +51,7 @@ cleanup_test_job() {
 
     rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")" 2>/dev/null || true
     crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
-    if [[ "$include_paused" == "true" ]]; then
-        rm -f "${DATA_DIR}/${job_id}.paused" 2>/dev/null || true
-    fi
+    [[ "$include_paused" == "true" ]] && rm -f "${DATA_DIR}/${job_id}.paused" 2>/dev/null || true
 }
 
 # Cleanup source and cloned job from clone tests

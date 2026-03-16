@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.96] - 2026-03-16
+
+### Refactor
+- Simplify if-fi to && pattern in cmd_export job validation
+- Simplify if-fi patterns in test_helper.bash
+
 ## [2.4.95] - 2026-03-16
 
 ### Refactor
