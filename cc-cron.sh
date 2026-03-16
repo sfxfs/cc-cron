@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.76"
+readonly VERSION="2.4.77"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1150,9 +1150,7 @@ cmd_run() {
 
     local run_script; run_script=$(get_run_script "$job_id")
 
-    if [[ ! -f "$run_script" ]]; then
-        error "Run script not found for job: ${job_id}" "$EXIT_NOT_FOUND"
-    fi
+    [[ ! -f "$run_script" ]] && error "Run script not found for job: ${job_id}" "$EXIT_NOT_FOUND"
 
     info "Running job ${job_id} immediately..."
     info "Workdir: ${workdir}"
