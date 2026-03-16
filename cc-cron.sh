@@ -1302,8 +1302,7 @@ purge_old_files() {
 
         [[ "$dry_run" == "true" ]] && echo "  [dry-run] Would remove ${label}: ${file}" || \
             { rm -f "$file"; echo "  Removed ${label}: ${file}"; }
-        ((PURGE_COUNT++)) || true
-        ((PURGE_BYTES += file_size)) || true
+        ((PURGE_COUNT++)) || true; ((PURGE_BYTES += file_size)) || true
     done
 }
 
