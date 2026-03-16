@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.152"
+readonly VERSION="2.4.153"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -116,8 +116,7 @@ load_job_meta() {
 # Extract job ID from a crontab line containing CC-CRON comment
 # Usage: extract_job_id <crontab_line>
 extract_job_id() {
-    local line="$1" temp="${line#*"${CRON_COMMENT_PREFIX}"}"
-    echo "${temp%%:*}"
+    local line="$1"; echo "${line#*"${CRON_COMMENT_PREFIX}"}" | cut -d: -f1
 }
 
 # Helper to validate a number is within range
@@ -271,19 +270,12 @@ validate_cron() {
     [[ ${#fields[@]} -ne 5 ]] && error "Invalid cron expression: $cron (expected 5 fields: minute hour day month weekday)" "$EXIT_INVALID_ARGS"
 
     # Validate each field: minute (0-59), hour (0-23), day (1-31), month (1-12), weekday (0-6)
-    validate_cron_field "${fields[0]}" 0 59 "minute"
-    validate_cron_field "${fields[1]}" 0 23 "hour"
-    validate_cron_field "${fields[2]}" 1 31 "day of month"
-    validate_cron_field "${fields[3]}" 1 12 "month"
-    validate_cron_field "${fields[4]}" 0 6 "day of week"
+    validate_cron_field "${fields[0]}" 0 59 "minute"; validate_cron_field "${fields[1]}" 0 23 "hour"; validate_cron_field "${fields[2]}" 1 31 "day of month"; validate_cron_field "${fields[3]}" 1 12 "month"; validate_cron_field "${fields[4]}" 0 6 "day of week"
 }
 
 # Check if cron expression is valid (returns true/false, no exit)
 is_valid_cron() {
-    local cron="$1"
-
-    # Run validation in subshell to catch errors without exiting
-    ( validate_cron "$cron" ) 2>/dev/null
+    ( validate_cron "$1" ) 2>/dev/null
 }
 
 # Validate working directory exists
