@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.67"
+readonly VERSION="2.4.68"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1652,9 +1652,7 @@ cmd_purge() {
     [[ "$days" =~ ^[0-9]+$ ]] || error "Invalid days argument: ${days}" "$EXIT_INVALID_ARGS"
 
     info "Purging files older than ${days} days..."
-    if [[ "$dry_run" == "true" ]]; then
-        info "(dry-run mode - no files will be deleted)"
-    fi
+    [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"
     echo
 
     # Get list of active job IDs from crontab
