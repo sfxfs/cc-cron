@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.119"
+readonly VERSION="2.4.120"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -830,8 +830,7 @@ calculate_next_run() {
             current_minute=$(date +%M)
             current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
 
-            local target_hour=$((10#$hour))
-            local target_minute=$((10#$minute))
+            local target_hour=$((10#$hour)) target_minute=$((10#$minute))
 
             local minutes_today=$((target_hour * 60 + target_minute))
             local minutes_now=$((current_hour * 60 + current_minute))
@@ -854,8 +853,7 @@ calculate_next_run() {
             local current_minute; current_minute=$(date +%M)
             current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
 
-            local target_hour=$((10#$hour))
-            local target_minute=$((10#$minute))
+            local target_hour=$((10#$hour)) target_minute=$((10#$minute))
 
             local days_until=$(( (target_weekday - current_weekday + 7) % 7 ))
             if [[ $days_until -eq 0 ]]; then
