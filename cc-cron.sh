@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.61"
+readonly VERSION="2.4.62"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -633,21 +633,13 @@ cmd_add() {
         info "Schedule: ${cron_expr}"
         info "Recurring: ${recurring}"
         info "Workdir: ${job_workdir}"
-        if [[ -n "$job_model" ]]; then
-            info "Model: ${job_model}"
-        fi
+        [[ -n "$job_model" ]] && info "Model: ${job_model}" || true
         info "Permission: ${job_permission}"
-        if [[ "$job_timeout" -gt 0 ]]; then
-            info "Timeout: ${job_timeout}s"
-        fi
-        if [[ -n "$job_tags" ]]; then
-            info "Tags: ${job_tags}"
-        fi
+        [[ "$job_timeout" -gt 0 ]] && info "Timeout: ${job_timeout}s" || true
+        [[ -n "$job_tags" ]] && info "Tags: ${job_tags}" || true
         info "Prompt: ${prompt}"
         info "Log file: $(get_log_file "$job_id")"
-        if [[ "$recurring" == "false" ]]; then
-            info "One-shot job: will auto-remove after successful execution"
-        fi
+        [[ "$recurring" == "false" ]] && info "One-shot job: will auto-remove after successful execution" || true
     fi
 }
 
@@ -1248,18 +1240,10 @@ cmd_edit() {
     [[ ! -f "${DATA_DIR}/${job_id}.paused" ]] && crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
 
     success "Updated job: ${job_id}"
-    if [[ "$cron" != "$new_cron" ]]; then
-        info "Schedule: ${cron} → ${new_cron}"
-    fi
-    if [[ "$prompt" != "$new_prompt" ]]; then
-        info "Prompt updated"
-    fi
-    if [[ "$workdir" != "$new_workdir" ]]; then
-        info "Workdir: ${workdir} → ${new_workdir}"
-    fi
-    if [[ "${tags:-}" != "$new_tags" ]]; then
-        info "Tags: ${tags:-none} → ${new_tags:-none}"
-    fi
+    [[ "$cron" != "$new_cron" ]] && info "Schedule: ${cron} → ${new_cron}" || true
+    [[ "$prompt" != "$new_prompt" ]] && info "Prompt updated" || true
+    [[ "$workdir" != "$new_workdir" ]] && info "Workdir: ${workdir} → ${new_workdir}" || true
+    [[ "${tags:-}" != "$new_tags" ]] && info "Tags: ${tags:-none} → ${new_tags:-none}" || true
 }
 
 # Clone an existing job with a new ID
