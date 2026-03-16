@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.94"
+readonly VERSION="2.4.95"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -958,14 +958,10 @@ cmd_next() {
             local id; id=$(extract_job_id "$line")
 
             # Filter by job_id if specified
-            if [[ -n "$job_id" && "$id" != "$job_id" ]]; then
-                continue
-            fi
+            [[ -n "$job_id" && "$id" != "$job_id" ]] && continue
 
             local meta_file; meta_file=$(get_meta_file "$id")
-            if [[ ! -f "$meta_file" ]]; then
-                continue
-            fi
+            [[ ! -f "$meta_file" ]] && continue
 
             # Reset optional fields to avoid persistence from previous iterations
             local tags="" model="" modified=""
@@ -2510,13 +2506,8 @@ _cc_cron_completion() {
             fi
             ;;
         edit|clone)
-            if [[ ${#words[@]} -eq 3 ]]; then
-                COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
-            else
-                COMPREPLY=($(compgen -W \
-                "--cron --prompt --workdir --model --permission-mode --timeout --tags" \
-                -- "${cur}"))
-            fi
+            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}")) || \
+                COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout --tags" -- "${cur}"))
             ;;
         --model)
             COMPREPLY=($(compgen -W "sonnet opus haiku" -- "${cur}"))
