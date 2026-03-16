@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.217"
+readonly VERSION="2.4.218"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1477,8 +1477,7 @@ cmd_doctor() {
     # Check 2: Crontab access
     echo -e "\n2. Checking crontab access..."
     crontab -l &>/dev/null && echo "   ✓ Crontab is accessible" || {
-        echo "   ! No crontab configured (this is OK if no jobs are scheduled)"
-        ((warnings++)) || true
+        echo "   ! No crontab configured (this is OK if no jobs are scheduled)"; ((warnings++)) || true
     }
 
     # Check 3: Claude CLI
@@ -1487,8 +1486,7 @@ cmd_doctor() {
         echo "   ✓ Claude CLI found: $(command -v claude)"
         claude --version &>/dev/null && echo "     Version: $(claude --version 2>&1 | head -1)"
     else
-        echo -e "   ✗ Claude CLI not found in PATH\n     Fix: Install Claude CLI from https://claude.ai/code"
-        ((issues++)) || true
+        echo -e "   ✗ Claude CLI not found in PATH\n     Fix: Install Claude CLI from https://claude.ai/code"; ((issues++)) || true
     fi
 
     # Check 4: Required tools
@@ -1496,9 +1494,7 @@ cmd_doctor() {
     local missing_tools=()
     for tool in flock md5sum; do
         command -v "$tool" &>/dev/null && echo "   ✓ ${tool} available" || {
-            echo "   ✗ ${tool} not found"
-            missing_tools+=("$tool")
-            ((issues++)) || true
+            echo "   ✗ ${tool} not found"; missing_tools+=("$tool"); ((issues++)) || true
         }
     done
     [[ ${#missing_tools[@]} -gt 0 ]] && echo "     Fix: Install missing tools with your package manager"
@@ -1506,8 +1502,7 @@ cmd_doctor() {
     # Check 5: Optional tools
     echo -e "\n5. Checking optional tools..."
     command -v jq &>/dev/null && echo "   ✓ jq available (for import/export)" || {
-        echo -e "   ! jq not found (needed for import command)\n     Install: apt-get install jq or brew install jq"
-        ((warnings++)) || true
+        echo -e "   ! jq not found (needed for import command)\n     Install: apt-get install jq or brew install jq"; ((warnings++)) || true
     }
 
     # Check 6: Lock files
