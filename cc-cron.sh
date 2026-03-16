@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.83"
+readonly VERSION="2.4.84"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1813,12 +1813,10 @@ cmd_doctor() {
     # Check 2: Crontab access
     echo
     echo "2. Checking crontab access..."
-    if crontab -l &>/dev/null; then
-        echo "   ✓ Crontab is accessible"
-    else
+    crontab -l &>/dev/null && echo "   ✓ Crontab is accessible" || {
         echo "   ! No crontab configured (this is OK if no jobs are scheduled)"
         ((warnings++)) || true
-    fi
+    }
 
     # Check 3: Claude CLI
     echo
@@ -1837,26 +1835,22 @@ cmd_doctor() {
     echo "4. Checking required tools..."
     local missing_tools=()
     for tool in flock md5sum; do
-        if command -v "$tool" &>/dev/null; then
-            echo "   ✓ ${tool} available"
-        else
+        command -v "$tool" &>/dev/null && echo "   ✓ ${tool} available" || {
             echo "   ✗ ${tool} not found"
             missing_tools+=("$tool")
             ((issues++)) || true
-        fi
+        }
     done
     [[ ${#missing_tools[@]} -gt 0 ]] && echo "     Fix: Install missing tools with your package manager"
 
     # Check 5: Optional tools
     echo
     echo "5. Checking optional tools..."
-    if command -v jq &>/dev/null; then
-        echo "   ✓ jq available (for import/export)"
-    else
+    command -v jq &>/dev/null && echo "   ✓ jq available (for import/export)" || {
         echo "   ! jq not found (needed for import command)"
         echo "     Install: apt-get install jq or brew install jq"
         ((warnings++)) || true
-    fi
+    }
 
     # Check 6: Lock files
     echo
@@ -1884,15 +1878,14 @@ cmd_doctor() {
 
     # Count jobs in crontab
     while IFS= read -r line; do
-        if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            ((crontab_jobs++)) || true
-            local job_id; job_id=$(extract_job_id "$line")
-            local meta_file; meta_file=$(get_meta_file "$job_id")
-            if [[ ! -f "$meta_file" ]]; then
-                echo "   ! Missing metadata for job: ${job_id}"
-                ((orphaned++)) || true
-            fi
-        fi
+        [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]] || continue
+        ((crontab_jobs++)) || true
+        local job_id; job_id=$(extract_job_id "$line")
+        local meta_file; meta_file=$(get_meta_file "$job_id")
+        [[ -f "$meta_file" ]] || {
+            echo "   ! Missing metadata for job: ${job_id}"
+            ((orphaned++)) || true
+        }
     done < <(get_crontab)
 
     # Count meta files
