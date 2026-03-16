@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.203"
+readonly VERSION="2.4.204"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2116,8 +2116,7 @@ cmd_help() {
             # No argument - show general help
             ;;
         *)
-            echo "Unknown help topic: $topic"
-            echo "Run 'cc-cron help' for available commands"
+            echo -e "Unknown help topic: $topic\nRun 'cc-cron help' for available commands"
             return 1
             ;;
     esac
