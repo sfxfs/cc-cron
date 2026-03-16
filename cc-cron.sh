@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.66"
+readonly VERSION="2.4.67"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1024,9 +1024,7 @@ cmd_next() {
 
             echo -e "  ${GREEN}${id}${NC}${paused_status}"
             echo "    Schedule: ${cron}"
-            if [[ -n "$next_run" ]]; then
-                echo "    Next run: ${next_run}"
-            fi
+            [[ -n "$next_run" ]] && echo "    Next run: ${next_run}"
             echo "    Prompt:   ${prompt:0:50}${prompt:50:+...}"
             echo
 
