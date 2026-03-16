@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.148"
+readonly VERSION="2.4.149"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -967,9 +967,8 @@ cmd_show() {
 
 # Show execution history for a job
 cmd_history() {
-    local job_id="$1" lines="${2:-20}"
-    local history_file; history_file=$(get_history_file "$job_id")
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="$1" lines="${2:-20}" history_file log_file
+    history_file=$(get_history_file "$job_id"); log_file=$(get_log_file "$job_id")
 
     [[ -f "$log_file" ]] || {
         [[ -f "$(get_meta_file "$job_id")" ]] && \
