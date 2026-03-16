@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.82"
+readonly VERSION="2.4.83"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1748,15 +1748,13 @@ cmd_config() {
 
             # Read existing config or create new
             local -A config_map
-            if [[ -f "$CONFIG_FILE" ]]; then
-                while IFS='=' read -r k v; do
-                    [[ "$k" =~ ^[[:space:]]*# ]] && continue
-                    [[ -z "$k" ]] && continue
-                    v="${v#\"}"
-                    v="${v%\"}"
-                    config_map["$k"]="$v"
-                done < "$CONFIG_FILE"
-            fi
+            [[ -f "$CONFIG_FILE" ]] && while IFS='=' read -r k v; do
+                [[ "$k" =~ ^[[:space:]]*# ]] && continue
+                [[ -z "$k" ]] && continue
+                v="${v#\"}"
+                v="${v%\"}"
+                config_map["$k"]="$v"
+            done < "$CONFIG_FILE"
 
             # Set new value
             config_map["$key"]="$value"
@@ -1779,10 +1777,7 @@ cmd_config() {
 
             [[ -z "$key" ]] && error "Usage: cc-cron config unset <key>" "$EXIT_INVALID_ARGS"
 
-            if [[ ! -f "$CONFIG_FILE" ]]; then
-                warn "No config file exists"
-                return 0
-            fi
+            [[ ! -f "$CONFIG_FILE" ]] && { warn "No config file exists"; return 0; }
 
             # Remove key from config
             local temp_file; temp_file=$(mktemp)
