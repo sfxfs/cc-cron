@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.71"
+readonly VERSION="2.4.72"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -731,11 +731,7 @@ cmd_list() {
         done
         echo "]"
     elif [[ "$found" -eq 0 ]]; then
-        if [[ -n "$filter_tag" ]]; then
-            info "No jobs found with tag: ${filter_tag}"
-        else
-            info "No scheduled jobs found."
-        fi
+        [[ -n "$filter_tag" ]] && info "No jobs found with tag: ${filter_tag}" || info "No scheduled jobs found."
     fi
 }
 
@@ -1037,11 +1033,7 @@ cmd_next() {
     done <<< "$crontab_content"
 
     if [[ $found -eq 0 ]]; then
-        if [[ -n "$job_id" ]]; then
-            info "Job not found: ${job_id}"
-        else
-            info "No scheduled jobs found."
-        fi
+        [[ -n "$job_id" ]] && info "Job not found: ${job_id}" || info "No scheduled jobs found."
     fi
 }
 
