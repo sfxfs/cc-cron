@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.68"
+readonly VERSION="2.4.69"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1067,10 +1067,7 @@ cmd_show() {
 
     # Check if paused
     local paused_file="${DATA_DIR}/${job_id}.paused"
-    if [[ -f "$paused_file" ]]; then
-        echo -e "  Status:       ${YELLOW}PAUSED${NC}"
-        echo
-    fi
+    [[ -f "$paused_file" ]] && { echo -e "  Status:       ${YELLOW}PAUSED${NC}"; echo; }
 
     # Show current status
     local status_file; status_file=$(get_status_file "$job_id")
