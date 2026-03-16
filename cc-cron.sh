@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.135"
+readonly VERSION="2.4.136"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2572,8 +2572,7 @@ Options:
             cmd_clone "$1" "${@:2}"
             ;;
         export)
-            ensure_data_dir
-            cmd_export "${1:-}" "${2:-}"
+            ensure_data_dir; cmd_export "${1:-}" "${2:-}"
             ;;
         import)
             ensure_data_dir
