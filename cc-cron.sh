@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.196"
+readonly VERSION="2.4.197"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1500,16 +1500,14 @@ cmd_doctor() {
     }
 
     # Check 2: Crontab access
-    echo
-    echo "2. Checking crontab access..."
+    echo -e "\n2. Checking crontab access..."
     crontab -l &>/dev/null && echo "   ✓ Crontab is accessible" || {
         echo "   ! No crontab configured (this is OK if no jobs are scheduled)"
         ((warnings++)) || true
     }
 
     # Check 3: Claude CLI
-    echo
-    echo "3. Checking Claude CLI..."
+    echo -e "\n3. Checking Claude CLI..."
     if command -v claude &>/dev/null; then
         echo "   ✓ Claude CLI found: $(command -v claude)"
         claude --version &>/dev/null && echo "     Version: $(claude --version 2>&1 | head -1)"
@@ -1519,8 +1517,7 @@ cmd_doctor() {
     fi
 
     # Check 4: Required tools
-    echo
-    echo "4. Checking required tools..."
+    echo -e "\n4. Checking required tools..."
     local missing_tools=()
     for tool in flock md5sum; do
         command -v "$tool" &>/dev/null && echo "   ✓ ${tool} available" || {
@@ -1532,16 +1529,14 @@ cmd_doctor() {
     [[ ${#missing_tools[@]} -gt 0 ]] && echo "     Fix: Install missing tools with your package manager"
 
     # Check 5: Optional tools
-    echo
-    echo "5. Checking optional tools..."
+    echo -e "\n5. Checking optional tools..."
     command -v jq &>/dev/null && echo "   ✓ jq available (for import/export)" || {
         echo -e "   ! jq not found (needed for import command)\n     Install: apt-get install jq or brew install jq"
         ((warnings++)) || true
     }
 
     # Check 6: Lock files
-    echo
-    echo "6. Checking lock files..."
+    echo -e "\n6. Checking lock files..."
     local lock_count; lock_count=$(find "$LOCK_DIR" -name "*.lock" 2>/dev/null | wc -l)
     echo "   Active lock files: ${lock_count}"
     [[ "$lock_count" -gt 0 ]] && {
@@ -1558,8 +1553,7 @@ cmd_doctor() {
     }
 
     # Check 7: Job consistency
-    echo
-    echo "7. Checking job consistency..."
+    echo -e "\n7. Checking job consistency..."
     local crontab_jobs=0 meta_files=0 orphaned=0
 
     # Count jobs in crontab
@@ -1593,8 +1587,7 @@ cmd_doctor() {
     echo -e "   Data directory size: ${data_size}\n   Available space: ${available_space}"
 
     # Check 9: Permission issues
-    echo
-    echo "9. Checking permissions..."
+    echo -e "\n9. Checking permissions..."
     local perm_issues=0
     for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
         [[ -d "$dir" && ! -w "$dir" ]] && {
