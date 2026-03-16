@@ -363,9 +363,7 @@ EOF
     # Skip if there are existing cc-cron jobs
     local crontab_content
     crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
-    if [[ "$crontab_content" == *"CC-CRON:"* ]]; then
-        skip "crontab has existing cc-cron jobs"
-    fi
+    [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
     run cmd_next
     [ "$status" -eq 0 ]
@@ -1310,9 +1308,7 @@ EOF
     crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
 
     # Skip if there are existing cc-cron jobs in crontab
-    if [[ "$crontab_content" == *"CC-CRON:"* ]]; then
-        skip "crontab has existing cc-cron jobs"
-    fi
+    [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
     # If crontab is empty or has no CC-CRON entries, test the output
     run cmd_list
@@ -1387,9 +1383,7 @@ EOF
     # Only test if crontab is empty
     local crontab_content
     crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
-    if [[ "$crontab_content" == *"CC-CRON:"* ]]; then
-        skip "crontab has existing cc-cron jobs"
-    fi
+    [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
     run cmd_list "" "true"
     [ "$status" -eq 0 ]
@@ -2133,9 +2127,7 @@ EOF
     crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
 
     # Skip if there are existing cc-cron jobs
-    if [[ "$crontab_content" == *"CC-CRON:"* ]]; then
-        skip "crontab has existing cc-cron jobs"
-    fi
+    [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
     run cmd_status
     [ "$status" -eq 0 ]
