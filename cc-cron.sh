@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.176"
+readonly VERSION="2.4.177"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1124,8 +1124,7 @@ cmd_status() {
         fi
     done
 
-    echo -e "Summary: ${GREEN}${success_count} succeeded${NC}, ${RED}${failed_count} failed${NC}, "
-    echo -e "  ${YELLOW}${running_count} running${NC}, ${unknown_count} unknown${NC}"
+    echo -e "Summary: ${GREEN}${success_count} succeeded${NC}, ${RED}${failed_count} failed${NC}, \n  ${YELLOW}${running_count} running${NC}, ${unknown_count} unknown${NC}"
 }
 
 # Show execution statistics for jobs
