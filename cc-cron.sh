@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.194"
+readonly VERSION="2.4.195"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1393,10 +1393,7 @@ cmd_purge() {
     [[ $freed_mb_int -lt 100 ]] && freed_mb="0.${freed_mb_int}" || freed_mb="${freed_mb_int:0:-2}.${freed_mb_int: -2}"
     echo
     [[ "$dry_run" == "true" ]] && info "Dry-run summary:" || success "Purge complete:"
-    echo "  Logs purged:     ${purged_logs}"
-    echo "  History purged:  ${purged_history}"
-    echo "  Orphans removed: ${purged_orphans}"
-    echo "  Space freed:     ${freed_mb} MB"
+    echo -e "  Logs purged:     ${purged_logs}\n  History purged:  ${purged_history}\n  Orphans removed: ${purged_orphans}\n  Space freed:     ${freed_mb} MB"
 }
 
 # Manage configuration
