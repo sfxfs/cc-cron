@@ -51,9 +51,7 @@ teardown() {
 }
 
 @test "generate_job_id produces unique ids" {
-    local id1 id2
-    id1=$(generate_job_id)
-    id2=$(generate_job_id)
+    local id1 id2; id1=$(generate_job_id); id2=$(generate_job_id)
     [ "$id1" != "$id2" ]
 }
 
