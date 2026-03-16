@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.184"
+readonly VERSION="2.4.185"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1126,8 +1126,7 @@ _show_job_stats() {
     local tags="" model="" modified=""
     source "$meta_file"
 
-    echo -e "Job: ${GREEN}${job_id}${NC}"
-    echo "Schedule: ${cron}"
+    echo -e "Job: ${GREEN}${job_id}${NC}\nSchedule: ${cron}"
 
     # Count executions from history file
     local total_runs=0 success_count=0 failed_count=0 last_success="" last_failure="" total_duration=0 duration_count=0
