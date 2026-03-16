@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.101"
+readonly VERSION="2.4.102"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -971,9 +971,7 @@ cmd_next() {
         fi
     done <<< "$crontab_content"
 
-    if [[ $found -eq 0 ]]; then
-        [[ -n "$job_id" ]] && info "Job not found: ${job_id}" || info "No scheduled jobs found."
-    fi
+    [[ $found -eq 0 ]] && { [[ -n "$job_id" ]] && info "Job not found: ${job_id}" || info "No scheduled jobs found."; }
 }
 
 # Show detailed information for a specific job
