@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.122"
+readonly VERSION="2.4.123"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2474,18 +2474,13 @@ Options:
   --timeout <seconds>         Timeout for job execution (default: \$CC_TIMEOUT or 0, no timeout)
   --tags <tags>               Comma-separated tags for organization (e.g., 'prod,backup')
   --quiet, -q                 Only output the job ID (useful for scripting)" "$EXIT_INVALID_ARGS"
-            local cron_expr="$1"
-            local prompt="$2"
+            local cron_expr="$1" prompt="$2"
             shift 2
 
             # Parse optional flags
-            local recurring="true"
-            local job_workdir="$CC_WORKDIR"
-            local job_model="$CC_MODEL"
-            local job_permission="$CC_PERMISSION_MODE"
+            local recurring="true" job_workdir="$CC_WORKDIR" job_model="$CC_MODEL" job_permission="$CC_PERMISSION_MODE"
             local job_timeout; job_timeout=$(safe_numeric "${CC_TIMEOUT:-0}" "0")
-            local quiet="false"
-            local job_tags=""
+            local quiet="false" job_tags=""
 
             while [[ $# -gt 0 ]]; do
                 case "$1" in
