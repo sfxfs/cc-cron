@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.234"
+readonly VERSION="2.4.235"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2292,8 +2292,7 @@ Options:
             ensure_data_dir; require_job_id "$command" "$@"; cmd_remove "$1"
             ;;
         logs)
-            ensure_data_dir; require_job_id "$command" "$@"
-            cmd_logs "$1" "$([[ "${2:-}" == "--tail" || "${2:-}" == "-f" ]] && echo true || echo false)"
+            ensure_data_dir; require_job_id "$command" "$@"; cmd_logs "$1" "$([[ "${2:-}" == "--tail" || "${2:-}" == "-f" ]] && echo true || echo false)"
             ;;
         status)
             ensure_data_dir; cmd_status
