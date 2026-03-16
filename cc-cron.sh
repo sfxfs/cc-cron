@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.195"
+readonly VERSION="2.4.196"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1579,12 +1579,10 @@ cmd_doctor() {
         ((meta_files++)) || true
     done
 
-    echo "   Jobs in crontab: ${crontab_jobs}"
-    echo "   Metadata files:  ${meta_files}"
+    echo -e "   Jobs in crontab: ${crontab_jobs}\n   Metadata files:  ${meta_files}"
 
     [[ $orphaned -gt 0 ]] && {
-        echo "   ! ${orphaned} orphaned crontab entries found"
-        echo "     Fix: Run 'cc-cron purge' or manually clean crontab"
+        echo -e "   ! ${orphaned} orphaned crontab entries found\n     Fix: Run 'cc-cron purge' or manually clean crontab"
         ((issues++)) || true
     }
 
