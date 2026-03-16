@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.102"
+readonly VERSION="2.4.103"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -44,16 +44,14 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 
 # Error with configurable exit code
 error() {
-    local message="$1"
-    local exit_code="${2:-$EXIT_ERROR}"
+    local message="$1" exit_code="${2:-$EXIT_ERROR}"
     echo -e "${RED}[ERROR]${NC} ${message}" >&2
     exit "$exit_code"
 }
 
 # Helper to validate and get numeric value safely
 safe_numeric() {
-    local value="$1"
-    local default="$2"
+    local value="$1" default="$2"
     [[ "$value" =~ ^[0-9]+$ ]] && echo "$value" || echo "$default"
 }
 
@@ -135,9 +133,7 @@ validate_range() {
 # Arguments: file, label, dry_run (optional, default: false)
 # Returns: 0 on success, prints removed file info
 remove_file() {
-    local file="$1"
-    local label="$2"
-    local dry_run="${3:-false}"
+    local file="$1" label="$2" dry_run="${3:-false}"
 
     [[ -f "$file" ]] || return 0
 
@@ -390,11 +386,7 @@ parse_job_options() {
 # Crontab helper functions
 # Build a crontab entry for a job
 build_cron_entry() {
-    local job_id="$1"
-    local cron_expr="$2"
-    local run_script="$3"
-    local recurring="$4"
-    local prompt="$5"
+    local job_id="$1" cron_expr="$2" run_script="$3" recurring="$4" prompt="$5"
     echo "${cron_expr} ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=${recurring}:prompt=${prompt:0:30}"
 }
 
@@ -437,13 +429,7 @@ get_lock_file() {
 
 # Generate run script for a job (shared by add and edit)
 generate_run_script() {
-    local job_id="$1"
-    local job_workdir="$2"
-    local job_model="$3"
-    local job_permission="$4"
-    local job_timeout="$5"
-    local recurring="$6"
-    local prompt="$7"
+    local job_id="$1" job_workdir="$2" job_model="$3" job_permission="$4" job_timeout="$5" recurring="$6" prompt="$7"
 
     local log_file; log_file=$(get_log_file "$job_id")
     local status_file; status_file=$(get_status_file "$job_id")
@@ -1523,8 +1509,7 @@ purge_old_files() {
 
 # Purge old logs and orphaned files
 cmd_purge() {
-    local days="${1:-7}"
-    local dry_run="${2:-false}"
+    local days="${1:-7}" dry_run="${2:-false}"
 
     # Validate days argument
     [[ "$days" =~ ^[0-9]+$ ]] || error "Invalid days argument: ${days}" "$EXIT_INVALID_ARGS"
