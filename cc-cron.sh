@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.159"
+readonly VERSION="2.4.160"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -481,11 +481,7 @@ write_meta_file() {
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Escape string values for proper shell sourcing
-    local safe_prompt; safe_prompt=$(escape_shell_string "$prompt")
-    local safe_workdir; safe_workdir=$(escape_shell_string "$workdir")
-    local safe_model; safe_model=$(escape_shell_string "$model")
-    local safe_permission; safe_permission=$(escape_shell_string "$permission")
-    local safe_run_script; safe_run_script=$(escape_shell_string "$run_script")
+    local safe_prompt; safe_prompt=$(escape_shell_string "$prompt"); local safe_workdir; safe_workdir=$(escape_shell_string "$workdir"); local safe_model; safe_model=$(escape_shell_string "$model"); local safe_permission; safe_permission=$(escape_shell_string "$permission"); local safe_run_script; safe_run_script=$(escape_shell_string "$run_script")
 
     {
         echo "id=\"${job_id}\""
@@ -1039,8 +1035,7 @@ cmd_edit() {
     [[ -f "${DATA_DIR}/${job_id}.paused" ]] || crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
 
     # Update metadata file using helper
-    local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    local new_run_script; new_run_script=$(get_run_script "$job_id")
+    local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S'); local new_run_script; new_run_script=$(get_run_script "$job_id")
     write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" \
         "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp" "$new_tags"
 
