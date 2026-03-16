@@ -40,8 +40,7 @@ teardown() {
 
 @test "get_lock_file generates consistent hash" {
     run get_lock_file "/home/user/project"
-    local expected_hash
-    expected_hash=$(printf '%s' '/home/user/project' | md5sum | cut -d' ' -f1)
+    local expected_hash; expected_hash=$(printf '%s' '/home/user/project' | md5sum | cut -d' ' -f1)
     [ "$output" == "${LOCK_DIR}/${expected_hash}.lock" ]
 }
 
@@ -60,13 +59,11 @@ teardown() {
 
 @test "generate_job_id avoids collision" {
     # Create a meta file with a specific ID to force collision handling
-    local existing_id="test0001"
-    local meta_file; meta_file=$(get_meta_file "$existing_id")
+    local existing_id="test0001" meta_file; meta_file=$(get_meta_file "$existing_id")
     echo 'id="test0001"' > "$meta_file"
 
     # generate_job_id should still work (generate a different ID)
-    local new_id
-    new_id=$(generate_job_id)
+    local new_id; new_id=$(generate_job_id)
     [ "$new_id" != "$existing_id" ]
     [[ "$new_id" =~ ^[a-z0-9]{8}$ ]]
 
