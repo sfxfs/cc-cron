@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.91"
+readonly VERSION="2.4.92"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1400,10 +1400,7 @@ cmd_export() {
         done
     fi
 
-    if [[ ${#jobs[@]} -eq 0 ]]; then
-        warn "No jobs to export"
-        return 0
-    fi
+    [[ ${#jobs[@]} -eq 0 ]] && { warn "No jobs to export"; return 0; }
 
     # Build JSON output
     local json_output timestamp
@@ -1455,32 +1452,20 @@ cmd_export() {
     json_output+=']}'
 
     # Output to file or stdout
-    if [[ -n "$output_file" ]]; then
-        echo "$json_output" > "$output_file"
-        success "Exported ${export_count} job(s) to ${output_file}"
-    else
-        echo "$json_output"
-        info "Exported ${export_count} job(s)"
-    fi
+    [[ -n "$output_file" ]] && { echo "$json_output" > "$output_file"; success "Exported ${export_count} job(s) to ${output_file}"; } || { echo "$json_output"; info "Exported ${export_count} job(s)"; }
 }
 
 # Import jobs from JSON file
 cmd_import() {
     local input_file="$1"
 
-    if [[ ! -f "$input_file" ]]; then
-        error "File not found: ${input_file}" "$EXIT_NOT_FOUND"
-    fi
+    [[ ! -f "$input_file" ]] && error "File not found: ${input_file}" "$EXIT_NOT_FOUND"
 
     # Check for jq
-    if ! command -v jq &>/dev/null; then
-        error "jq is required for import. Install with: apt-get install jq or brew install jq" "$EXIT_ERROR"
-    fi
+    command -v jq &>/dev/null || error "jq is required for import. Install with: apt-get install jq or brew install jq" "$EXIT_ERROR"
 
     # Validate JSON syntax
-    if ! jq '.' "$input_file" >/dev/null 2>&1; then
-        error "Invalid JSON in file: ${input_file}" "$EXIT_INVALID_ARGS"
-    fi
+    jq '.' "$input_file" >/dev/null 2>&1 || error "Invalid JSON in file: ${input_file}" "$EXIT_INVALID_ARGS"
 
     # Parse JSON
     local job_count; job_count=$(jq '.jobs | length' "$input_file")
