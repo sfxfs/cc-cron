@@ -864,8 +864,7 @@ cmd_show() {
     # Show history summary
     local history_file; history_file=$(get_history_file "$job_id")
     if [[ -f "$history_file" ]]; then
-        local total_runs success_runs failed_runs
-        total_runs=$(wc -l < "$history_file"); success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0"); failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
+        local total_runs success_runs failed_runs; total_runs=$(wc -l < "$history_file"); success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0"); failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
         echo -e "  Statistics:\n    Total runs:    ${total_runs}\n    Successful:    ${GREEN}${success_runs}${NC}\n    Failed:        ${RED}${failed_runs}${NC}\n"
     fi
 
