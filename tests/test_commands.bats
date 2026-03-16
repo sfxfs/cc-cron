@@ -247,8 +247,7 @@ teardown() {
 }
 
 @test "load_job_meta loads existing job" {
-    local job_id="testmeta"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="testmeta" meta_file; meta_file=$(get_meta_file "$job_id")
     echo 'id="testmeta"' > "$meta_file"
     echo 'created="2024-01-01"' >> "$meta_file"
 
@@ -306,8 +305,7 @@ teardown() {
 }
 
 @test "cmd_run executes job successfully" {
-    local job_id="runsuccess"
-    local job_workdir="$BATS_TEST_TMPDIR"
+    local job_id="runsuccess" job_workdir="$BATS_TEST_TMPDIR"
     local run_script; run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "$job_workdir"
@@ -329,8 +327,7 @@ EOF
 }
 
 @test "cmd_run handles job failure" {
-    local job_id="runfail"
-    local job_workdir="$BATS_TEST_TMPDIR"
+    local job_id="runfail" job_workdir="$BATS_TEST_TMPDIR"
     local run_script; run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "$job_workdir"
@@ -430,8 +427,7 @@ EOF
 }
 
 @test "cmd_edit updates cron expression" {
-    local job_id="editcron"
-    local run_script; run_script=$(get_run_script "$job_id")
+    local job_id="editcron" run_script; run_script=$(get_run_script "$job_id")
     create_test_meta "$job_id" "/tmp"
 
     # Add crontab entry
@@ -448,8 +444,7 @@ EOF
 }
 
 @test "cmd_edit updates workdir" {
-    local job_id="editworkdir"
-    local run_script; run_script=$(get_run_script "$job_id")
+    local job_id="editworkdir" run_script; run_script=$(get_run_script "$job_id")
     create_test_meta "$job_id" "/tmp"
 
     # Add crontab entry
@@ -822,8 +817,7 @@ EOF
 }
 
 @test "cmd_logs defaults to non-follow mode" {
-    local job_id="testcat"
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="testcat" log_file; log_file=$(get_log_file "$job_id")
     echo "Log content" > "$log_file"
 
     run cmd_logs "$job_id" "false"
@@ -930,8 +924,7 @@ EOF
 }
 
 @test "cmd_history parses structured history" {
-    local job_id="histtest"
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="histtest" log_file; log_file=$(get_log_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
     echo "Some log entry" > "$log_file"
@@ -946,8 +939,7 @@ EOF
 }
 
 @test "cmd_history shows failed status" {
-    local job_id="histfail"
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="histfail" log_file; log_file=$(get_log_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
     echo "Log entry" > "$log_file"
@@ -961,8 +953,7 @@ EOF
 }
 
 @test "cmd_history falls back to log file when no history" {
-    local job_id="histfallback"
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="histfallback" log_file; log_file=$(get_log_file "$job_id")
 
     echo "Log entry line 1" > "$log_file"
     echo "Log entry line 2" >> "$log_file"
@@ -976,8 +967,7 @@ EOF
 }
 
 @test "cmd_history respects lines argument" {
-    local job_id="histlines"
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="histlines" log_file; log_file=$(get_log_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
     echo "Log entry" > "$log_file"
