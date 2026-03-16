@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.220"
+readonly VERSION="2.4.221"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1328,8 +1328,7 @@ cmd_purge() {
 
     # Clean up history files
     purge_old_files "$LOG_DIR" "history" "$days" "$dry_run" "history"
-    local purged_history=$PURGE_COUNT
-    ((freed_bytes += PURGE_BYTES)) || true
+    local purged_history=$PURGE_COUNT; ((freed_bytes += PURGE_BYTES)) || true
 
     # Clean up orphaned files (files for jobs not in crontab)
     # Reset counters for orphan tracking
