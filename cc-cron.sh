@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.63"
+readonly VERSION="2.4.64"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1106,9 +1106,7 @@ cmd_show() {
 
     # Show log file location
     local log_file; log_file=$(get_log_file "$job_id")
-    if [[ -f "$log_file" ]]; then
-        echo "  Log file: ${log_file}"
-    fi
+    [[ -f "$log_file" ]] && echo "  Log file: ${log_file}"
 }
 
 # Show execution history for a job
@@ -1446,12 +1444,8 @@ _show_job_stats() {
     fi
 
     # Show last execution times
-    if [[ -n "$last_success" ]]; then
-        echo "  Last success: ${last_success}"
-    fi
-    if [[ -n "$last_failure" ]]; then
-        echo "  Last failure: ${last_failure}"
-    fi
+    [[ -n "$last_success" ]] && echo "  Last success: ${last_success}"
+    [[ -n "$last_failure" ]] && echo "  Last failure: ${last_failure}"
 
     echo
 }
