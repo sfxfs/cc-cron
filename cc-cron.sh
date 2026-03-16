@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.56"
+readonly VERSION="2.4.57"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -909,8 +909,7 @@ calculate_next_run() {
             fi
         else
             # Every hour at specific minute
-            local current_minute
-            current_minute=$(date +%M)
+            local current_minute; current_minute=$(date +%M)
             current_minute=$((10#$current_minute))
             local target_minute=$((10#$minute))
 
@@ -973,15 +972,13 @@ calculate_next_run() {
         # Check if weekday is a simple single value (not a range or list)
         if [[ "$weekday" =~ ^[0-6]$ ]]; then
             # Weekly on a specific day
-            local current_weekday
-            current_weekday=$(date +%u)  # 1-7, Monday is 1
+            local current_weekday; current_weekday=$(date +%u)  # 1-7, Monday is 1
             current_weekday=$((current_weekday % 7))  # Convert to 0-6, Sunday is 0
 
             local target_weekday=$((10#$weekday))
 
-            local current_hour current_minute
-            current_hour=$(date +%H)
-            current_minute=$(date +%M)
+            local current_hour; current_hour=$(date +%H)
+            local current_minute; current_minute=$(date +%M)
             current_hour=$((10#$current_hour))
             current_minute=$((10#$current_minute))
 
@@ -1036,16 +1033,14 @@ cmd_next() {
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            local id
-            id=$(extract_job_id "$line")
+            local id; id=$(extract_job_id "$line")
 
             # Filter by job_id if specified
             if [[ -n "$job_id" && "$id" != "$job_id" ]]; then
                 continue
             fi
 
-            local meta_file
-            meta_file=$(get_meta_file "$id")
+            local meta_file; meta_file=$(get_meta_file "$id")
             if [[ ! -f "$meta_file" ]]; then
                 continue
             fi
@@ -1059,8 +1054,7 @@ cmd_next() {
             local paused_status=""
             [[ -f "$paused_file" ]] && paused_status=" (PAUSED)"
 
-            local next_run
-            next_run=$(calculate_next_run "$cron")
+            local next_run; next_run=$(calculate_next_run "$cron")
 
             echo -e "  ${GREEN}${id}${NC}${paused_status}"
             echo "    Schedule: ${cron}"
@@ -1387,8 +1381,7 @@ cmd_status() {
             fi
         elif [[ -f "$log_file" ]]; then
             # Has log but no status (old format or running)
-            local last_run
-            last_run=$(get_stat "$log_file" mtime | cut -d. -f1)
+            local last_run; last_run=$(get_stat "$log_file" mtime | cut -d. -f1)
             echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})"
             echo "    Workdir: ${workdir}"
             echo
@@ -1412,8 +1405,7 @@ cmd_stats() {
         local found=0
         for meta_file in "${LOG_DIR}"/*.meta; do
             [[ -f "$meta_file" ]] || continue
-            local id
-            id=$(basename "$meta_file" .meta)
+            local id; id=$(basename "$meta_file" .meta)
             _show_job_stats "$id"
             found=$((found + 1))
         done
@@ -1451,8 +1443,7 @@ _show_job_stats() {
             ((total_runs++)) || true
 
             # Parse status
-            local h_status
-            h_status="${line#*status=\"}" && h_status="${h_status%%\"*}"
+            local h_status; h_status="${line#*status=\"}" && h_status="${h_status%%\"*}"
 
             # Parse times for duration calculation
             local h_start h_end
@@ -1538,8 +1529,7 @@ cmd_export() {
         # Export all jobs
         for meta_file in "${LOG_DIR}"/*.meta; do
             [[ -f "$meta_file" ]] || continue
-            local id
-            id=$(basename "$meta_file" .meta)
+            local id; id=$(basename "$meta_file" .meta)
             jobs+=("$id")
         done
     fi
@@ -1550,8 +1540,7 @@ cmd_export() {
     fi
 
     # Build JSON output
-    local json_output
-    local timestamp
+    local json_output timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     json_output='{"version":"1.0","exported_at":"'"${timestamp}"'","jobs":['
     local first=1
@@ -1912,8 +1901,7 @@ cmd_config() {
             fi
 
             # Remove key from config
-            local temp_file
-            temp_file=$(mktemp)
+            local temp_file; temp_file=$(mktemp)
             grep -v "^${key}=" "$CONFIG_FILE" > "$temp_file" || true
             mv "$temp_file" "$CONFIG_FILE"
 
@@ -2006,10 +1994,8 @@ cmd_doctor() {
         echo "   ! Some jobs may be stuck or running"
         for lock_file in "$LOCK_DIR"/*.lock; do
             [[ -f "$lock_file" ]] || continue
-            local lock_age
-            lock_age=$(get_stat "$lock_file" mtime_unix)
-            local current_time
-            current_time=$(date +%s)
+            local lock_age; lock_age=$(get_stat "$lock_file" mtime_unix)
+            local current_time; current_time=$(date +%s)
             local age_minutes=$(( (current_time - lock_age) / 60 ))
             if [[ $age_minutes -gt 60 ]]; then
                 echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)"
@@ -2028,8 +2014,7 @@ cmd_doctor() {
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
             ((crontab_jobs++)) || true
             local job_id; job_id=$(extract_job_id "$line")
-            local meta_file
-            meta_file=$(get_meta_file "$job_id")
+            local meta_file; meta_file=$(get_meta_file "$job_id")
             if [[ ! -f "$meta_file" ]]; then
                 echo "   ! Missing metadata for job: ${job_id}"
                 ((orphaned++)) || true
@@ -2813,8 +2798,7 @@ Options:
             local job_workdir="$CC_WORKDIR"
             local job_model="$CC_MODEL"
             local job_permission="$CC_PERMISSION_MODE"
-            local job_timeout
-            job_timeout=$(safe_numeric "${CC_TIMEOUT:-0}" "0")
+            local job_timeout; job_timeout=$(safe_numeric "${CC_TIMEOUT:-0}" "0")
             local quiet="false"
             local job_tags=""
 
