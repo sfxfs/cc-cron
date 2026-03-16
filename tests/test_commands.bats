@@ -313,7 +313,6 @@ teardown() {
 @test "cmd_run executes job successfully" {
     local job_id="runsuccess"
     local job_workdir="$BATS_TEST_TMPDIR"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
     local run_script; run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "$job_workdir"
@@ -331,13 +330,12 @@ EOF
     [[ "$output" == *"Job executed successfully"* ]]
     [[ "$output" == *"Job completed successfully"* ]]
 
-    rm -f "$meta_file" "$run_script"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_run handles job failure" {
     local job_id="runfail"
     local job_workdir="$BATS_TEST_TMPDIR"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
     local run_script; run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "$job_workdir"
@@ -355,7 +353,7 @@ EOF
     [[ "$output" == *"Job failed intentionally"* ]]
     [[ "$output" == *"exited with code: 1"* ]]
 
-    rm -f "$meta_file" "$run_script"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_next shows no jobs message when empty" {
@@ -1649,15 +1647,13 @@ EOF
 
 @test "cmd_show displays tags when set" {
     local job_id="taggedjob"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     run cmd_show "$job_id"
     [ "$status" -eq 0 ]
     [[ "$output" == *"Tags:         prod,backup"* ]]
 
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "cmd_list filters by tag" {
@@ -1957,12 +1953,10 @@ EOF
 
     # Verify the job was created with tags (use the ID from LAST_CREATED_JOB_ID)
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local meta_file; meta_file=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$meta_file" ]]
-    grep -q 'tags="prod,backup"' "$meta_file"
+    grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
-    rm -f "$meta_file"
+    cleanup_test_job "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_export escapes quotes in prompt" {
@@ -1989,8 +1983,6 @@ EOF
 
 @test "cmd_export includes tags in JSON output" {
     local job_id="exportags"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     run cmd_export "$job_id"
@@ -1998,7 +1990,7 @@ EOF
     # Check that tags are included in JSON output
     [[ "$output" == *'"tags":"prod,backup"'* ]]
 
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "parse_job_options validates permission-mode" {
