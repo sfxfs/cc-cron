@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.198"
+readonly VERSION="2.4.199"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -543,7 +543,7 @@ cmd_list() {
     local filter_tag="${1:-}" json_output="${2:-false}" found=0
     local -a jobs=()
 
-    [[ "$json_output" != "true" ]] && { echo "Scheduled Claude Code Cron Jobs:"; echo "================================="; echo; }
+    [[ "$json_output" != "true" ]] && echo -e "Scheduled Claude Code Cron Jobs:\n=================================\n"
 
     # Single crontab read with caching
     local crontab_content; crontab_content=$(get_crontab) || return 0
@@ -588,8 +588,7 @@ cmd_list() {
                     [[ -n "${model:-}" ]] && echo "  Model: ${model}"
                     echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
                     [[ -n "${tags:-}" ]] && echo "  Tags: ${tags}"
-                    echo "  Prompt: ${prompt}"
-                    echo
+                    echo -e "  Prompt: ${prompt}\n"
                 fi
             else
                 # Skip jobs without metadata when filtering
@@ -1404,8 +1403,7 @@ cmd_config() {
         list)
             info "Current configuration:"
             echo -e "\n  Config file: ${CONFIG_FILE}\n  Data dir:    ${DATA_DIR}"
-            echo -e "\n  Default workdir:    ${CC_WORKDIR}\n  Default model:      ${CC_MODEL:-<not set>}\n  Default permission: ${CC_PERMISSION_MODE}\n  Default timeout:    ${CC_TIMEOUT}s"
-            echo
+            echo -e "\n  Default workdir:    ${CC_WORKDIR}\n  Default model:      ${CC_MODEL:-<not set>}\n  Default permission: ${CC_PERMISSION_MODE}\n  Default timeout:    ${CC_TIMEOUT}s\n"
             if [[ -f "$CONFIG_FILE" ]]; then
                 echo -e "Config file contents:\n----------------------"
                 cat "$CONFIG_FILE"
@@ -1581,8 +1579,7 @@ cmd_doctor() {
     }
 
     # Check 8: Disk space
-    echo
-    echo "8. Checking disk space..."
+    echo -e "\n8. Checking disk space..."
     local data_size available_space; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0"); available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
     echo -e "   Data directory size: ${data_size}\n   Available space: ${available_space}"
 
