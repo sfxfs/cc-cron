@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.200"
+readonly VERSION="2.4.201"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2402,8 +2402,7 @@ Options:
             ensure_data_dir; [[ $# -lt 1 ]] && error "Usage: cc-cron import <file>" "$EXIT_INVALID_ARGS"; cmd_import "$1"
             ;;
         purge)
-            ensure_data_dir
-            local purge_days="7" dry_run="false"
+            ensure_data_dir; local purge_days="7" dry_run="false"
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     --dry-run)
