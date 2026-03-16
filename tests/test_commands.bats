@@ -1905,8 +1905,7 @@ EOF
 }
 
 @test "cmd_export escapes quotes in prompt" {
-    local job_id="quotejob"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="quotejob" meta_file; meta_file=$(get_meta_file "$job_id")
     echo 'id="quotejob"' > "$meta_file"
     echo 'created="2024-01-01"' >> "$meta_file"
     echo 'cron="0 0 * * *"' >> "$meta_file"
@@ -2255,8 +2254,7 @@ EOF
 }
 
 @test "cmd_pause handles already paused job" {
-    local job_id="alreadypaused"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="alreadypaused" meta_file; meta_file=$(get_meta_file "$job_id")
     local paused_file="${DATA_DIR}/${job_id}.paused"
 
     create_test_meta "$job_id" "/tmp"
@@ -2324,8 +2322,7 @@ EOF
 
 @test "cmd_list handles job with missing metadata" {
     # Create a fake crontab entry with a job ID that has no metadata
-    local job_id="missingmeta"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="missingmeta" meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Ensure metadata doesn't exist
     rm -f "$meta_file" 2>/dev/null || true
@@ -2651,8 +2648,7 @@ EOF
 # Tests for set -e edge cases (ensures [[ condition ]] && command patterns don't regress)
 
 @test "cmd_edit works on a paused job" {
-    local job_id="editpaused"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="editpaused" meta_file; meta_file=$(get_meta_file "$job_id")
     local paused_file="${DATA_DIR}/${job_id}.paused"
 
     # Create job metadata
@@ -2670,8 +2666,7 @@ EOF
 }
 
 @test "cmd_show without model does not show Model line" {
-    local job_id="shownomodel"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="shownomodel" meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Create job metadata without model
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
@@ -2685,8 +2680,7 @@ EOF
 }
 
 @test "cmd_show with model shows Model line" {
-    local job_id="showmodel"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="showmodel" meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Create job metadata with model
     create_test_meta "$job_id" "/tmp" "sonnet" "bypassPermissions" "0"
@@ -2699,8 +2693,7 @@ EOF
 }
 
 @test "cmd_show with timeout shows Timeout line" {
-    local job_id="showtimeout"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="showtimeout" meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Create job metadata with timeout
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
@@ -2713,8 +2706,7 @@ EOF
 }
 
 @test "cmd_status with exit code shows Exit code" {
-    local job_id="statusexit"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="statusexit" meta_file; meta_file=$(get_meta_file "$job_id")
     local status_file; status_file=$(get_status_file "$job_id")
 
     # Create job metadata
@@ -2735,8 +2727,7 @@ EOF
 }
 
 @test "cmd_status handles unknown status" {
-    local job_id="unknownstatus"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="unknownstatus" meta_file; meta_file=$(get_meta_file "$job_id")
     local status_file; status_file=$(get_status_file "$job_id")
 
     create_test_meta "$job_id"
@@ -2754,8 +2745,7 @@ EOF
 }
 
 @test "cmd_status handles job with log but no status file" {
-    local job_id="logonly"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="logonly" meta_file; meta_file=$(get_meta_file "$job_id")
     local log_file; log_file=$(get_log_file "$job_id")
 
     create_test_meta "$job_id"
@@ -2880,8 +2870,7 @@ EOF
 }
 
 @test "cmd_stats shows stats for specific job" {
-    local job_id="statsjob"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="statsjob" meta_file; meta_file=$(get_meta_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
     # Create meta file
@@ -2937,8 +2926,7 @@ EOF
 }
 
 @test "cmd_stats handles job with no history" {
-    local job_id="statsnohistory"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="statsnohistory" meta_file; meta_file=$(get_meta_file "$job_id")
 
     create_test_meta "$job_id"
 
@@ -3026,8 +3014,7 @@ EOF
 }
 
 @test "cmd_stats handles malformed history entries gracefully" {
-    local job_id="malformedstats"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="malformedstats" meta_file; meta_file=$(get_meta_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
     create_test_meta "$job_id"
@@ -3355,8 +3342,7 @@ EOF
 
 # Tests for write_meta_file special character escaping
 @test "write_meta_file escapes double quotes in prompt" {
-    local job_id="escquote"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="escquote" meta_file; meta_file=$(get_meta_file "$job_id")
     local prompt='He said "hello world" to me'
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
@@ -3369,8 +3355,7 @@ EOF
 }
 
 @test "write_meta_file escapes backslashes in prompt" {
-    local job_id="escslash"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="escslash" meta_file; meta_file=$(get_meta_file "$job_id")
     local prompt='Path: C:\Users\test\node_modules'
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
@@ -3383,8 +3368,7 @@ EOF
 }
 
 @test "write_meta_file escapes both quotes and backslashes in prompt" {
-    local job_id="escboth"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="escboth" meta_file; meta_file=$(get_meta_file "$job_id")
     local prompt='Test "path" C:\test\folder and "more"'
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
@@ -3397,8 +3381,7 @@ EOF
 }
 
 @test "write_meta_file escapes special characters in workdir" {
-    local job_id="escwork"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="escwork" meta_file; meta_file=$(get_meta_file "$job_id")
     local workdir='/path/with "quotes"/and\backslashes'
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "$workdir" "" "auto" "0" "/tmp/run.sh"
@@ -3411,8 +3394,7 @@ EOF
 }
 
 @test "write_meta_file escapes special characters in tags" {
-    local job_id="esctags"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="esctags" meta_file; meta_file=$(get_meta_file "$job_id")
     local tags='tag"with"quotes,and\backslash'
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "/tmp" "" "auto" "0" "/tmp/run.sh" "" "$tags"
@@ -3425,8 +3407,7 @@ EOF
 }
 
 @test "write_meta_file preserves JSON-like prompt" {
-    local job_id="escjson"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="escjson" meta_file; meta_file=$(get_meta_file "$job_id")
     local prompt='{"key": "value", "nested": {"data": "test"}}'
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
@@ -3439,8 +3420,7 @@ EOF
 }
 
 @test "write_meta_file handles consecutive backslashes" {
-    local job_id="escmultislash"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="escmultislash" meta_file; meta_file=$(get_meta_file "$job_id")
     local prompt='UNC path: \\server\share\folder'
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
@@ -3453,8 +3433,7 @@ EOF
 }
 
 @test "write_meta_file escapes special characters in model name" {
-    local job_id="escmodel"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="escmodel" meta_file; meta_file=$(get_meta_file "$job_id")
     local model='model"with"quotes'
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "/tmp" "$model" "auto" "0" "/tmp/run.sh"
@@ -3468,8 +3447,7 @@ EOF
 
 # Tests for JSON output with special characters
 @test "cmd_list --json escapes backslashes in prompt" {
-    local job_id="jsonbackslash"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="jsonbackslash" meta_file; meta_file=$(get_meta_file "$job_id")
     local run_script; run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
@@ -3489,8 +3467,7 @@ EOF
 }
 
 @test "cmd_export escapes backslashes in prompt" {
-    local job_id="exportback"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="exportback" meta_file; meta_file=$(get_meta_file "$job_id")
 
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
     # Override prompt with backslash-containing value
@@ -3506,8 +3483,7 @@ EOF
 
 # Tests for cmd_purge actually removing files
 @test "cmd_purge removes old log files" {
-    local job_id="purgejob"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="purgejob" meta_file; meta_file=$(get_meta_file "$job_id")
     local log_file; log_file=$(get_log_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
@@ -3533,8 +3509,7 @@ EOF
 }
 
 @test "cmd_purge keeps recent files" {
-    local job_id="recentpurge"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="recentpurge" meta_file; meta_file=$(get_meta_file "$job_id")
     local log_file; log_file=$(get_log_file "$job_id")
     local run_script; run_script=$(get_run_script "$job_id")
 
@@ -3580,8 +3555,7 @@ EOF
 }
 
 @test "cmd_remove fails for job without crontab entry but cleans up files" {
-    local job_id="orphanremove"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="orphanremove" meta_file; meta_file=$(get_meta_file "$job_id")
     local log_file; log_file=$(get_log_file "$job_id")
 
     # Create meta file without adding to crontab
@@ -3605,8 +3579,7 @@ EOF
 }
 
 @test "_show_job_stats shows zero stats for job without history" {
-    local job_id="statjob"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="statjob" meta_file; meta_file=$(get_meta_file "$job_id")
 
     create_test_meta "$job_id"
 
@@ -3621,8 +3594,7 @@ EOF
 }
 
 @test "_show_job_stats calculates success and failure counts" {
-    local job_id="statcount"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="statcount" meta_file; meta_file=$(get_meta_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
     create_test_meta "$job_id"
@@ -3646,8 +3618,7 @@ EOF
 }
 
 @test "_show_job_stats shows last success and failure times" {
-    local job_id="stattimes"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="stattimes" meta_file; meta_file=$(get_meta_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
     create_test_meta "$job_id"
@@ -3667,8 +3638,7 @@ EOF
 }
 
 @test "_show_job_stats calculates average duration" {
-    local job_id="statduration"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="statduration" meta_file; meta_file=$(get_meta_file "$job_id")
     local history_file; history_file=$(get_history_file "$job_id")
 
     create_test_meta "$job_id"
