@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.73"
+readonly VERSION="2.4.74"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1862,10 +1862,7 @@ cmd_doctor() {
     echo "3. Checking Claude CLI..."
     if command -v claude &>/dev/null; then
         echo "   ✓ Claude CLI found: $(command -v claude)"
-        # Check version if possible
-        if claude --version &>/dev/null; then
-            echo "     Version: $(claude --version 2>&1 | head -1)"
-        fi
+        claude --version &>/dev/null && echo "     Version: $(claude --version 2>&1 | head -1)"
     else
         echo "   ✗ Claude CLI not found in PATH"
         echo "     Fix: Install Claude CLI from https://claude.ai/code"
@@ -1885,9 +1882,7 @@ cmd_doctor() {
             ((issues++)) || true
         fi
     done
-    if [[ ${#missing_tools[@]} -gt 0 ]]; then
-        echo "     Fix: Install missing tools with your package manager"
-    fi
+    [[ ${#missing_tools[@]} -gt 0 ]] && echo "     Fix: Install missing tools with your package manager"
 
     # Check 5: Optional tools
     echo
