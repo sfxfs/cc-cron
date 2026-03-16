@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.133"
+readonly VERSION="2.4.134"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2603,14 +2603,11 @@ Options:
             cmd_config "${1:-list}" "${2:-}" "${3:-}"
             ;;
         doctor)
-            ensure_data_dir
-            cmd_doctor
+            ensure_data_dir; cmd_doctor
             ;;
         version|--version|-v) cmd_version ;;
         completion) cmd_completion ;;
-        help|--help|-h)
-            cmd_help "${1:-}"
-            ;;
+        help|--help|-h) cmd_help "${1:-}" ;;
         *)
             error "Unknown command: ${command}. Run 'cc-cron help' for usage." "$EXIT_INVALID_ARGS"
             ;;
