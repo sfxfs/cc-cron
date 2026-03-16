@@ -145,8 +145,7 @@ remove_file() {
 # Arguments: file, label, dry_run (optional, default: false)
 purge_single_file() {
     remove_file "$1" "$2" "${3:-false}"
-    ((PURGE_COUNT++)) || true
-    ((PURGE_BYTES += REMOVE_FILE_SIZE)) || true
+    ((PURGE_COUNT++)) || true; ((PURGE_BYTES += REMOVE_FILE_SIZE)) || true
 }
 
 # Helper to validate job-id argument presence
