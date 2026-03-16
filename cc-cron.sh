@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.75"
+readonly VERSION="2.4.76"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -795,10 +795,7 @@ cmd_pause() {
     fi
 
     # Check if already paused
-    if [[ -f "$paused_file" ]]; then
-        warn "Job ${job_id} is already paused"
-        return 0
-    fi
+    [[ -f "$paused_file" ]] && { warn "Job ${job_id} is already paused"; return 0; }
 
     # Check if job is in crontab (it should be if not paused)
     if ! crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
