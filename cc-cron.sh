@@ -319,9 +319,7 @@ parse_job_options() {
                 PARSED_HAS_CHANGES=1; shift 2
                 ;;
             --model)
-                PARSED_MODEL="${2:-}"
-                PARSED_MODEL_SET=1
-                PARSED_HAS_CHANGES=1; shift 2
+                PARSED_MODEL="${2:-}"; PARSED_MODEL_SET=1; PARSED_HAS_CHANGES=1; shift 2
                 ;;
             --permission-mode)
                 [[ -z "${2:-}" ]] && error "--permission-mode requires a mode" "$EXIT_INVALID_ARGS"
@@ -336,9 +334,7 @@ parse_job_options() {
                 PARSED_HAS_CHANGES=1; shift 2
                 ;;
             --tags)
-                PARSED_TAGS="${2:-}"
-                PARSED_TAGS_SET=1
-                PARSED_HAS_CHANGES=1; shift 2
+                PARSED_TAGS="${2:-}"; PARSED_TAGS_SET=1; PARSED_HAS_CHANGES=1; shift 2
                 ;;
             *)
                 error "Unknown option: $1" "$EXIT_INVALID_ARGS"
