@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.59] - 2025-03-16
+
+### Refactor
+- Continue combining local variable declarations with assignments throughout the codebase
+
 ## [2.4.58] - 2025-03-16
 
 ### Refactor

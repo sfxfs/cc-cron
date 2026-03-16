@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.58"
+readonly VERSION="2.4.59"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -145,8 +145,7 @@ remove_file() {
 
     [[ -f "$file" ]] || return 0
 
-    local file_size
-    file_size=$(get_stat "$file" size 2>/dev/null || echo "0")
+    local file_size; file_size=$(get_stat "$file" size 2>/dev/null || echo "0")
 
     if [[ "$dry_run" == "true" ]]; then
         echo "  [dry-run] Would remove ${label}: ${file}"
@@ -455,8 +454,7 @@ crontab_remove_entry() {
 # Generate lock file path from directory path
 get_lock_file() {
     local dir="$1"
-    local dir_hash
-    dir_hash=$(echo -n "$dir" | md5sum | cut -d' ' -f1)
+    local dir_hash; dir_hash=$(echo -n "$dir" | md5sum | cut -d' ' -f1)
     echo "${LOCK_DIR}/${dir_hash}.lock"
 }
 
@@ -609,15 +607,13 @@ cmd_add() {
     # Ensure timeout is numeric
     job_timeout=$(safe_numeric "$job_timeout" "0")
 
-    local job_id
-    job_id=$(generate_job_id)
+    local job_id; job_id=$(generate_job_id)
     local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
     ensure_data_dir
 
     # Generate run script using helper
-    local run_script
-    run_script=$(generate_run_script "$job_id" "$job_workdir" "$job_model" \
+    local run_script; run_script=$(generate_run_script "$job_id" "$job_workdir" "$job_model" \
         "$job_permission" "$job_timeout" "$recurring" "$prompt")
 
     # Create the cron entry using helper
@@ -670,8 +666,7 @@ cmd_list() {
     fi
 
     # Single crontab read with caching
-    local crontab_content
-    crontab_content=$(get_crontab) || return 0
+    local crontab_content; crontab_content=$(get_crontab) || return 0
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
@@ -873,8 +868,7 @@ cmd_resume() {
 # Supports: hourly (0 * * * *), daily (0 H * * *), weekly (0 H * * D)
 calculate_next_run() {
     local cron="$1"
-    local now
-    now=$(date +%s)
+    local now; now=$(date +%s)
 
     # Parse cron fields
     local -a fields
@@ -893,8 +887,7 @@ calculate_next_run() {
             local step="${minute#*/}"
             if [[ "$step" =~ ^[0-9]+$ ]]; then
                 # Every N minutes
-                local current_minute
-                current_minute=$(date +%M)
+                local current_minute; current_minute=$(date +%M)
                 current_minute=$((10#$current_minute))
                 local minutes_until=$(( (step - current_minute % step) % step ))
                 if [[ $minutes_until -eq 0 ]]; then
@@ -1026,8 +1019,7 @@ cmd_next() {
     echo "========================="
     echo
 
-    local crontab_content
-    crontab_content=$(get_crontab) || { info "No crontab configured"; return 0; }
+    local crontab_content; crontab_content=$(get_crontab) || { info "No crontab configured"; return 0; }
 
     local found=0
 
@@ -1320,11 +1312,9 @@ cmd_status() {
     echo
 
     # Count jobs from crontab
-    local crontab_content
-    crontab_content=$(get_crontab) || { warn "No crontab configured for current user"; return; }
+    local crontab_content; crontab_content=$(get_crontab) || { warn "No crontab configured for current user"; return; }
 
-    local job_count
-    job_count=$(echo "$crontab_content" | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
+    local job_count; job_count=$(echo "$crontab_content" | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
     echo "Total scheduled jobs: ${job_count}"
     echo
 
@@ -1485,15 +1475,13 @@ _show_job_stats() {
 
     # Calculate success rate
     if [[ $total_runs -gt 0 ]]; then
-        local success_rate
-        success_rate=$((success_count * 100 / total_runs))
+        local success_rate; success_rate=$((success_count * 100 / total_runs))
         echo "  Success rate: ${success_rate}%"
     fi
 
     # Calculate average duration
     if [[ $duration_count -gt 0 ]]; then
-        local avg_duration
-        avg_duration=$((total_duration / duration_count))
+        local avg_duration; avg_duration=$((total_duration / duration_count))
         local avg_min=$((avg_duration / 60))
         local avg_sec=$((avg_duration % 60))
         echo "  Avg duration: ${avg_min}m ${avg_sec}s"
@@ -1617,8 +1605,7 @@ cmd_import() {
     fi
 
     # Parse JSON
-    local job_count
-    job_count=$(jq '.jobs | length' "$input_file")
+    local job_count; job_count=$(jq '.jobs | length' "$input_file")
 
     if [[ "$job_count" -eq 0 ]]; then
         warn "No jobs found in import file"
@@ -1630,8 +1617,7 @@ cmd_import() {
     local imported=0 skipped=0 i
 
     for ((i = 0; i < job_count; i++)); do
-        local job_json
-        job_json=$(jq -c ".jobs[$i]" "$input_file")
+        local job_json; job_json=$(jq -c ".jobs[$i]" "$input_file")
 
         local job_cron job_prompt job_recurring job_workdir job_model job_permission job_timeout job_paused job_tags
         job_cron=$(jq -r '.cron' <<< "$job_json")
@@ -1693,12 +1679,10 @@ purge_old_files() {
         [[ -f "$file" ]] || continue
 
         # Check if file is old enough
-        local file_age
-        file_age=$(find "$file" -mtime +"$days" 2>/dev/null)
+        local file_age; file_age=$(find "$file" -mtime +"$days" 2>/dev/null)
         [[ -n "$file_age" ]] || continue
 
-        local file_size
-        file_size=$(get_stat "$file" size || echo "0")
+        local file_size; file_size=$(get_stat "$file" size || echo "0")
 
         if [[ "$dry_run" == "true" ]]; then
             echo "  [dry-run] Would remove ${label}: ${file}"
@@ -1737,8 +1721,7 @@ cmd_purge() {
     # Also check paused jobs
     for paused_file in "${DATA_DIR}"/*.paused; do
         [[ -f "$paused_file" ]] || continue
-        local job_id
-        job_id=$(basename "$paused_file" .paused)
+        local job_id; job_id=$(basename "$paused_file" .paused)
         active_jobs["$job_id"]=1
     done
 
@@ -1985,8 +1968,7 @@ cmd_doctor() {
     # Check 6: Lock files
     echo
     echo "6. Checking lock files..."
-    local lock_count
-    lock_count=$(find "$LOCK_DIR" -name "*.lock" 2>/dev/null | wc -l)
+    local lock_count; lock_count=$(find "$LOCK_DIR" -name "*.lock" 2>/dev/null | wc -l)
     echo "   Active lock files: ${lock_count}"
     if [[ "$lock_count" -gt 0 ]]; then
         echo "   ! Some jobs may be stuck or running"
@@ -2038,12 +2020,10 @@ cmd_doctor() {
     # Check 8: Disk space
     echo
     echo "8. Checking disk space..."
-    local data_size
-    data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0")
+    local data_size; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0")
     echo "   Data directory size: ${data_size}"
 
-    local available_space
-    available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
+    local available_space; available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
     echo "   Available space: ${available_space}"
 
     # Check 9: Permission issues
