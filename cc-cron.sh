@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.86"
+readonly VERSION="2.4.87"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1308,9 +1308,7 @@ _show_job_stats() {
     local history_file; history_file=$(get_history_file "$job_id")
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
-    if [[ ! -f "$meta_file" ]]; then
-        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
-    fi
+    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
 
     # Reset optional fields to avoid persistence from previous iterations
     local tags="" model="" modified=""
@@ -1499,10 +1497,7 @@ cmd_import() {
     # Parse JSON
     local job_count; job_count=$(jq '.jobs | length' "$input_file")
 
-    if [[ "$job_count" -eq 0 ]]; then
-        warn "No jobs found in import file"
-        return 0
-    fi
+    [[ "$job_count" -eq 0 ]] && { warn "No jobs found in import file"; return 0; }
 
     info "Found ${job_count} job(s) to import"
 
@@ -1778,13 +1773,11 @@ cmd_doctor() {
 
     # Check 1: Data directory
     echo "1. Checking data directory..."
-    if [[ -d "$DATA_DIR" ]]; then
-        echo "   ✓ Data directory exists: ${DATA_DIR}"
-    else
+    [[ -d "$DATA_DIR" ]] && echo "   ✓ Data directory exists: ${DATA_DIR}" || {
         echo "   ✗ Data directory not found: ${DATA_DIR}"
         echo "     Fix: Run 'cc-cron add' to create it automatically"
         ((issues++)) || true
-    fi
+    }
 
     # Check 2: Crontab access
     echo
