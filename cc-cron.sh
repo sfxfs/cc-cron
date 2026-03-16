@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.215"
+readonly VERSION="2.4.216"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1030,8 +1030,7 @@ cmd_status() {
             # Check if job is currently running (has start_time but no end_time, or status=running)
             if [[ "${status:-}" == "running" ]] || { [[ -n "${start_time:-}" ]] && [[ -z "${end_time:-}" ]]; }; then
                 status_icon="${YELLOW}◉ RUNNING${NC}"
-                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    Workdir: ${workdir}\n"
-                ((running_count++)) || true
+                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    Workdir: ${workdir}\n"; ((running_count++)) || true
             else
                 case "${status:-}" in
                     success)
@@ -1051,8 +1050,7 @@ cmd_status() {
         elif [[ -f "$log_file" ]]; then
             # Has log but no status (old format or running)
             local last_run; last_run=$(get_stat "$log_file" mtime | cut -d. -f1)
-            echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})\n    Workdir: ${workdir}\n"
-            ((unknown_count++)) || true
+            echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})\n    Workdir: ${workdir}\n"; ((unknown_count++)) || true
         fi
     done
 
@@ -1249,15 +1247,13 @@ cmd_import() {
 
         # Validate cron expression
         is_valid_cron "$job_cron" || {
-            warn "Skipping invalid cron expression: ${job_cron}"
-            ((skipped++)) || true
+            warn "Skipping invalid cron expression: ${job_cron}"; ((skipped++)) || true
             continue
         }
 
         # Validate workdir
         [[ -d "$job_workdir" ]] || {
-            warn "Skipping job with missing workdir: ${job_workdir}"
-            ((skipped++)) || true
+            warn "Skipping job with missing workdir: ${job_workdir}"; ((skipped++)) || true
             continue
         }
 
