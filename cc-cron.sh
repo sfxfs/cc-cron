@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.231"
+readonly VERSION="2.4.232"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2316,8 +2316,7 @@ Options:
             ensure_data_dir; require_job_id "$command" "$@"; cmd_show "$1"
             ;;
         history)
-            ensure_data_dir; require_job_id "$command" "$@"
-            cmd_history "$1" "${2:-20}"
+            ensure_data_dir; require_job_id "$command" "$@"; cmd_history "$1" "${2:-20}"
             ;;
         stats)
             ensure_data_dir; cmd_stats "${1:-}"
