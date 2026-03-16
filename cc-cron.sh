@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.224"
+readonly VERSION="2.4.225"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -721,8 +721,7 @@ calculate_next_run() {
                 schedule_desc="every ${step} minutes"
             else
                 # Invalid step pattern
-                schedule_desc="custom schedule (${cron})"
-                next_time=0
+                schedule_desc="custom schedule (${cron})"; next_time=0
             fi
         else
             # Every hour at specific minute
@@ -743,8 +742,7 @@ calculate_next_run() {
                 schedule_desc="every ${hour_step} hours at minute ${minute}"
             else
                 # Invalid step pattern
-                schedule_desc="custom schedule (${cron})"
-                next_time=0
+                schedule_desc="custom schedule (${cron})"; next_time=0
             fi
         else
             # Daily at specific time
@@ -781,8 +779,7 @@ calculate_next_run() {
             schedule_desc="weekly on ${day_names[$target_weekday]} at ${hour}:${minute}"
         else
             # Complex weekday pattern (range, list, etc.)
-            schedule_desc="custom schedule (${cron})"
-            next_time=0
+            schedule_desc="custom schedule (${cron})"; next_time=0
         fi
     else
         # Complex schedule - show cron expression
