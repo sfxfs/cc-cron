@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.88"
+readonly VERSION="2.4.89"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -143,12 +143,7 @@ remove_file() {
 
     local file_size; file_size=$(get_stat "$file" size 2>/dev/null || echo "0")
 
-    if [[ "$dry_run" == "true" ]]; then
-        echo "  [dry-run] Would remove ${label}: ${file}"
-    else
-        rm -f "$file"
-        echo "  Removed ${label}: ${file}"
-    fi
+    [[ "$dry_run" == "true" ]] && echo "  [dry-run] Would remove ${label}: ${file}" || { rm -f "$file"; echo "  Removed ${label}: ${file}"; }
 
     # Return file size via global for tracking
     REMOVE_FILE_SIZE="$file_size"
@@ -640,11 +635,7 @@ cmd_list() {
     local found=0
     local -a jobs=()
 
-    if [[ "$json_output" != "true" ]]; then
-        echo "Scheduled Claude Code Cron Jobs:"
-        echo "================================="
-        echo
-    fi
+    [[ "$json_output" != "true" ]] && { echo "Scheduled Claude Code Cron Jobs:"; echo "================================="; echo; }
 
     # Single crontab read with caching
     local crontab_content; crontab_content=$(get_crontab) || return 0
@@ -944,7 +935,9 @@ calculate_next_run() {
         next_time=0
     fi
 
-    [[ $next_time -gt 0 ]] && date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null
+    if [[ $next_time -gt 0 ]]; then
+        date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null
+    fi
 }
 
 # Show next scheduled run times
@@ -1368,18 +1361,13 @@ _show_job_stats() {
     echo -e "  ${RED}Failed:  ${failed_count}${NC}"
 
     # Calculate success rate
-    if [[ $total_runs -gt 0 ]]; then
-        local success_rate; success_rate=$((success_count * 100 / total_runs))
-        echo "  Success rate: ${success_rate}%"
-    fi
+    [[ $total_runs -gt 0 ]] && echo "  Success rate: $((success_count * 100 / total_runs))%"
 
     # Calculate average duration
-    if [[ $duration_count -gt 0 ]]; then
+    [[ $duration_count -gt 0 ]] && {
         local avg_duration; avg_duration=$((total_duration / duration_count))
-        local avg_min=$((avg_duration / 60))
-        local avg_sec=$((avg_duration % 60))
-        echo "  Avg duration: ${avg_min}m ${avg_sec}s"
-    fi
+        echo "  Avg duration: $((avg_duration / 60))m $((avg_duration % 60))s"
+    }
 
     # Show last execution times
     [[ -n "$last_success" ]] && echo "  Last success: ${last_success}"
