@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.145"
+readonly VERSION="2.4.146"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -954,9 +954,7 @@ cmd_show() {
     local history_file; history_file=$(get_history_file "$job_id")
     if [[ -f "$history_file" ]]; then
         local total_runs success_runs failed_runs
-        total_runs=$(wc -l < "$history_file")
-        success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0")
-        failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
+        total_runs=$(wc -l < "$history_file"); success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0"); failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
         echo "  Statistics:"
         echo "    Total runs:    ${total_runs}"
         echo -e "    Successful:    ${GREEN}${success_runs}${NC}"
