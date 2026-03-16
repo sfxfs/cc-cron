@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.137"
+readonly VERSION="2.4.138"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -526,10 +526,7 @@ write_meta_file() {
 
 # Add a new cron job
 cmd_add() {
-    local cron_expr="$1" prompt="$2" recurring="${3:-true}"
-    local job_workdir="${4:-$CC_WORKDIR}" job_model="${5:-$CC_MODEL}"
-    local job_permission="${6:-$CC_PERMISSION_MODE}" job_timeout="${7:-${CC_TIMEOUT:-0}}"
-    local quiet="${8:-false}" job_tags="${9:-}"
+    local cron_expr="$1" prompt="$2" recurring="${3:-true}" job_workdir="${4:-$CC_WORKDIR}" job_model="${5:-$CC_MODEL}" job_permission="${6:-$CC_PERMISSION_MODE}" job_timeout="${7:-${CC_TIMEOUT:-0}}" quiet="${8:-false}" job_tags="${9:-}"
 
     validate_cron "$cron_expr"
     validate_workdir "$job_workdir"
