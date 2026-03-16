@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.153"
+readonly VERSION="2.4.154"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -707,8 +707,7 @@ cmd_pause() {
 
 # Resume a paused job
 cmd_resume() {
-    local job_id="$1"
-    local paused_file="${DATA_DIR}/${job_id}.paused"
+    local job_id="$1"; local paused_file="${DATA_DIR}/${job_id}.paused"
 
     [[ -f "$paused_file" ]] || {
         [[ -f "$(get_meta_file "$job_id")" ]] && \
