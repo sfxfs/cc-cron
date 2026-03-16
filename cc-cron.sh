@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.136"
+readonly VERSION="2.4.137"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -497,9 +497,7 @@ RUNEOF
 
 # Write job metadata file
 write_meta_file() {
-    local job_id="$1" created="$2" cron="$3" recurring="$4" prompt="$5"
-    local workdir="$6" model="$7" permission="$8" timeout="$9"
-    local run_script="${10:-}" modified="${11:-}" tags="${12:-}"
+    local job_id="$1" created="$2" cron="$3" recurring="$4" prompt="$5" workdir="$6" model="$7" permission="$8" timeout="$9" run_script="${10:-}" modified="${11:-}" tags="${12:-}"
 
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
