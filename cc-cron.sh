@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.80"
+readonly VERSION="2.4.81"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1287,7 +1287,7 @@ cmd_status() {
                 echo -e "  ${id}: ${status_icon}"
                 echo "    Start: ${start_time:-unknown}"
                 echo "    End:   ${end_time:-unknown}"
-                [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}"
+                [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}" || true
                 echo "    Workdir: ${workdir}"
                 echo
             fi
@@ -1310,22 +1310,20 @@ cmd_stats() {
     local job_id="${1:-}"
 
     if [[ -n "$job_id" ]]; then
-        # Show stats for specific job
         _show_job_stats "$job_id"
-    else
-        # Show stats for all jobs
-        local found=0
-        for meta_file in "${LOG_DIR}"/*.meta; do
-            [[ -f "$meta_file" ]] || continue
-            local id; id=$(basename "$meta_file" .meta)
-            _show_job_stats "$id"
-            found=$((found + 1))
-        done
-
-        if [[ $found -eq 0 ]]; then
-            info "No jobs found."
-        fi
+        return
     fi
+
+    # Show stats for all jobs
+    local found=0
+    for meta_file in "${LOG_DIR}"/*.meta; do
+        [[ -f "$meta_file" ]] || continue
+        local id; id=$(basename "$meta_file" .meta)
+        _show_job_stats "$id"
+        found=$((found + 1))
+    done
+
+    [[ $found -eq 0 ]] && info "No jobs found." || true
 }
 
 # Helper function to show stats for a single job
