@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.181"
+readonly VERSION="2.4.182"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -850,8 +850,7 @@ cmd_show() {
     # Load metadata (errors if not found)
     load_job_meta "$job_id"
 
-    echo "Job Details: ${id}"
-    echo "===================="
+    echo -e "Job Details: ${id}\n===================="
     echo
     echo "  ID:           ${id}"
     echo "  Created:      ${created}"
@@ -863,8 +862,7 @@ cmd_show() {
     [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s" || true
     [[ -n "${tags:-}" ]] && echo "  Tags:         ${tags}" || true
     echo
-    echo "  Prompt:"
-    echo "    ${prompt}"
+    echo -e "  Prompt:\n    ${prompt}"
     echo
 
     # Check if paused
@@ -875,9 +873,7 @@ cmd_show() {
     local status_file; status_file=$(get_status_file "$job_id")
     if [[ -f "$status_file" ]]; then
         source "$status_file"
-        echo "  Last Execution:"
-        echo "    Start:      ${start_time:-unknown}"
-        echo "    End:        ${end_time:-unknown}"
+        echo -e "  Last Execution:\n    Start:      ${start_time:-unknown}\n    End:        ${end_time:-unknown}"
         case "${status:-}" in
             success) echo -e "    Status:     ${GREEN}SUCCESS${NC}" ;;
             failed)  echo -e "    Status:     ${RED}FAILED${NC} (exit code: ${exit_code:-unknown})" ;;
@@ -892,10 +888,7 @@ cmd_show() {
     if [[ -f "$history_file" ]]; then
         local total_runs success_runs failed_runs
         total_runs=$(wc -l < "$history_file"); success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0"); failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
-        echo "  Statistics:"
-        echo "    Total runs:    ${total_runs}"
-        echo -e "    Successful:    ${GREEN}${success_runs}${NC}"
-        echo -e "    Failed:        ${RED}${failed_runs}${NC}"
+        echo -e "  Statistics:\n    Total runs:    ${total_runs}\n    Successful:    ${GREEN}${success_runs}${NC}\n    Failed:        ${RED}${failed_runs}${NC}"
         echo
     fi
 
