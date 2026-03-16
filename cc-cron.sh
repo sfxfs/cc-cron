@@ -1262,22 +1262,10 @@ cmd_edit() {
     local new_cron="${PARSED_CRON:-$cron}"
     local new_prompt="${PARSED_PROMPT:-$prompt}"
     local new_workdir="${PARSED_WORKDIR:-$workdir}"
-    # For model, use PARSED_MODEL_SET to distinguish between "not passed" and "passed empty"
-    local new_model
-    if [[ "$PARSED_MODEL_SET" -eq 1 ]]; then
-        new_model="$PARSED_MODEL"
-    else
-        new_model="${model:-}"
-    fi
+    local new_model; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"
     local new_permission="${PARSED_PERMISSION:-$permission_mode}"
     local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
-    # For tags, use PARSED_TAGS_SET to distinguish between "not passed" and "passed empty"
-    local new_tags
-    if [[ "$PARSED_TAGS_SET" -eq 1 ]]; then
-        new_tags="$PARSED_TAGS"
-    else
-        new_tags="${tags:-}"
-    fi
+    local new_tags; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
     local has_changes="$PARSED_HAS_CHANGES"
 
     if [[ "$has_changes" -eq 0 ]]; then
@@ -1342,22 +1330,10 @@ cmd_clone() {
     local new_cron="${PARSED_CRON:-$cron}"
     local new_prompt="${PARSED_PROMPT:-$prompt}"
     local new_workdir="${PARSED_WORKDIR:-$workdir}"
-    # For model, use PARSED_MODEL_SET to distinguish between "not passed" and "passed empty"
-    local new_model
-    if [[ "$PARSED_MODEL_SET" -eq 1 ]]; then
-        new_model="$PARSED_MODEL"
-    else
-        new_model="${model:-}"
-    fi
+    local new_model; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"
     local new_permission="${PARSED_PERMISSION:-$permission_mode}"
     local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
-    # For tags, use PARSED_TAGS_SET to distinguish between "not passed" and "passed empty"
-    local new_tags
-    if [[ "$PARSED_TAGS_SET" -eq 1 ]]; then
-        new_tags="$PARSED_TAGS"
-    else
-        new_tags="${tags:-}"
-    fi
+    local new_tags; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
 
     # Create new job with copied settings
     cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" \
