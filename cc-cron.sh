@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.177"
+readonly VERSION="2.4.178"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1472,8 +1472,7 @@ cmd_config() {
             echo "  Default timeout:    ${CC_TIMEOUT}s"
             echo
             if [[ -f "$CONFIG_FILE" ]]; then
-                echo "Config file contents:"
-                echo "----------------------"
+                echo -e "Config file contents:\n----------------------"
                 cat "$CONFIG_FILE"
             else
                 echo "No config file exists. Create one with:"
