@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.140"
+readonly VERSION="2.4.141"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -188,8 +188,7 @@ get_stat() {
 # Escape string for safe embedding in shell variable assignment
 # Escapes backslashes and double quotes
 escape_shell_string() {
-    local s="${1//\\/\\\\}"  # Escape backslashes first
-    s="${s//\"/\\\"}"        # Then escape double quotes
+    local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"
     echo "$s"
 }
 
