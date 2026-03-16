@@ -2991,13 +2991,7 @@ Options:
         logs)
             ensure_data_dir
             require_job_id "$command" "$@"
-            local logs_job_id="$1"
-            shift
-            local follow="false"
-            if [[ "${1:-}" == "--tail" || "${1:-}" == "-f" ]]; then
-                follow="true"
-            fi
-            cmd_logs "$logs_job_id" "$follow"
+            cmd_logs "$1" "$([[ "${2:-}" == "--tail" || "${2:-}" == "-f" ]] && echo true || echo false)"
             ;;
         status)
             ensure_data_dir
@@ -3038,19 +3032,13 @@ Options:
             ;;
         edit)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron edit <job-id> [--cron <expr>] [--prompt <text>] [--workdir <path>] [--model <name>] [--permission-mode <mode>] [--timeout <seconds>]" "$EXIT_INVALID_ARGS"
-            fi
-            local edit_job_id="$1"
-            shift
-            cmd_edit "$edit_job_id" "$@"
+            require_job_id "$command" "$@"
+            cmd_edit "$1" "${@:2}"
             ;;
         clone)
             ensure_data_dir
             require_job_id "$command" "$@"
-            local clone_source_id="$1"
-            shift
-            cmd_clone "$clone_source_id" "$@"
+            cmd_clone "$1" "${@:2}"
             ;;
         export)
             ensure_data_dir
@@ -3058,9 +3046,7 @@ Options:
             ;;
         import)
             ensure_data_dir
-            if [[ $# -lt 1 ]]; then
-                error "Usage: cc-cron import <file>" "$EXIT_INVALID_ARGS"
-            fi
+            [[ $# -lt 1 ]] && error "Usage: cc-cron import <file>" "$EXIT_INVALID_ARGS"
             cmd_import "$1"
             ;;
         purge)
