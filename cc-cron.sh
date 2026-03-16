@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.161"
+readonly VERSION="2.4.162"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1092,8 +1092,7 @@ cmd_status() {
         local tags="" model="" modified=""
         source "$meta_file"
 
-        local status_file; status_file=$(get_status_file "$id")
-        local log_file; log_file=$(get_log_file "$id")
+        local status_file; status_file=$(get_status_file "$id"); local log_file; log_file=$(get_log_file "$id")
 
         if [[ -f "$status_file" ]]; then
             source "$status_file"
