@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.69"
+readonly VERSION="2.4.70"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -485,6 +485,10 @@ generate_run_script() {
 #!/usr/bin/env bash
 # Auto-generated job runner for ${job_id}
 set -e
+
+# Source profile files to load environment variables (API keys, etc.)
+[[ -f ~/.bash_profile ]] && source ~/.bash_profile
+[[ -f ~/.bashrc ]] && source ~/.bashrc
 
 export PATH="${current_path}"
 
