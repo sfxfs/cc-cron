@@ -2546,8 +2546,7 @@ Options:
             ;;
         list)
             ensure_data_dir
-            local filter_tag=""
-            local json_output="false"
+            local filter_tag="" json_output="false"
             # Support both positional argument and --tag flag
             while [[ $# -gt 0 ]]; do
                 case "$1" in
@@ -2639,8 +2638,7 @@ Options:
             ;;
         purge)
             ensure_data_dir
-            local purge_days="7"
-            local dry_run="false"
+            local purge_days="7" dry_run="false"
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     --dry-run)
