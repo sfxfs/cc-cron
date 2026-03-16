@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.191"
+readonly VERSION="2.4.192"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1406,14 +1406,8 @@ cmd_config() {
     case "$action" in
         list)
             info "Current configuration:"
-            echo
-            echo "  Config file: ${CONFIG_FILE}"
-            echo "  Data dir:    ${DATA_DIR}"
-            echo
-            echo "  Default workdir:    ${CC_WORKDIR}"
-            echo "  Default model:      ${CC_MODEL:-<not set>}"
-            echo "  Default permission: ${CC_PERMISSION_MODE}"
-            echo "  Default timeout:    ${CC_TIMEOUT}s"
+            echo -e "\n  Config file: ${CONFIG_FILE}\n  Data dir:    ${DATA_DIR}"
+            echo -e "\n  Default workdir:    ${CC_WORKDIR}\n  Default model:      ${CC_MODEL:-<not set>}\n  Default permission: ${CC_PERMISSION_MODE}\n  Default timeout:    ${CC_TIMEOUT}s"
             echo
             if [[ -f "$CONFIG_FILE" ]]; then
                 echo -e "Config file contents:\n----------------------"
