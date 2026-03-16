@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.162"
+readonly VERSION="2.4.163"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1660,8 +1660,7 @@ cmd_doctor() {
     while IFS= read -r line; do
         [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]] || continue
         ((crontab_jobs++)) || true
-        local job_id; job_id=$(extract_job_id "$line")
-        local meta_file; meta_file=$(get_meta_file "$job_id")
+        local job_id; job_id=$(extract_job_id "$line"); local meta_file; meta_file=$(get_meta_file "$job_id")
         [[ -f "$meta_file" ]] || {
             echo "   ! Missing metadata for job: ${job_id}"
             ((orphaned++)) || true
@@ -1686,10 +1685,8 @@ cmd_doctor() {
     # Check 8: Disk space
     echo
     echo "8. Checking disk space..."
-    local data_size; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0")
+    local data_size; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0"); local available_space; available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
     echo "   Data directory size: ${data_size}"
-
-    local available_space; available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
     echo "   Available space: ${available_space}"
 
     # Check 9: Permission issues
