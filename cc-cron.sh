@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.87"
+readonly VERSION="2.4.88"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1826,19 +1826,19 @@ cmd_doctor() {
     echo "6. Checking lock files..."
     local lock_count; lock_count=$(find "$LOCK_DIR" -name "*.lock" 2>/dev/null | wc -l)
     echo "   Active lock files: ${lock_count}"
-    if [[ "$lock_count" -gt 0 ]]; then
+    [[ "$lock_count" -gt 0 ]] && {
         echo "   ! Some jobs may be stuck or running"
         for lock_file in "$LOCK_DIR"/*.lock; do
             [[ -f "$lock_file" ]] || continue
             local lock_age; lock_age=$(get_stat "$lock_file" mtime_unix)
             local current_time; current_time=$(date +%s)
             local age_minutes=$(( (current_time - lock_age) / 60 ))
-            if [[ $age_minutes -gt 60 ]]; then
+            [[ $age_minutes -gt 60 ]] && {
                 echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)"
                 ((warnings++)) || true
-            fi
+            }
         done
-    fi
+    }
 
     # Check 7: Job consistency
     echo
@@ -2600,8 +2600,7 @@ main() {
     case "$command" in
         add)
             ensure_data_dir
-            if [[ $# -lt 2 ]]; then
-                error "Usage: cc-cron add <cron-expression> <prompt> [options]
+            [[ $# -lt 2 ]] && error "Usage: cc-cron add <cron-expression> <prompt> [options]
 
 Options:
   --once                      Create a one-shot job (auto-removes after success)
@@ -2611,7 +2610,6 @@ Options:
   --timeout <seconds>         Timeout for job execution (default: \$CC_TIMEOUT or 0, no timeout)
   --tags <tags>               Comma-separated tags for organization (e.g., 'prod,backup')
   --quiet, -q                 Only output the job ID (useful for scripting)" "$EXIT_INVALID_ARGS"
-            fi
             local cron_expr="$1"
             local prompt="$2"
             shift 2
@@ -2638,9 +2636,7 @@ Options:
                         shift 2
                         ;;
                     --model)
-                        if [[ $# -lt 2 ]]; then
-                            error "--model requires a model name (use empty string to set none)" "$EXIT_INVALID_ARGS"
-                        fi
+                        [[ $# -lt 2 ]] && error "--model requires a model name (use empty string to set none)" "$EXIT_INVALID_ARGS"
                         job_model="$2"
                         shift 2
                         ;;
@@ -2657,9 +2653,7 @@ Options:
                         shift 2
                         ;;
                     --tags)
-                        if [[ $# -lt 2 ]]; then
-                            error "--tags requires a value (use empty string to set none)" "$EXIT_INVALID_ARGS"
-                        fi
+                        [[ $# -lt 2 ]] && error "--tags requires a value (use empty string to set none)" "$EXIT_INVALID_ARGS"
                         job_tags="$2"
                         shift 2
                         ;;
