@@ -299,7 +299,6 @@ teardown() {
 
 @test "cmd_run fails when run script is missing" {
     local job_id="runmissing"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Create metadata but no run script
     create_test_meta "$job_id"
@@ -308,7 +307,7 @@ teardown() {
     [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
     [[ "$output" == *"Run script not found"* ]]
 
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "cmd_run executes job successfully" {
@@ -847,8 +846,6 @@ EOF
 
 @test "cmd_logs for job with no log file" {
     local job_id="nologjob"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    local log_file; log_file=$(get_log_file "$job_id")
 
     # Create metadata but no log file
     create_test_meta "$job_id"
@@ -857,7 +854,7 @@ EOF
     [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
     [[ "$output" == *"No logs found"* ]]
 
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "get_stat returns file size" {
@@ -2070,15 +2067,13 @@ EOF
 @test "cmd_show displays paused status" {
     local job_id="showpaused"
     create_test_meta "$job_id"
-    local paused_file="${DATA_DIR}/${job_id}.paused"
-
-    touch "$paused_file"
+    touch "${DATA_DIR}/${job_id}.paused"
 
     run cmd_show "$job_id"
     [ "$status" -eq 0 ]
     [[ "$output" == *"PAUSED"* ]]
 
-    rm -f "$(get_meta_file "$job_id")" "$paused_file"
+    rm -f "$(get_meta_file "$job_id")" "${DATA_DIR}/${job_id}.paused"
 }
 
 @test "cmd_show displays execution statistics" {
@@ -2347,31 +2342,26 @@ EOF
 
 @test "cmd_resume fails when metadata is missing" {
     local job_id="missingmeta"
-    local paused_file="${DATA_DIR}/${job_id}.paused"
 
     # Create paused file without metadata
-    mkdir -p "$DATA_DIR"
-    touch "$paused_file"
+    touch "${DATA_DIR}/${job_id}.paused"
 
     run cmd_resume "$job_id"
     [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
     [[ "$output" == *"not found"* ]]
 
-    rm -f "$paused_file"
+    rm -f "${DATA_DIR}/${job_id}.paused"
 }
 
 @test "cmd_resume fails when job is not paused" {
     local job_id="notpaused"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-
-    # Create metadata but no paused file
     create_test_meta "$job_id"
 
     run cmd_resume "$job_id"
     [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
     [[ "$output" == *"is not paused"* ]]
 
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "crontab_add_entry and remove work together" {
@@ -2471,17 +2461,13 @@ EOF
 
 @test "cmd_status handles paused jobs" {
     local job_id="pausedstatus"
-    local paused_file="${DATA_DIR}/${job_id}.paused"
     create_test_meta "$job_id"
-
-    # Create paused file
-    mkdir -p "$DATA_DIR"
-    touch "$paused_file"
+    touch "${DATA_DIR}/${job_id}.paused"
 
     run cmd_status
     [ "$status" -eq 0 ]
 
-    rm -f "$(get_meta_file "$job_id")" "$paused_file"
+    rm -f "$(get_meta_file "$job_id")" "${DATA_DIR}/${job_id}.paused"
 }
 
 @test "cmd_purge handles orphaned run scripts" {
