@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.169"
+readonly VERSION="2.4.170"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -840,9 +840,7 @@ cmd_next() {
     echo "========================="
     echo
 
-    local crontab_content; crontab_content=$(get_crontab) || { info "No crontab configured"; return 0; }
-
-    local found=0
+    local crontab_content found=0; crontab_content=$(get_crontab) || { info "No crontab configured"; return 0; }
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
@@ -1159,8 +1157,7 @@ cmd_stats() {
 
 # Helper function to show stats for a single job
 _show_job_stats() {
-    local job_id="$1" history_file meta_file
-    history_file=$(get_history_file "$job_id"); meta_file=$(get_meta_file "$job_id")
+    local job_id="$1" history_file meta_file; history_file=$(get_history_file "$job_id"); meta_file=$(get_meta_file "$job_id")
 
     [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
 
