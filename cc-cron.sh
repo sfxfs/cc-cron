@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.65"
+readonly VERSION="2.4.66"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1601,9 +1601,7 @@ cmd_import() {
             "$job_model" "$job_permission" "$job_timeout" "false" "$job_tags"
 
         # Pause if needed (use job ID from LAST_CREATED_JOB_ID)
-        if [[ "$job_paused" == "true" && -n "${LAST_CREATED_JOB_ID:-}" ]]; then
-            cmd_pause "$LAST_CREATED_JOB_ID"
-        fi
+        [[ "$job_paused" == "true" && -n "${LAST_CREATED_JOB_ID:-}" ]] && cmd_pause "$LAST_CREATED_JOB_ID"
 
         ((imported++)) || true
     done
