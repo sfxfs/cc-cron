@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.104"
+readonly VERSION="2.4.105"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -165,8 +165,7 @@ require_job_id() {
 # Usage: get_stat <file> <format>
 # Formats: size, mtime, mtime_unix
 get_stat() {
-    local file="$1"
-    local format="$2"
+    local file="$1" format="$2"
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS stat
@@ -679,8 +678,7 @@ cmd_list() {
 
 # Remove a cron job by ID (optimized)
 cmd_remove() {
-    local job_id="$1"
-    local found=0
+    local job_id="$1" found=0
 
     # Remove from crontab using helper function
     crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" && {
@@ -1084,12 +1082,9 @@ cmd_edit() {
     parse_job_options "$@"
 
     # Apply parsed options (fall back to current values)
-    local new_cron="${PARSED_CRON:-$cron}"
-    local new_prompt="${PARSED_PROMPT:-$prompt}"
-    local new_workdir="${PARSED_WORKDIR:-$workdir}"
+    local new_cron="${PARSED_CRON:-$cron}" new_prompt="${PARSED_PROMPT:-$prompt}" new_workdir="${PARSED_WORKDIR:-$workdir}"
     local new_model; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"
-    local new_permission="${PARSED_PERMISSION:-$permission_mode}"
-    local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
+    local new_permission="${PARSED_PERMISSION:-$permission_mode}" new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
     local new_tags; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
     local has_changes="$PARSED_HAS_CHANGES"
 
@@ -1130,12 +1125,9 @@ cmd_clone() {
     parse_job_options "$@"
 
     # Apply parsed options (fall back to source values)
-    local new_cron="${PARSED_CRON:-$cron}"
-    local new_prompt="${PARSED_PROMPT:-$prompt}"
-    local new_workdir="${PARSED_WORKDIR:-$workdir}"
+    local new_cron="${PARSED_CRON:-$cron}" new_prompt="${PARSED_PROMPT:-$prompt}" new_workdir="${PARSED_WORKDIR:-$workdir}"
     local new_model; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"
-    local new_permission="${PARSED_PERMISSION:-$permission_mode}"
-    local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
+    local new_permission="${PARSED_PERMISSION:-$permission_mode}" new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
     local new_tags; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
 
     # Create new job with copied settings
@@ -1255,9 +1247,7 @@ _show_job_stats() {
     echo "Schedule: ${cron}"
 
     # Count executions from history file
-    local total_runs=0 success_count=0 failed_count=0
-    local last_success="" last_failure=""
-    local total_duration=0 duration_count=0
+    local total_runs=0 success_count=0 failed_count=0 last_success="" last_failure="" total_duration=0 duration_count=0
 
     if [[ -f "$history_file" ]]; then
         while IFS= read -r line; do
@@ -1460,11 +1450,7 @@ cmd_import() {
 PURGE_COUNT=0
 PURGE_BYTES=0
 purge_old_files() {
-    local dir="$1"
-    local ext="$2"
-    local days="$3"
-    local dry_run="$4"
-    local label="$5"
+    local dir="$1" ext="$2" days="$3" dry_run="$4" label="$5"
 
     PURGE_COUNT=0
     PURGE_BYTES=0
