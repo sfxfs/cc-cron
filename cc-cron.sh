@@ -682,9 +682,7 @@ cmd_list() {
             local meta_file; meta_file=$(get_meta_file "$job_id")
             if [[ -f "$meta_file" ]]; then
                 # Reset optional fields to avoid persistence from previous iterations
-                local tags=""
-                local model=""
-                local modified=""
+                local tags="" model="" modified=""
                 source "$meta_file"
 
                 # Filter by tag if specified
@@ -1059,17 +1057,13 @@ cmd_next() {
             fi
 
             # Reset optional fields to avoid persistence from previous iterations
-            local tags=""
-            local model=""
-            local modified=""
+            local tags="" model="" modified=""
             source "$meta_file"
 
             # Check if paused
             local paused_file="${DATA_DIR}/${id}.paused"
             local paused_status=""
-            if [[ -f "$paused_file" ]]; then
-                paused_status=" (PAUSED)"
-            fi
+            [[ -f "$paused_file" ]] && paused_status=" (PAUSED)"
 
             local next_run
             next_run=$(calculate_next_run "$cron")
@@ -1358,9 +1352,7 @@ cmd_status() {
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue
         # Reset optional fields to avoid persistence from previous iterations
-        local tags=""
-        local model=""
-        local modified=""
+        local tags="" model="" modified=""
         source "$meta_file"
 
         local status_file; status_file=$(get_status_file "$id")
@@ -1452,22 +1444,16 @@ _show_job_stats() {
     fi
 
     # Reset optional fields to avoid persistence from previous iterations
-    local tags=""
-    local model=""
-    local modified=""
+    local tags="" model="" modified=""
     source "$meta_file"
 
     echo -e "Job: ${GREEN}${job_id}${NC}"
     echo "Schedule: ${cron}"
 
     # Count executions from history file
-    local total_runs=0
-    local success_count=0
-    local failed_count=0
-    local last_success=""
-    local last_failure=""
-    local total_duration=0
-    local duration_count=0
+    local total_runs=0 success_count=0 failed_count=0
+    local last_success="" last_failure=""
+    local total_duration=0 duration_count=0
 
     if [[ -f "$history_file" ]]; then
         while IFS= read -r line; do
@@ -1583,9 +1569,7 @@ cmd_export() {
         local meta_file; meta_file=$(get_meta_file "$job_id")
         [[ -f "$meta_file" ]] || continue
         # Reset optional fields to avoid persistence from previous iterations
-        local tags=""
-        local model=""
-        local modified=""
+        local tags="" model="" modified=""
         source "$meta_file"
 
         # Check if paused
