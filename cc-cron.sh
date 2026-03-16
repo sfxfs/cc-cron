@@ -1897,11 +1897,11 @@ cmd_doctor() {
     echo "   Jobs in crontab: ${crontab_jobs}"
     echo "   Metadata files:  ${meta_files}"
 
-    if [[ $orphaned -gt 0 ]]; then
+    [[ $orphaned -gt 0 ]] && {
         echo "   ! ${orphaned} orphaned crontab entries found"
         echo "     Fix: Run 'cc-cron purge' or manually clean crontab"
         ((issues++)) || true
-    fi
+    }
 
     # Check 8: Disk space
     echo
@@ -1917,16 +1917,12 @@ cmd_doctor() {
     echo "9. Checking permissions..."
     local perm_issues=0
     for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
-        if [[ -d "$dir" && ! -w "$dir" ]]; then
+        [[ -d "$dir" && ! -w "$dir" ]] && {
             echo "   ✗ No write permission: ${dir}"
             ((perm_issues++)) || true
-        fi
+        }
     done
-    if [[ $perm_issues -eq 0 ]]; then
-        echo "   ✓ All directories are writable"
-    else
-        ((issues++)) || true
-    fi
+    [[ $perm_issues -eq 0 ]] && echo "   ✓ All directories are writable" || ((issues++)) || true
 
     # Summary
     echo
