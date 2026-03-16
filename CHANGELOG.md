@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.229] - 2026-03-17
+
+### Refactor
+- Combine echo and return statement in cmd_help unknown topic case
+
 ## [2.4.228] - 2026-03-17
 
 ### Refactor
