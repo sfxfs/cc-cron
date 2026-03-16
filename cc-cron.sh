@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.158"
+readonly VERSION="2.4.159"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -514,8 +514,7 @@ cmd_add() {
     # Ensure timeout is numeric
     job_timeout=$(safe_numeric "$job_timeout" "0")
 
-    local job_id; job_id=$(generate_job_id)
-    local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local job_id; job_id=$(generate_job_id); local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
     ensure_data_dir
 
