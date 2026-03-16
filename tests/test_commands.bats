@@ -525,8 +525,7 @@ EOF
 }
 
 @test "cmd_export writes to file" {
-    local job_id="fileexp"
-    local output_file="${BATS_TEST_TMPDIR}/export.json"
+    local job_id="fileexp" output_file="${BATS_TEST_TMPDIR}/export.json"
     create_test_meta "$job_id"
 
     run cmd_export "$job_id" "$output_file"
@@ -805,8 +804,7 @@ EOF
 }
 
 @test "cmd_logs shows log content" {
-    local job_id="testlog"
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="testlog" log_file; log_file=$(get_log_file "$job_id")
     echo "Test log entry" > "$log_file"
 
     run cmd_logs "$job_id" "false"
