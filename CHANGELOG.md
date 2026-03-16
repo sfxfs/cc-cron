@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.79] - 2025-03-16
+
+### Refactor
+- Simplify nested if-else blocks in cmd_logs, cmd_pause, cmd_resume, cmd_history
+- Add `|| true` to prevent script exit on false condition with `set -e`
+
 ## [2.4.78] - 2025-03-16
 
 ### Refactor

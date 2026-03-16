@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.78"
+readonly VERSION="2.4.79"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -113,7 +113,7 @@ get_run_script() { echo "${DATA_DIR}/run-${1}.sh"; }
 load_job_meta() {
     local job_id="$1"
     local meta_file; meta_file=$(get_meta_file "$job_id")
-    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
+    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND" || true
     source "$meta_file"
 }
 
@@ -128,7 +128,7 @@ extract_job_id() {
 # Helper to validate a number is within range
 validate_range() {
     local value="$1" min="$2" max="$3" context="$4"
-    [[ "$value" -lt "$min" || "$value" -gt "$max" ]] && error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS"
+    [[ "$value" -lt "$min" || "$value" -gt "$max" ]] && error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS" || true
 }
 
 # Helper to remove a file if it exists
@@ -168,7 +168,7 @@ purge_single_file() {
 require_job_id() {
     local command="$1"
     shift
-    [[ $# -lt 1 ]] && error "Usage: cc-cron ${command} <job-id>" "$EXIT_INVALID_ARGS"
+    [[ $# -lt 1 ]] && error "Usage: cc-cron ${command} <job-id>" "$EXIT_INVALID_ARGS" || true
 }
 
 # Portable stat helper (supports both Linux and macOS)
@@ -759,14 +759,11 @@ cmd_logs() {
     local follow="${2:-false}"
     local log_file; log_file=$(get_log_file "$job_id")
 
-    if [[ ! -f "$log_file" ]]; then
-        # Check if job exists to give better error message
-        if [[ -f "$(get_meta_file "$job_id")" ]]; then
-            error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND"
-        else
+    [[ -f "$log_file" ]] || {
+        [[ -f "$(get_meta_file "$job_id")" ]] && \
+            error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND" || \
             error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
-        fi
-    fi
+    }
 
     if [[ "$follow" == "true" ]]; then
         info "Following logs for job ${job_id} (Ctrl+C to stop)..."
@@ -786,17 +783,14 @@ cmd_pause() {
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Check if job exists (either in crontab or paused)
-    if [[ ! -f "$meta_file" ]]; then
-        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
-    fi
+    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
 
     # Check if already paused
     [[ -f "$paused_file" ]] && { warn "Job ${job_id} is already paused"; return 0; }
 
     # Check if job is in crontab (it should be if not paused)
-    if ! crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
+    crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" || \
         error "Job ${job_id} has no crontab entry (may be orphaned)" "$EXIT_ERROR"
-    fi
 
     # Remove from crontab but keep metadata
     crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
@@ -811,12 +805,11 @@ cmd_resume() {
     local job_id="$1"
     local paused_file="${DATA_DIR}/${job_id}.paused"
 
-    if [[ ! -f "$paused_file" ]]; then
-        if [[ ! -f "$(get_meta_file "$job_id")" ]]; then
+    [[ -f "$paused_file" ]] || {
+        [[ -f "$(get_meta_file "$job_id")" ]] && \
+            error "Job ${job_id} is not paused" "$EXIT_INVALID_ARGS" || \
             error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
-        fi
-        error "Job ${job_id} is not paused" "$EXIT_INVALID_ARGS"
-    fi
+    }
 
     # Load metadata (errors if not found)
     load_job_meta "$job_id"
@@ -1043,10 +1036,10 @@ cmd_show() {
     echo "  Schedule:     ${cron}"
     echo "  Recurring:    ${recurring}"
     echo "  Workdir:      ${workdir}"
-    [[ -n "${model:-}" ]] && echo "  Model:        ${model}"
+    [[ -n "${model:-}" ]] && echo "  Model:        ${model}" || true
     echo "  Permission:   ${permission_mode}"
-    [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s"
-    [[ -n "${tags:-}" ]] && echo "  Tags:         ${tags}"
+    [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s" || true
+    [[ -n "${tags:-}" ]] && echo "  Tags:         ${tags}" || true
     echo
     echo "  Prompt:"
     echo "    ${prompt}"
@@ -1088,7 +1081,7 @@ cmd_show() {
 
     # Show log file location
     local log_file; log_file=$(get_log_file "$job_id")
-    [[ -f "$log_file" ]] && echo "  Log file: ${log_file}"
+    [[ -f "$log_file" ]] && echo "  Log file: ${log_file}" || true
 }
 
 # Show execution history for a job
@@ -1098,14 +1091,11 @@ cmd_history() {
     local history_file; history_file=$(get_history_file "$job_id")
     local log_file; log_file=$(get_log_file "$job_id")
 
-    if [[ ! -f "$log_file" ]]; then
-        # Check if job exists to give better error message
-        if [[ -f "$(get_meta_file "$job_id")" ]]; then
-            error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND"
-        else
+    [[ -f "$log_file" ]] || {
+        [[ -f "$(get_meta_file "$job_id")" ]] && \
+            error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND" || \
             error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
-        fi
-    fi
+    }
 
     echo "Execution History for ${job_id}:"
     echo "================================="
