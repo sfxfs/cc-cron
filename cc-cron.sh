@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.173"
+readonly VERSION="2.4.174"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -161,25 +161,17 @@ require_job_id() {
 # Usage: get_stat <file> <format>
 # Formats: size, mtime, mtime_unix
 get_stat() {
-    local file="$1" format="$2"
-
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS stat
-        case "$format" in
-            size)   stat -f %z "$file" 2>/dev/null ;;
-            mtime)  stat -f %Sm "$file" 2>/dev/null ;;
-            mtime_unix) stat -f %m "$file" 2>/dev/null ;;
-            *) return 1 ;;
-        esac
-    else
-        # Linux stat
-        case "$format" in
-            size)   stat -c %s "$file" 2>/dev/null ;;
-            mtime)  stat -c %y "$file" 2>/dev/null ;;
-            mtime_unix) stat -c %Y "$file" 2>/dev/null ;;
-            *) return 1 ;;
-        esac
-    fi
+    local file="$1" format="$2" opts
+    case "$OSTYPE" in
+        darwin*) opts=("-f %z" "-f %Sm" "-f %m") ;;
+        *)       opts=("-c %s" "-c %y" "-c %Y") ;;
+    esac
+    case "$format" in
+        size)        stat ${opts[0]} "$file" 2>/dev/null ;;
+        mtime)       stat ${opts[1]} "$file" 2>/dev/null ;;
+        mtime_unix)  stat ${opts[2]} "$file" 2>/dev/null ;;
+        *) return 1 ;;
+    esac
 }
 
 # Escape string for safe embedding in shell variable assignment

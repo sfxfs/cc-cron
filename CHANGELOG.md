@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.174] - 2026-03-17
+
+### Refactor
+- Simplify get_stat() by consolidating platform-specific stat options into arrays
+- Reduce code duplication between macOS and Linux stat commands
+
 ## [2.4.173] - 2026-03-17
 
 ### Refactor
