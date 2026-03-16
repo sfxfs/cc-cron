@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.202"
+readonly VERSION="2.4.203"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -842,8 +842,7 @@ cmd_show() {
     # Load metadata (errors if not found)
     load_job_meta "$job_id"
 
-    echo -e "Job Details: ${id}\n===================="
-    echo -e "  ID:           ${id}\n  Created:      ${created}\n  Schedule:     ${cron}\n  Recurring:    ${recurring}\n  Workdir:      ${workdir}"
+    echo -e "Job Details: ${id}\n====================\n  ID:           ${id}\n  Created:      ${created}\n  Schedule:     ${cron}\n  Recurring:    ${recurring}\n  Workdir:      ${workdir}"
     [[ -n "${model:-}" ]] && echo "  Model:        ${model}" || true
     echo "  Permission:   ${permission_mode}"
     [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s" || true
@@ -1401,8 +1400,7 @@ cmd_config() {
     case "$action" in
         list)
             info "Current configuration:"
-            echo -e "\n  Config file: ${CONFIG_FILE}\n  Data dir:    ${DATA_DIR}"
-            echo -e "\n  Default workdir:    ${CC_WORKDIR}\n  Default model:      ${CC_MODEL:-<not set>}\n  Default permission: ${CC_PERMISSION_MODE}\n  Default timeout:    ${CC_TIMEOUT}s\n"
+            echo -e "\n  Config file: ${CONFIG_FILE}\n  Data dir:    ${DATA_DIR}\n\n  Default workdir:    ${CC_WORKDIR}\n  Default model:      ${CC_MODEL:-<not set>}\n  Default permission: ${CC_PERMISSION_MODE}\n  Default timeout:    ${CC_TIMEOUT}s\n"
             if [[ -f "$CONFIG_FILE" ]]; then
                 echo -e "Config file contents:\n----------------------"
                 cat "$CONFIG_FILE"
