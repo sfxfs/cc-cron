@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Simplify help by removing redundant MORE HELP section
+- Simplify cmd_resume by combining conditional checks
 
 ## [2.4.54] - 2025-03-16
 
