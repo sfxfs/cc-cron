@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.180"
+readonly VERSION="2.4.181"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -915,8 +915,7 @@ cmd_history() {
             error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     }
 
-    echo "Execution History for ${job_id}:"
-    echo "================================="
+    echo -e "Execution History for ${job_id}:\n================================="
     echo
 
     # Show from history file if exists (structured format)
