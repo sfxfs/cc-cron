@@ -18,8 +18,7 @@ teardown_test_env() {
 # Create a test meta file with default values
 # Usage: create_test_meta <job_id> [workdir] [model] [permission_mode] [timeout] [tags] [prompt]
 create_test_meta() {
-    local job_id="$1" workdir="${2:-/tmp}" model="${3:-}" permission="${4:-bypassPermissions}"
-    local timeout="${5:-0}" tags="${6:-}" prompt="${7:-test prompt}"
+    local job_id="$1" workdir="${2:-/tmp}" model="${3:-}" permission="${4:-bypassPermissions}" timeout="${5:-0}" tags="${6:-}" prompt="${7:-test prompt}"
 
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
