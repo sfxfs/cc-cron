@@ -141,11 +141,10 @@ teardown() {
     local job_id="$LAST_CREATED_JOB_ID"
 
     # Create a log file for the job
-    local log_file; log_file=$(get_log_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id"); local history_file; history_file=$(get_history_file "$job_id")
     echo "Test log" > "$log_file"
 
     # Create a history file
-    local history_file; history_file=$(get_history_file "$job_id")
     echo "2024-01-01 10:00:00|2024-01-01 10:05:00|success|0" > "$history_file"
 
     # Verify files exist
