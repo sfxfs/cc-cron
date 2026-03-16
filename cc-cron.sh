@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.72"
+readonly VERSION="2.4.73"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1716,11 +1716,7 @@ cmd_purge() {
         freed_mb="${freed_mb_int:0:-2}.${freed_mb_int: -2}"
     fi
     echo
-    if [[ "$dry_run" == "true" ]]; then
-        info "Dry-run summary:"
-    else
-        success "Purge complete:"
-    fi
+    [[ "$dry_run" == "true" ]] && info "Dry-run summary:" || success "Purge complete:"
     echo "  Logs purged:     ${purged_logs}"
     echo "  History purged:  ${purged_history}"
     echo "  Orphans removed: ${purged_orphans}"
