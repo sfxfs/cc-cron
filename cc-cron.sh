@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.103"
+readonly VERSION="2.4.104"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -509,18 +509,9 @@ RUNEOF
 
 # Write job metadata file
 write_meta_file() {
-    local job_id="$1"
-    local created="$2"
-    local cron="$3"
-    local recurring="$4"
-    local prompt="$5"
-    local workdir="$6"
-    local model="$7"
-    local permission="$8"
-    local timeout="$9"
-    local run_script="${10:-}"
-    local modified="${11:-}"
-    local tags="${12:-}"
+    local job_id="$1" created="$2" cron="$3" recurring="$4" prompt="$5"
+    local workdir="$6" model="$7" permission="$8" timeout="$9"
+    local run_script="${10:-}" modified="${11:-}" tags="${12:-}"
 
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
@@ -549,15 +540,10 @@ write_meta_file() {
 
 # Add a new cron job
 cmd_add() {
-    local cron_expr="$1"
-    local prompt="$2"
-    local recurring="${3:-true}"
-    local job_workdir="${4:-$CC_WORKDIR}"
-    local job_model="${5:-$CC_MODEL}"
-    local job_permission="${6:-$CC_PERMISSION_MODE}"
-    local job_timeout="${7:-${CC_TIMEOUT:-0}}"
-    local quiet="${8:-false}"
-    local job_tags="${9:-}"
+    local cron_expr="$1" prompt="$2" recurring="${3:-true}"
+    local job_workdir="${4:-$CC_WORKDIR}" job_model="${5:-$CC_MODEL}"
+    local job_permission="${6:-$CC_PERMISSION_MODE}" job_timeout="${7:-${CC_TIMEOUT:-0}}"
+    local quiet="${8:-false}" job_tags="${9:-}"
 
     validate_cron "$cron_expr"
     validate_workdir "$job_workdir"
@@ -715,9 +701,7 @@ cmd_remove() {
 
 # Show logs for a job
 cmd_logs() {
-    local job_id="$1"
-    local follow="${2:-false}"
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="$1" follow="${2:-false}" log_file; log_file=$(get_log_file "$job_id")
 
     [[ -f "$log_file" ]] || {
         [[ -f "$(get_meta_file "$job_id")" ]] && \
@@ -739,8 +723,7 @@ cmd_logs() {
 # Pause a job (comment out in crontab)
 cmd_pause() {
     local job_id="$1"
-    local paused_file="${DATA_DIR}/${job_id}.paused"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local paused_file="${DATA_DIR}/${job_id}.paused" meta_file; meta_file=$(get_meta_file "$job_id")
 
     # Check if job exists (either in crontab or paused)
     [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
@@ -786,8 +769,7 @@ cmd_resume() {
 # Calculate next run time from cron expression
 # Supports: hourly (0 * * * *), daily (0 H * * *), weekly (0 H * * D)
 calculate_next_run() {
-    local cron="$1"
-    local now; now=$(date +%s)
+    local cron="$1" now; now=$(date +%s)
 
     # Parse cron fields
     local -a fields; read -ra fields <<< "$cron"
@@ -915,8 +897,7 @@ calculate_next_run() {
 
 # Show next scheduled run times
 cmd_next() {
-    local job_id="${1:-}"
-    local count="${2:-5}"
+    local job_id="${1:-}" count="${2:-5}"
 
     echo "Upcoming Scheduled Runs:"
     echo "========================="
@@ -1025,8 +1006,7 @@ cmd_show() {
 
 # Show execution history for a job
 cmd_history() {
-    local job_id="$1"
-    local lines="${2:-20}"
+    local job_id="$1" lines="${2:-20}"
     local history_file; history_file=$(get_history_file "$job_id")
     local log_file; log_file=$(get_log_file "$job_id")
 
@@ -1342,8 +1322,7 @@ _show_job_stats() {
 
 # Export jobs to JSON format
 cmd_export() {
-    local job_id="${1:-}"
-    local output_file="${2:-}"
+    local job_id="${1:-}" output_file="${2:-}"
 
     # Collect jobs to export
     local -a jobs=()

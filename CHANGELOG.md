@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.104] - 2026-03-16
+
+### Refactor
+- Combine multiple local declarations in write_meta_file, cmd_add, cmd_logs, cmd_pause, cmd_resume, calculate_next_run, cmd_next, cmd_history, and cmd_export functions
+- Fix SC2318 warnings by separating job_id from dependent variables in cmd_pause and cmd_resume
+
 ## [2.4.103] - 2026-03-16
 
 ### Refactor
