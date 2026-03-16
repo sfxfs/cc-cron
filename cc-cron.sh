@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.59"
+readonly VERSION="2.4.60"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -293,8 +293,7 @@ validate_cron() {
     local cron="$1"
 
     # Split into fields using read (faster than array slicing)
-    local -a fields
-    read -ra fields <<< "$cron"
+    local -a fields; read -ra fields <<< "$cron"
 
     # Early exit for wrong field count
     if [[ ${#fields[@]} -ne 5 ]]; then
@@ -871,8 +870,7 @@ calculate_next_run() {
     local now; now=$(date +%s)
 
     # Parse cron fields
-    local -a fields
-    read -ra fields <<< "$cron"
+    local -a fields; read -ra fields <<< "$cron"
     local minute="${fields[0]}" hour="${fields[1]}" day="${fields[2]}" month="${fields[3]}" weekday="${fields[4]}"
     local next_time="" schedule_desc=""
 
