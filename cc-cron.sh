@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.99"
+readonly VERSION="2.4.100"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -284,9 +284,7 @@ validate_cron() {
     local -a fields; read -ra fields <<< "$cron"
 
     # Early exit for wrong field count
-    if [[ ${#fields[@]} -ne 5 ]]; then
-        error "Invalid cron expression: $cron (expected 5 fields: minute hour day month weekday)" "$EXIT_INVALID_ARGS"
-    fi
+    [[ ${#fields[@]} -ne 5 ]] && error "Invalid cron expression: $cron (expected 5 fields: minute hour day month weekday)" "$EXIT_INVALID_ARGS"
 
     # Validate each field: minute (0-59), hour (0-23), day (1-31), month (1-12), weekday (0-6)
     validate_cron_field "${fields[0]}" 0 59 "minute"
@@ -408,9 +406,7 @@ crontab_add_entry() {
 
 # Get crontab content with caching
 get_crontab() {
-    if [[ -z "${_CRONTAB_CACHE:-}" ]]; then
-        _CRONTAB_CACHE=$(crontab -l 2>/dev/null) || _CRONTAB_CACHE=""
-    fi
+    [[ -z "${_CRONTAB_CACHE:-}" ]] && { _CRONTAB_CACHE=$(crontab -l 2>/dev/null) || _CRONTAB_CACHE=""; }
     printf '%s\n' "$_CRONTAB_CACHE"
 }
 
