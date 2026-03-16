@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.57"
+readonly VERSION="2.4.58"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1757,8 +1757,7 @@ cmd_purge() {
     PURGE_BYTES=0
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue
-        local job_id
-        job_id=$(basename "$meta_file" .meta)
+        local job_id; job_id=$(basename "$meta_file" .meta)
 
         # Skip if job is active
         [[ -z "${active_jobs[$job_id]:-}" ]] || continue
@@ -1774,8 +1773,7 @@ cmd_purge() {
     # Clean up old run scripts for removed jobs
     for run_script in "${DATA_DIR}"/run-*.sh; do
         [[ -f "$run_script" ]] || continue
-        local job_id
-        job_id=$(basename "$run_script" .sh)
+        local job_id; job_id=$(basename "$run_script" .sh)
         job_id="${job_id#run-}"
 
         # Skip if job is active
