@@ -1239,9 +1239,7 @@ EOF
 
     # Verify cloned job has tags
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$cloned_meta" ]]
-    grep -q 'tags="prod,backup"' "$cloned_meta"
+    grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1255,9 +1253,7 @@ EOF
 
     # Verify cloned job has overridden tags
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$cloned_meta" ]]
-    grep -q 'tags="dev,test"' "$cloned_meta"
+    grep -q 'tags="dev,test"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1271,9 +1267,7 @@ EOF
 
     # Verify cloned job has no tags
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$cloned_meta" ]]
-    ! grep -q 'tags=' "$cloned_meta"
+    ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1287,9 +1281,7 @@ EOF
 
     # Verify cloned job has overridden prompt
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$cloned_meta" ]]
-    grep -q 'prompt="new prompt text"' "$cloned_meta"
+    grep -q 'prompt="new prompt text"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1303,9 +1295,7 @@ EOF
 
     # Verify cloned job has overridden permission mode
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$cloned_meta" ]]
-    grep -q 'permission_mode="auto"' "$cloned_meta"
+    grep -q 'permission_mode="auto"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1459,9 +1449,9 @@ EOF
     run cmd_edit "$job_id" --model ""
     [ "$status" -eq 0 ]
 
-    # Verify model removed from metadata
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    ! grep -q 'model=' "$meta_file" || [[ $(grep 'model=' "$meta_file") == 'model=""' ]]
+    # Verify model removed from metadata (either absent or empty)
+    local meta_content; meta_content=$(cat "$(get_meta_file "$job_id")")
+    [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
 
     cleanup_test_job "$job_id"
 }
@@ -1478,8 +1468,7 @@ EOF
     [[ "$output" == *"Updated job"* ]]
 
     # Verify model updated in metadata
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    grep -q 'model="opus"' "$meta_file"
+    grep -q 'model="opus"' "$(get_meta_file "$job_id")"
 
     cleanup_test_job "$job_id"
 }
@@ -1492,9 +1481,7 @@ EOF
 
     # Verify cloned job has overridden model
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$cloned_meta" ]]
-    grep -q 'model="haiku"' "$cloned_meta"
+    grep -q 'model="haiku"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1506,11 +1493,10 @@ EOF
 
     cmd_clone "$source_id" --model "" >/dev/null
 
-    # Verify cloned job has no model
+    # Verify cloned job has no model (either absent or empty)
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$cloned_meta" ]]
-    ! grep -q 'model=' "$cloned_meta" || [[ $(grep 'model=' "$cloned_meta") == 'model=""' ]]
+    local meta_content; meta_content=$(cat "$(get_meta_file "$LAST_CREATED_JOB_ID")")
+    [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1524,9 +1510,7 @@ EOF
 
     # Verify cloned job has overridden timeout
     [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$cloned_meta" ]]
-    grep -q 'timeout="300"' "$cloned_meta"
+    grep -q 'timeout="300"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1621,9 +1605,7 @@ EOF
     [ -n "$LAST_CREATED_JOB_ID" ]
 
     # Verify tags are stored in metadata
-    local meta_file; meta_file=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$meta_file" ]]
-    grep -q 'tags="prod,backup"' "$meta_file"
+    grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
@@ -1636,10 +1618,8 @@ EOF
     cmd_add "0 10 * * *" "no tags job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
     [ -n "$LAST_CREATED_JOB_ID" ]
 
-    local meta_file; meta_file=$(get_meta_file "$LAST_CREATED_JOB_ID")
-    [[ -f "$meta_file" ]]
     # Tags field should not be present (empty string means no tags)
-    ! grep -q 'tags=' "$meta_file"
+    ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
