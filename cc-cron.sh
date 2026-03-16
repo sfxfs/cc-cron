@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.154"
+readonly VERSION="2.4.155"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -395,9 +395,7 @@ crontab_remove_entry() {
 
 # Generate lock file path from directory path
 get_lock_file() {
-    local dir="$1"
-    local dir_hash; dir_hash=$(echo -n "$dir" | md5sum | cut -d' ' -f1)
-    echo "${LOCK_DIR}/${dir_hash}.lock"
+    echo "${LOCK_DIR}/$(echo -n "$1" | md5sum | cut -d' ' -f1).lock"
 }
 
 # Generate run script for a job (shared by add and edit)
