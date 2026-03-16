@@ -1928,17 +1928,7 @@ cmd_config() {
             [[ -z "$key" ]] && error "Usage: cc-cron config set <key> <value>" "$EXIT_INVALID_ARGS"
             [[ -z "$value" ]] && error "Usage: cc-cron config set <key> <value>" "$EXIT_INVALID_ARGS"
 
-            # Validate key
-            case "$key" in
-                workdir|model|permission_mode|timeout)
-                    # Valid keys
-                    ;;
-                *)
-                    error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout" "$EXIT_INVALID_ARGS"
-                    ;;
-            esac
-
-            # Validate value
+            # Validate key and value
             case "$key" in
                 workdir)
                     [[ -d "$value" ]] || error "Directory not found: ${value}" "$EXIT_INVALID_ARGS"
@@ -1951,6 +1941,9 @@ cmd_config() {
                     ;;
                 timeout)
                     validate_timeout "$value"
+                    ;;
+                *)
+                    error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout" "$EXIT_INVALID_ARGS"
                     ;;
             esac
 
