@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.182"
+readonly VERSION="2.4.183"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1172,9 +1172,7 @@ _show_job_stats() {
         done < "$history_file"
     fi
 
-    echo "Total runs: ${total_runs}"
-    echo -e "  ${GREEN}Success: ${success_count}${NC}"
-    echo -e "  ${RED}Failed:  ${failed_count}${NC}"
+    echo -e "Total runs: ${total_runs}\n  ${GREEN}Success: ${success_count}${NC}\n  ${RED}Failed:  ${failed_count}${NC}"
 
     # Calculate success rate
     [[ $total_runs -gt 0 ]] && echo "  Success rate: $((success_count * 100 / total_runs))%"
