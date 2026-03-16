@@ -879,14 +879,8 @@ calculate_next_run() {
     # Parse cron fields
     local -a fields
     read -ra fields <<< "$cron"
-    local minute="${fields[0]}"
-    local hour="${fields[1]}"
-    local day="${fields[2]}"
-    local month="${fields[3]}"
-    local weekday="${fields[4]}"
-
-    local next_time=""
-    local schedule_desc=""
+    local minute="${fields[0]}" hour="${fields[1]}" day="${fields[2]}" month="${fields[3]}" weekday="${fields[4]}"
+    local next_time="" schedule_desc=""
 
     # Handle common patterns
     if [[ "$minute" == "*" && "$hour" == "*" ]]; then
@@ -1344,10 +1338,7 @@ cmd_status() {
     echo "Recent executions:"
     echo "------------------"
 
-    local success_count=0
-    local failed_count=0
-    local running_count=0
-    local unknown_count=0
+    local success_count=0 failed_count=0 running_count=0 unknown_count=0
 
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue
@@ -1650,9 +1641,7 @@ cmd_import() {
 
     info "Found ${job_count} job(s) to import"
 
-    local imported=0
-    local skipped=0
-    local i
+    local imported=0 skipped=0 i
 
     for ((i = 0; i < job_count; i++)); do
         local job_json
@@ -1769,8 +1758,7 @@ cmd_purge() {
 
     # Clean up log files
     purge_old_files "$LOG_DIR" "log" "$days" "$dry_run" "log"
-    local purged_logs=$PURGE_COUNT
-    local freed_bytes=$PURGE_BYTES
+    local purged_logs=$PURGE_COUNT freed_bytes=$PURGE_BYTES
 
     # Clean up history files
     purge_old_files "$LOG_DIR" "history" "$days" "$dry_run" "history"
@@ -1942,8 +1930,7 @@ cmd_config() {
 
 # Diagnose common issues
 cmd_doctor() {
-    local issues=0
-    local warnings=0
+    local issues=0 warnings=0
 
     echo "CC-Cron Health Check"
     echo "===================="
@@ -2037,9 +2024,7 @@ cmd_doctor() {
     # Check 7: Job consistency
     echo
     echo "7. Checking job consistency..."
-    local crontab_jobs=0
-    local meta_files=0
-    local orphaned=0
+    local crontab_jobs=0 meta_files=0 orphaned=0
 
     # Count jobs in crontab
     while IFS= read -r line; do
