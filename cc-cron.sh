@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.156"
+readonly VERSION="2.4.157"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -220,8 +220,7 @@ validate_cron_field() {
     # Handle comma-separated list first (before step/range checks)
     case "$value" in
         *,*)
-            local IFS=','
-            local part
+            local IFS=',' part
             for part in $value; do
                 validate_cron_field "$part" "$min" "$max" "$field_name"
             done
