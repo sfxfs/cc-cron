@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.179"
+readonly VERSION="2.4.180"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -728,9 +728,7 @@ calculate_next_run() {
             local step="${minute#*/}"
             if [[ "$step" =~ ^[0-9]+$ ]]; then
                 # Every N minutes
-                local current_minute; current_minute=$(date +%M)
-                current_minute=$((10#$current_minute))
-                local minutes_until=$(( (step - current_minute % step) % step ))
+                local current_minute minutes_until; current_minute=$(date +%M); current_minute=$((10#$current_minute)); minutes_until=$(( (step - current_minute % step) % step ))
                 [[ $minutes_until -eq 0 ]] && minutes_until=$step
                 next_time=$((now + minutes_until * 60))
                 schedule_desc="every ${step} minutes"
@@ -741,11 +739,7 @@ calculate_next_run() {
             fi
         else
             # Every hour at specific minute
-            local current_minute; current_minute=$(date +%M)
-            current_minute=$((10#$current_minute))
-            local target_minute=$((10#$minute))
-
-            local minutes_until=$(( (target_minute - current_minute + 60) % 60 ))
+            local current_minute target_minute minutes_until; current_minute=$(date +%M); current_minute=$((10#$current_minute)); target_minute=$((10#$minute)); minutes_until=$(( (target_minute - current_minute + 60) % 60 ))
             [[ $minutes_until -eq 0 ]] && minutes_until=60
             next_time=$((now + minutes_until * 60))
             schedule_desc="hourly at minute $minute"
@@ -756,11 +750,7 @@ calculate_next_run() {
             local hour_step="${hour#*/}"
             if [[ "$hour_step" =~ ^[0-9]+$ ]]; then
                 # Every N hours at specific minute
-                local current_hour current_minute; current_hour=$(date +%H); current_minute=$(date +%M)
-                current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
-                local target_minute=$((10#$minute))
-
-                local hours_until=$(( (hour_step - current_hour % hour_step) % hour_step ))
+                local current_hour current_minute target_minute hours_until; current_hour=$(date +%H); current_minute=$(date +%M); current_hour=$((10#$current_hour)); current_minute=$((10#$current_minute)); target_minute=$((10#$minute)); hours_until=$(( (hour_step - current_hour % hour_step) % hour_step ))
                 [[ $hours_until -eq 0 && $current_minute -ge $target_minute ]] && hours_until=$hour_step
                 next_time=$((now + hours_until * 3600 + (target_minute - current_minute) * 60))
                 schedule_desc="every ${hour_step} hours at minute ${minute}"
@@ -787,16 +777,9 @@ calculate_next_run() {
         # Check if weekday is a simple single value (not a range or list)
         if [[ "$weekday" =~ ^[0-6]$ ]]; then
             # Weekly on a specific day
-            local current_weekday; current_weekday=$(($(date +%u) % 7))  # 0-6, Sunday is 0
+            local current_weekday target_weekday; current_weekday=$(($(date +%u) % 7)); target_weekday=$((10#$weekday))  # 0-6, Sunday is 0
 
-            local target_weekday=$((10#$weekday))
-
-            local current_hour current_minute; current_hour=$(date +%H); current_minute=$(date +%M)
-            current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
-
-            local target_hour=$((10#$hour)) target_minute=$((10#$minute))
-
-            local days_until=$(( (target_weekday - current_weekday + 7) % 7 ))
+            local current_hour current_minute target_hour target_minute days_until; current_hour=$(date +%H); current_minute=$(date +%M); current_hour=$((10#$current_hour)); current_minute=$((10#$current_minute)); target_hour=$((10#$hour)); target_minute=$((10#$minute)); days_until=$(( (target_weekday - current_weekday + 7) % 7 ))
             if [[ $days_until -eq 0 ]]; then
                 # Same day, check if time has passed
                 local minutes_target=$((target_hour * 60 + target_minute)) minutes_now=$((current_hour * 60 + current_minute))
