@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.115"
+readonly VERSION="2.4.116"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1306,11 +1306,10 @@ _show_job_stats() {
 
 # Export jobs to JSON format
 cmd_export() {
-    local job_id="${1:-}" output_file="${2:-}"
+    local job_id="${1:-}" output_file="${2:-}" export_count=0
 
     # Collect jobs to export
     local -a jobs=()
-    local export_count=0
 
     if [[ -n "$job_id" ]]; then
         # Export specific job - validate existence
