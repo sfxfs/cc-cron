@@ -910,8 +910,7 @@ cmd_history() {
         done
     else
         # Fall back to parsing log file timestamps
-        echo "No structured history available. Showing recent log entries:"
-        echo "------------------------------------------------------------"
+        echo -e "No structured history available. Showing recent log entries:\n------------------------------------------------------------"
         tail -n "$lines" "$log_file"
     fi
 }
