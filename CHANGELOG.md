@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.106] - 2026-03-16
+
+### Refactor
+- Combine local declarations in cmd_list (cc-cron.sh) and create_test_meta, cleanup_test_job (test_helper.bash)
+
 ## [2.4.105] - 2026-03-16
 
 ### Refactor

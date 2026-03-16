@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.105"
+readonly VERSION="2.4.106"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -590,9 +590,7 @@ cmd_add() {
 
 # List all cc-cron jobs (optimized: single crontab read)
 cmd_list() {
-    local filter_tag="${1:-}"
-    local json_output="${2:-false}"
-    local found=0
+    local filter_tag="${1:-}" json_output="${2:-false}" found=0
     local -a jobs=()
 
     [[ "$json_output" != "true" ]] && { echo "Scheduled Claude Code Cron Jobs:"; echo "================================="; echo; }

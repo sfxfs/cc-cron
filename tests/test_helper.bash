@@ -18,13 +18,8 @@ teardown_test_env() {
 # Create a test meta file with default values
 # Usage: create_test_meta <job_id> [workdir] [model] [permission_mode] [timeout] [tags] [prompt]
 create_test_meta() {
-    local job_id="$1"
-    local workdir="${2:-/tmp}"
-    local model="${3:-}"
-    local permission="${4:-bypassPermissions}"
-    local timeout="${5:-0}"
-    local tags="${6:-}"
-    local prompt="${7:-test prompt}"
+    local job_id="$1" workdir="${2:-/tmp}" model="${3:-}" permission="${4:-bypassPermissions}"
+    local timeout="${5:-0}" tags="${6:-}" prompt="${7:-test prompt}"
 
     local meta_file; meta_file=$(get_meta_file "$job_id")
 
@@ -46,8 +41,7 @@ create_test_meta() {
 # Cleanup a test job's files and crontab entry
 # Usage: cleanup_test_job <job_id> [include_paused]
 cleanup_test_job() {
-    local job_id="$1"
-    local include_paused="${2:-false}"
+    local job_id="$1" include_paused="${2:-false}"
 
     rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")" 2>/dev/null || true
     crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
