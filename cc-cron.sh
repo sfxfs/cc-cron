@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.218"
+readonly VERSION="2.4.219"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1470,8 +1470,7 @@ cmd_doctor() {
     # Check 1: Data directory
     echo "1. Checking data directory..."
     [[ -d "$DATA_DIR" ]] && echo "   ✓ Data directory exists: ${DATA_DIR}" || {
-        echo -e "   ✗ Data directory not found: ${DATA_DIR}\n     Fix: Run 'cc-cron add' to create it automatically"
-        ((issues++)) || true
+        echo -e "   ✗ Data directory not found: ${DATA_DIR}\n     Fix: Run 'cc-cron add' to create it automatically"; ((issues++)) || true
     }
 
     # Check 2: Crontab access
