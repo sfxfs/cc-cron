@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.185"
+readonly VERSION="2.4.186"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1088,8 +1088,7 @@ cmd_status() {
         elif [[ -f "$log_file" ]]; then
             # Has log but no status (old format or running)
             local last_run; last_run=$(get_stat "$log_file" mtime | cut -d. -f1)
-            echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})"
-            echo "    Workdir: ${workdir}"
+            echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})\n    Workdir: ${workdir}"
             echo
             ((unknown_count++)) || true
         fi
