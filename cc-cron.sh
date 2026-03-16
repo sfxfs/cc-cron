@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.142"
+readonly VERSION="2.4.143"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2582,9 +2582,7 @@ Options:
             cmd_purge "$purge_days" "$dry_run"
             ;;
         config)
-            ensure_data_dir
-            load_config
-            cmd_config "${1:-list}" "${2:-}" "${3:-}"
+            ensure_data_dir; load_config; cmd_config "${1:-list}" "${2:-}" "${3:-}"
             ;;
         doctor)
             ensure_data_dir; cmd_doctor
