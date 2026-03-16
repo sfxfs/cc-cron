@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.77"
+readonly VERSION="2.4.78"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -113,9 +113,7 @@ get_run_script() { echo "${DATA_DIR}/run-${1}.sh"; }
 load_job_meta() {
     local job_id="$1"
     local meta_file; meta_file=$(get_meta_file "$job_id")
-    if [[ ! -f "$meta_file" ]]; then
-        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
-    fi
+    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     source "$meta_file"
 }
 
@@ -130,9 +128,7 @@ extract_job_id() {
 # Helper to validate a number is within range
 validate_range() {
     local value="$1" min="$2" max="$3" context="$4"
-    if [[ "$value" -lt "$min" || "$value" -gt "$max" ]]; then
-        error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS"
-    fi
+    [[ "$value" -lt "$min" || "$value" -gt "$max" ]] && error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS"
 }
 
 # Helper to remove a file if it exists
