@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.204"
+readonly VERSION="2.4.205"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -433,8 +433,7 @@ if ! flock -n 9; then
     exit 0
 fi
 
-echo "start_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" > "\$STATUS_FILE"
-echo "status=\"running\"" >> "\$STATUS_FILE"
+echo -e "start_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"\nstatus=\"running\"" > "\$STATUS_FILE"
 
 cd "\$WORKDIR"
 if [[ "\${TIMEOUT:-0}" -gt 0 ]]; then
@@ -444,8 +443,7 @@ else
 fi
 EXIT_CODE=\$?
 
-echo "end_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"" >> "\$STATUS_FILE"
-echo "exit_code=\"\${EXIT_CODE}\"" >> "\$STATUS_FILE"
+echo -e "end_time=\"\$(date '+%Y-%m-%d %H:%M:%S')\"\nexit_code=\"\${EXIT_CODE}\"" >> "\$STATUS_FILE"
 
 if [[ \$EXIT_CODE -eq 0 ]]; then
     echo "status=\"success\"" >> "\$STATUS_FILE"
