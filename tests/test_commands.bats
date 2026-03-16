@@ -2901,12 +2901,8 @@ EOF
 }
 
 @test "cmd_stats shows stats for all jobs" {
-    local job_id1="statsjob1"
-    local job_id2="statsjob2"
-    local meta_file1; meta_file1=$(get_meta_file "$job_id1")
-    local meta_file2; meta_file2=$(get_meta_file "$job_id2")
-    local history_file1; history_file1=$(get_history_file "$job_id1")
-    local history_file2; history_file2=$(get_history_file "$job_id2")
+    local job_id1="statsjob1" job_id2="statsjob2" meta_file1 meta_file2 history_file1 history_file2
+    meta_file1=$(get_meta_file "$job_id1"); meta_file2=$(get_meta_file "$job_id2"); history_file1=$(get_history_file "$job_id1"); history_file2=$(get_history_file "$job_id2")
 
     # Create meta files
     create_test_meta "$job_id1"
@@ -3483,9 +3479,7 @@ EOF
 
 # Tests for cmd_purge actually removing files
 @test "cmd_purge removes old log files" {
-    local job_id="purgejob" meta_file; meta_file=$(get_meta_file "$job_id")
-    local log_file; log_file=$(get_log_file "$job_id")
-    local history_file; history_file=$(get_history_file "$job_id")
+    local job_id="purgejob" meta_file log_file history_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
 
     create_test_meta "$job_id"
 
@@ -3509,9 +3503,7 @@ EOF
 }
 
 @test "cmd_purge keeps recent files" {
-    local job_id="recentpurge" meta_file; meta_file=$(get_meta_file "$job_id")
-    local log_file; log_file=$(get_log_file "$job_id")
-    local run_script; run_script=$(get_run_script "$job_id")
+    local job_id="recentpurge" meta_file log_file run_script; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id"
 
@@ -3555,8 +3547,7 @@ EOF
 }
 
 @test "cmd_remove fails for job without crontab entry but cleans up files" {
-    local job_id="orphanremove" meta_file; meta_file=$(get_meta_file "$job_id")
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_id="orphanremove" meta_file log_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id")
 
     # Create meta file without adding to crontab
     create_test_meta "$job_id"
@@ -3594,8 +3585,7 @@ EOF
 }
 
 @test "_show_job_stats calculates success and failure counts" {
-    local job_id="statcount" meta_file; meta_file=$(get_meta_file "$job_id")
-    local history_file; history_file=$(get_history_file "$job_id")
+    local job_id="statcount" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id")
 
     create_test_meta "$job_id"
 
@@ -3618,8 +3608,7 @@ EOF
 }
 
 @test "_show_job_stats shows last success and failure times" {
-    local job_id="stattimes" meta_file; meta_file=$(get_meta_file "$job_id")
-    local history_file; history_file=$(get_history_file "$job_id")
+    local job_id="stattimes" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id")
 
     create_test_meta "$job_id"
 
@@ -3638,8 +3627,7 @@ EOF
 }
 
 @test "_show_job_stats calculates average duration" {
-    local job_id="statduration" meta_file; meta_file=$(get_meta_file "$job_id")
-    local history_file; history_file=$(get_history_file "$job_id")
+    local job_id="statduration" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id")
 
     create_test_meta "$job_id"
 
