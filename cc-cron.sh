@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.187"
+readonly VERSION="2.4.188"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -598,8 +598,7 @@ cmd_list() {
                 if [[ "$json_output" == "true" ]]; then
                     jobs+=("{\"id\":\"${job_id}\",\"error\":\"metadata missing\"}")
                 else
-                    echo "Job ID: ${job_id} (metadata missing)"
-                    echo "  Raw: ${line}"
+                    echo -e "Job ID: ${job_id} (metadata missing)\n  Raw: ${line}"
                     echo
                 fi
             fi
@@ -830,10 +829,9 @@ cmd_next() {
 
             local next_run; next_run=$(calculate_next_run "$cron")
 
-            echo -e "  ${GREEN}${id}${NC}${paused_status}"
-            echo "    Schedule: ${cron}"
+            echo -e "  ${GREEN}${id}${NC}${paused_status}\n    Schedule: ${cron}"
             [[ -n "$next_run" ]] && echo "    Next run: ${next_run}"
-            echo "    Prompt:   ${prompt:0:50}${prompt:50:+...}"
+            echo -e "    Prompt:   ${prompt:0:50}${prompt:50:+...}"
             echo
 
             found=$((found + 1))
@@ -851,12 +849,7 @@ cmd_show() {
     load_job_meta "$job_id"
 
     echo -e "Job Details: ${id}\n===================="
-    echo
-    echo "  ID:           ${id}"
-    echo "  Created:      ${created}"
-    echo "  Schedule:     ${cron}"
-    echo "  Recurring:    ${recurring}"
-    echo "  Workdir:      ${workdir}"
+    echo -e "  ID:           ${id}\n  Created:      ${created}\n  Schedule:     ${cron}\n  Recurring:    ${recurring}\n  Workdir:      ${workdir}"
     [[ -n "${model:-}" ]] && echo "  Model:        ${model}" || true
     echo "  Permission:   ${permission_mode}"
     [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s" || true
