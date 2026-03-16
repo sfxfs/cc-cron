@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.70"
+readonly VERSION="2.4.71"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1978,11 +1978,9 @@ cmd_doctor() {
     echo "9. Checking permissions..."
     local perm_issues=0
     for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
-        if [[ -d "$dir" ]]; then
-            if [[ ! -w "$dir" ]]; then
-                echo "   ✗ No write permission: ${dir}"
-                ((perm_issues++)) || true
-            fi
+        if [[ -d "$dir" && ! -w "$dir" ]]; then
+            echo "   ✗ No write permission: ${dir}"
+            ((perm_issues++)) || true
         fi
     done
     if [[ $perm_issues -eq 0 ]]; then
