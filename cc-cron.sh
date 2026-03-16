@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.92"
+readonly VERSION="2.4.93"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1278,10 +1278,7 @@ cmd_status() {
 cmd_stats() {
     local job_id="${1:-}"
 
-    if [[ -n "$job_id" ]]; then
-        _show_job_stats "$job_id"
-        return
-    fi
+    [[ -n "$job_id" ]] && { _show_job_stats "$job_id"; return; }
 
     # Show stats for all jobs
     local found=0
