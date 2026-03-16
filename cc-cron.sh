@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.160"
+readonly VERSION="2.4.161"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -559,10 +559,7 @@ cmd_list() {
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
             # Extract job ID from comment using helper
-            local job_id; job_id=$(extract_job_id "$line")
-
-            # Read metadata if exists
-            local meta_file; meta_file=$(get_meta_file "$job_id")
+            local job_id; job_id=$(extract_job_id "$line"); local meta_file; meta_file=$(get_meta_file "$job_id")
             if [[ -f "$meta_file" ]]; then
                 # Reset optional fields to avoid persistence from previous iterations
                 local tags="" model="" modified=""
@@ -577,9 +574,7 @@ cmd_list() {
 
                 if [[ "$json_output" == "true" ]]; then
                     # Build JSON object for this job
-                    local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt")
-                    local escaped_workdir; escaped_workdir=$(escape_json_string "${workdir:-$CC_WORKDIR}")
-                    local escaped_permission; escaped_permission=$(escape_json_string "${permission_mode:-$CC_PERMISSION_MODE}")
+                    local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt"); local escaped_workdir; escaped_workdir=$(escape_json_string "${workdir:-$CC_WORKDIR}"); local escaped_permission; escaped_permission=$(escape_json_string "${permission_mode:-$CC_PERMISSION_MODE}")
                     local job_json="{"
                     job_json+="\"id\":\"${id}\""
                     job_json+=",\"created\":\"${created}\""
@@ -852,12 +847,7 @@ cmd_next() {
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            local id; id=$(extract_job_id "$line")
-
-            # Filter by job_id if specified
-            [[ -n "$job_id" && "$id" != "$job_id" ]] && continue
-
-            local meta_file; meta_file=$(get_meta_file "$id")
+            local id; id=$(extract_job_id "$line"); local meta_file; meta_file=$(get_meta_file "$id")
             [[ ! -f "$meta_file" ]] && continue
 
             # Reset optional fields to avoid persistence from previous iterations
