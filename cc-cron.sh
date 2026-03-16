@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.97"
+readonly VERSION="2.4.98"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -312,14 +312,8 @@ validate_workdir() {
 
 # Validate permission mode
 validate_permission_mode() {
-    case "$1" in
-        bypassPermissions|acceptEdits|auto|default)
-            return 0
-            ;;
-        *)
-            error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
-            ;;
-    esac
+    [[ "$1" =~ ^(bypassPermissions|acceptEdits|auto|default)$ ]] || \
+        error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
 }
 
 # Validate timeout value
@@ -1648,8 +1642,7 @@ cmd_config() {
             local key="${2:-}"
             local value="${3:-}"
 
-            [[ -z "$key" ]] && error "Usage: cc-cron config set <key> <value>" "$EXIT_INVALID_ARGS"
-            [[ -z "$value" ]] && error "Usage: cc-cron config set <key> <value>" "$EXIT_INVALID_ARGS"
+            [[ -z "$key" || -z "$value" ]] && error "Usage: cc-cron config set <key> <value>" "$EXIT_INVALID_ARGS"
 
             # Validate key and value
             case "$key" in
