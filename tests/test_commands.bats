@@ -92,8 +92,7 @@ teardown() {
     _CRONTAB_CACHE=""
 
     # First call should populate cache
-    local content
-    content=$(get_crontab)
+    local content; content=$(get_crontab)
 
     # Cache should now be populated
     [[ -n "$_CRONTAB_CACHE" ]] || [ "$_CRONTAB_CACHE" == "" ]
@@ -254,8 +253,7 @@ teardown() {
     echo 'created="2024-01-01"' >> "$meta_file"
 
     # Run in a subshell to test variable setting
-    local result
-    result=$(load_job_meta "$job_id" && echo "$id")
+    local result; result=$(load_job_meta "$job_id" && echo "$id")
     [ "$result" == "testmeta" ]
 
     rm -f "$meta_file"
@@ -358,8 +356,7 @@ EOF
     _CRONTAB_CACHE=""
 
     # Skip if there are existing cc-cron jobs
-    local crontab_content
-    crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
+    local crontab_content; crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
     run cmd_next
@@ -993,8 +990,7 @@ EOF
     run cmd_history "$job_id" 2
     [ "$status" -eq 0 ]
     # Should only show 2 entries (last 2 lines of history)
-    local success_count
-    success_count=$(echo "$output" | grep -c "✓" || echo "0")
+    local success_count; success_count=$(echo "$output" | grep -c "✓" || echo "0")
     [ "$success_count" -eq 2 ]
 
     rm -f "$log_file" "$history_file"
@@ -1301,8 +1297,7 @@ EOF
     _CRONTAB_CACHE=""
 
     # Only test if crontab is empty or not accessible
-    local crontab_content
-    crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
+    local crontab_content; crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
 
     # Skip if there are existing cc-cron jobs in crontab
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
@@ -1378,8 +1373,7 @@ EOF
     _CRONTAB_CACHE=""
 
     # Only test if crontab is empty
-    local crontab_content
-    crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
+    local crontab_content; crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
     run cmd_list "" "true"
@@ -2120,8 +2114,7 @@ EOF
 
 @test "cmd_status handles no jobs gracefully" {
     # Clear any existing jobs first
-    local crontab_content
-    crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
+    local crontab_content; crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
 
     # Skip if there are existing cc-cron jobs
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
