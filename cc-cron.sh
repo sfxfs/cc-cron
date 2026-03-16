@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.84"
+readonly VERSION="2.4.85"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -714,14 +714,10 @@ cmd_list() {
 
     if [[ "$json_output" == "true" ]]; then
         echo "["
-        local first=1
+        local comma=""
         for job in "${jobs[@]}"; do
-            if [[ $first -eq 1 ]]; then
-                echo "  ${job}"
-                first=0
-            else
-                echo "  ,${job}"
-            fi
+            echo "  ${comma}${job}"
+            comma=","
         done
         echo "]"
     elif [[ "$found" -eq 0 ]]; then
@@ -735,11 +731,11 @@ cmd_remove() {
     local found=0
 
     # Remove from crontab using helper function
-    if crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}"; then
+    crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" && {
         found=1
         crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
         success "Removed cron job: ${job_id}"
-    fi
+    }
 
     # Remove metadata, logs, status, and run script
     remove_file "$(get_meta_file "$job_id")" "metadata"
@@ -748,9 +744,7 @@ cmd_remove() {
     remove_file "$(get_history_file "$job_id")" "history file"
     remove_file "$(get_run_script "$job_id")" "run script"
 
-    if [[ "$found" -eq 0 ]]; then
-        error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
-    fi
+    [[ "$found" -eq 0 ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND" || true
 }
 
 # Show logs for a job

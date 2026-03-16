@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.85] - 2025-03-16
+
+### Refactor
+- Simplify JSON array output in cmd_list using comma prefix pattern
+- Convert if-fi to && { } pattern in cmd_remove crontab check
+- Simplify found check in cmd_remove to single-line conditional
+
 ## [2.4.84] - 2025-03-16
 
 ### Refactor
