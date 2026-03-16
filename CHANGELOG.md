@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplify main() command routing (logs, edit, clone, import)
 - Combine key and value validation in cmd_config
 - Simplify tag filtering in cmd_list using string matching
+- Simplify model/tags assignment in cmd_edit and cmd_clone
+- Simplify paused check in cmd_edit
+- Combine local declarations in multiple functions
 
 ## [2.4.54] - 2025-03-16
 
