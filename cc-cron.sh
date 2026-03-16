@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.74"
+readonly VERSION="2.4.75"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -172,9 +172,7 @@ purge_single_file() {
 require_job_id() {
     local command="$1"
     shift
-    if [[ $# -lt 1 ]]; then
-        error "Usage: cc-cron ${command} <job-id>" "$EXIT_INVALID_ARGS"
-    fi
+    [[ $# -lt 1 ]] && error "Usage: cc-cron ${command} <job-id>" "$EXIT_INVALID_ARGS"
 }
 
 # Portable stat helper (supports both Linux and macOS)
