@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.126"
+readonly VERSION="2.4.127"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2469,30 +2469,25 @@ Options:
                     --workdir)
                         [[ -z "${2:-}" ]] && error "--workdir requires a path" "$EXIT_INVALID_ARGS"
                         validate_workdir "$2"
-                        job_workdir="$2"
-                        shift 2
+                        job_workdir="$2"; shift 2
                         ;;
                     --model)
                         [[ $# -lt 2 ]] && error "--model requires a model name (use empty string to set none)" "$EXIT_INVALID_ARGS"
-                        job_model="$2"
-                        shift 2
+                        job_model="$2"; shift 2
                         ;;
                     --permission-mode)
                         [[ -z "${2:-}" ]] && error "--permission-mode requires a mode" "$EXIT_INVALID_ARGS"
                         validate_permission_mode "$2"
-                        job_permission="$2"
-                        shift 2
+                        job_permission="$2"; shift 2
                         ;;
                     --timeout)
                         [[ -z "${2:-}" ]] && error "--timeout requires seconds" "$EXIT_INVALID_ARGS"
                         validate_timeout "$2"
-                        job_timeout="$2"
-                        shift 2
+                        job_timeout="$2"; shift 2
                         ;;
                     --tags)
                         [[ $# -lt 2 ]] && error "--tags requires a value (use empty string to set none)" "$EXIT_INVALID_ARGS"
-                        job_tags="$2"
-                        shift 2
+                        job_tags="$2"; shift 2
                         ;;
                     --quiet|-q)
                         quiet="true"; shift
