@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.110"
+readonly VERSION="2.4.111"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1342,10 +1342,8 @@ cmd_export() {
         [[ "$first" -eq 1 ]] && first=0 || json_output+=","
 
         # Escape values for JSON output
-        local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt")
-        local escaped_workdir; escaped_workdir=$(escape_json_string "$workdir")
-        local escaped_model; escaped_model=$(escape_json_string "${model:-}")
-        local escaped_permission; escaped_permission=$(escape_json_string "$permission_mode")
+        local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt") escaped_workdir; escaped_workdir=$(escape_json_string "$workdir")
+        local escaped_model; escaped_model=$(escape_json_string "${model:-}") escaped_permission; escaped_permission=$(escape_json_string "$permission_mode")
         local escaped_tags; escaped_tags=$(escape_json_string "${tags:-}")
 
         json_output+='{'
