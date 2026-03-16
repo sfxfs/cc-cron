@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.130"
+readonly VERSION="2.4.131"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2589,12 +2589,10 @@ Options:
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     --dry-run)
-                        dry_run="true"
-                        shift
+                        dry_run="true"; shift
                         ;;
                     *)
-                        purge_days="$1"
-                        shift
+                        purge_days="$1"; shift
                         ;;
                 esac
             done
