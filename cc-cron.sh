@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.129"
+readonly VERSION="2.4.130"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2504,16 +2504,14 @@ Options:
                         shift 2
                         ;;
                     --json)
-                        json_output="true"
-                        shift
+                        json_output="true"; shift
                         ;;
                     -*)
                         shift
                         ;;
                     *)
                         # Positional argument (tag name)
-                        filter_tag="$1"
-                        shift
+                        filter_tag="$1"; shift
                         ;;
                 esac
             done
