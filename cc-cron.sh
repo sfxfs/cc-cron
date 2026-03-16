@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.190"
+readonly VERSION="2.4.191"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -712,8 +712,7 @@ calculate_next_run() {
 
     # Parse cron fields
     local -a fields; read -ra fields <<< "$cron"
-    local minute="${fields[0]}" hour="${fields[1]}" day="${fields[2]}" month="${fields[3]}" weekday="${fields[4]}"
-    local next_time="" schedule_desc=""
+    local minute="${fields[0]}" hour="${fields[1]}" day="${fields[2]}" month="${fields[3]}" weekday="${fields[4]}" next_time="" schedule_desc=""
 
     # Handle common patterns
     if [[ "$minute" == "*" && "$hour" == "*" ]]; then
