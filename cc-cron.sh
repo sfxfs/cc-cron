@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.183"
+readonly VERSION="2.4.184"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1031,13 +1031,12 @@ cmd_clone() {
 # Show status of all jobs and recent executions
 cmd_status() {
     info "CC-Cron Status Report"
-    echo "======================"
+    echo -e "======================"
     echo
 
     # Count jobs from crontab
     local crontab_content; crontab_content=$(get_crontab) || { warn "No crontab configured for current user"; return; }; local job_count; job_count=$(echo "$crontab_content" | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
-    echo "Total scheduled jobs: ${job_count}"
-    echo
+    echo -e "Total scheduled jobs: ${job_count}\n"
 
     # Show recent executions with status (single pass)
     echo -e "Recent executions:\n------------------"
