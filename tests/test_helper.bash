@@ -44,3 +44,23 @@ create_test_meta() {
         echo "run_script=\"\${DATA_DIR}/run-${job_id}.sh\""
     } > "$meta_file"
 }
+
+# Cleanup a test job's files and crontab entry
+# Usage: cleanup_test_job <job_id> [include_paused]
+cleanup_test_job() {
+    local job_id="$1"
+    local include_paused="${2:-false}"
+
+    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")" 2>/dev/null || true
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+    if [[ "$include_paused" == "true" ]]; then
+        rm -f "${DATA_DIR}/${job_id}.paused" 2>/dev/null || true
+    fi
+}
+
+# Cleanup source and cloned job from clone tests
+# Usage: cleanup_clone_test <source_id> <cloned_id>
+cleanup_clone_test() {
+    rm -f "$(get_meta_file "$1")" 2>/dev/null || true
+    cleanup_test_job "$2"
+}

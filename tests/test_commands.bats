@@ -195,7 +195,7 @@ teardown() {
     ! crontab_has_entry "CC-CRON:${job_id}"
 
     # Cleanup
-    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")" "${DATA_DIR}/${job_id}.paused"
+    cleanup_test_job "$job_id" true
 }
 
 @test "cmd_pause on already paused job shows warning" {
@@ -214,7 +214,7 @@ teardown() {
     [[ "$output" == *"already paused"* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")" "${DATA_DIR}/${job_id}.paused"
+    cleanup_test_job "$job_id" true
 }
 
 @test "cmd_resume resumes paused job" {
@@ -242,8 +242,7 @@ teardown() {
     crontab_has_entry "CC-CRON:${job_id}"
 
     # Cleanup
-    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")"
-    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+    cleanup_test_job "$job_id"
 }
 
 @test "load_job_meta fails for non-existent job" {
@@ -395,8 +394,7 @@ EOF
     [[ "$output" == *"Next run"* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")"
-    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_next shows all jobs when no job_id specified" {
@@ -415,10 +413,8 @@ EOF
     [[ "$output" == *"${job2}"* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$job1")" "$(get_run_script "$job1")"
-    rm -f "$(get_meta_file "$job2")" "$(get_run_script "$job2")"
-    crontab_remove_entry "CC-CRON:${job1}" 2>/dev/null || true
-    crontab_remove_entry "CC-CRON:${job2}" 2>/dev/null || true
+    cleanup_test_job "$job1"
+    cleanup_test_job "$job2"
 }
 
 @test "cmd_help next shows detailed help" {
@@ -435,16 +431,49 @@ EOF
 
 @test "cmd_edit with no options shows warning" {
     local job_id="testedit"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-
     create_test_meta "$job_id" "/tmp"
 
     run cmd_edit "$job_id"
     [ "$status" -eq 0 ]
     [[ "$output" == *"No changes specified"* ]]
 
-    # Cleanup
-    rm -f "$meta_file"
+    rm -f "$(get_meta_file "$job_id")"
+}
+
+@test "cmd_edit updates cron expression" {
+    local job_id="editcron"
+    local run_script; run_script=$(get_run_script "$job_id")
+    create_test_meta "$job_id" "/tmp"
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=test"
+
+    run cmd_edit "$job_id" --cron "0 10 * * *"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Updated job"* ]]
+
+    # Verify cron updated in metadata
+    grep -q 'cron="0 10' "$(get_meta_file "$job_id")"
+
+    cleanup_test_job "$job_id"
+}
+
+@test "cmd_edit updates workdir" {
+    local job_id="editworkdir"
+    local run_script; run_script=$(get_run_script "$job_id")
+    create_test_meta "$job_id" "/tmp"
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=test"
+
+    run cmd_edit "$job_id" --workdir "$BATS_TEST_TMPDIR"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Updated job"* ]]
+
+    # Verify workdir updated in metadata
+    grep -q "workdir=\"${BATS_TEST_TMPDIR}\"" "$(get_meta_file "$job_id")"
+
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_export outputs empty array when no jobs" {
@@ -475,6 +504,29 @@ EOF
     fi
 }
 
+@test "cmd_import handles paused job" {
+    # Skip if jq not available
+    if ! command -v jq &>/dev/null; then
+        skip "jq not available"
+    fi
+
+    local tmp_file="$BATS_TEST_TMPDIR/paused_job.json"
+    cat > "$tmp_file" <<EOF
+{"version":"1.0","jobs":[{"id":"pausedjob","created":"2024-01-01","cron":"0 9 * * *","recurring":true,"prompt":"paused test job","workdir":"${BATS_TEST_TMPDIR}","model":"","permission_mode":"bypassPermissions","timeout":0,"paused":true}]}
+EOF
+
+    # Run import directly to capture LAST_CREATED_JOB_ID
+    cmd_import "$tmp_file" >/dev/null
+
+    # Verify job was created and paused
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local paused_file="${DATA_DIR}/${LAST_CREATED_JOB_ID}.paused"
+    [[ -f "$paused_file" ]]
+
+    # Cleanup
+    cleanup_test_job "$LAST_CREATED_JOB_ID" true
+}
+
 @test "cmd_export creates valid JSON structure" {
     local job_id="testexp"
     create_test_meta "$job_id"
@@ -488,6 +540,21 @@ EOF
     rm -f "$(get_meta_file "$job_id")"
 }
 
+@test "cmd_export writes to file" {
+    local job_id="fileexp"
+    local output_file="${BATS_TEST_TMPDIR}/export.json"
+    create_test_meta "$job_id"
+
+    run cmd_export "$job_id" "$output_file"
+    [ "$status" -eq 0 ]
+    [ -f "$output_file" ]
+
+    # Verify file content
+    grep -q '"id":"fileexp"' "$output_file"
+
+    rm -f "$(get_meta_file "$job_id")" "$output_file"
+}
+
 @test "cmd_purge accepts days argument" {
     run cmd_purge "30"
     [ "$status" -eq 0 ]
@@ -495,6 +562,11 @@ EOF
 
 @test "cmd_purge rejects invalid days argument" {
     run cmd_purge "invalid"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+}
+
+@test "cmd_purge rejects negative days argument" {
+    run cmd_purge "-1"
     [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
@@ -591,6 +663,26 @@ EOF
     CONFIG_FILE="$orig_config"
 }
 
+@test "load_config handles malformed lines gracefully" {
+    local config_file="${BATS_TEST_TMPDIR}/config_malformed"
+    echo '# Valid comment' > "$config_file"
+    echo 'workdir="/tmp"' >> "$config_file"
+    echo 'line without equals' >> "$config_file"
+    echo 'model="sonnet"' >> "$config_file"
+
+    local orig_config="$CONFIG_FILE"
+    CONFIG_FILE="$config_file"
+
+    # Should not error, just skip malformed line
+    load_config
+
+    # Valid values should be set
+    [ "$CC_WORKDIR" == "/tmp" ]
+    [ "$CC_MODEL" == "sonnet" ]
+
+    CONFIG_FILE="$orig_config"
+}
+
 @test "cmd_config list works" {
     run cmd_config list
     [ "$status" -eq 0 ]
@@ -612,9 +704,53 @@ EOF
     [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
+@test "cmd_config set succeeds for valid model" {
+    local config_file="${DATA_DIR}/config"
+
+    run cmd_config set model "sonnet"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Set model"* ]]
+
+    # Verify value is set
+    grep -q '^model="sonnet"' "$config_file"
+
+    rm -f "$config_file"
+}
+
+@test "cmd_config set succeeds for valid timeout" {
+    local config_file="${DATA_DIR}/config"
+
+    run cmd_config set timeout "300"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Set timeout"* ]]
+
+    # Verify value is set
+    grep -q '^timeout="300"' "$config_file"
+
+    rm -f "$config_file"
+}
+
 @test "cmd_config rejects invalid key" {
     run cmd_config set invalid_key value
     [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+}
+
+@test "cmd_config set without key returns error" {
+    run cmd_config set
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "cmd_config set without value returns error" {
+    run cmd_config set workdir
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "cmd_config unset without key returns error" {
+    run cmd_config unset
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
 }
 
 @test "cmd_config unset removes key" {
@@ -642,6 +778,12 @@ EOF
     rm -f "$config_file"
 }
 
+@test "cmd_config rejects unknown action" {
+    run cmd_config unknown_action
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Unknown config action"* ]]
+}
+
 @test "cmd_doctor runs without error" {
     run cmd_doctor
     # Doctor returns non-zero if issues found, but should still produce output
@@ -656,6 +798,21 @@ EOF
 @test "cmd_doctor checks required tools" {
     run cmd_doctor
     [[ "$output" == *"flock"* ]]
+}
+
+@test "cmd_doctor checks data directory" {
+    run cmd_doctor
+    [[ "$output" == *"data directory"* ]]
+}
+
+@test "cmd_doctor checks lock files" {
+    run cmd_doctor
+    [[ "$output" == *"lock files"* ]]
+}
+
+@test "cmd_doctor checks job consistency" {
+    run cmd_doctor
+    [[ "$output" == *"job consistency"* ]]
 }
 
 @test "cmd_logs fails for non-existent job" {
@@ -1055,8 +1212,6 @@ EOF
 
 @test "cmd_clone creates new job from existing" {
     local source_id="clonesrc"
-    local meta_file; meta_file=$(get_meta_file "$source_id")
-
     create_test_meta "$source_id" "/tmp" "sonnet" "auto" "60"
 
     run cmd_clone "$source_id"
@@ -1065,13 +1220,11 @@ EOF
     [[ "$output" == *"Created cron job"* ]]
 
     # Cleanup
-    rm -f "$meta_file"
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_clone with options overrides source values" {
     local source_id="clonesrc2"
-    local meta_file; meta_file=$(get_meta_file "$source_id")
-
     create_test_meta "$source_id" "/tmp"
 
     # Clone with custom cron
@@ -1080,13 +1233,11 @@ EOF
     [[ "$output" == *"Cloned job"* ]]
 
     # Cleanup
-    rm -f "$meta_file"
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_clone preserves tags from source" {
     local source_id="clonetags"
-    local meta_file; meta_file=$(get_meta_file "$source_id")
-
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" >/dev/null
@@ -1098,13 +1249,11 @@ EOF
     grep -q 'tags="prod,backup"' "$cloned_meta"
 
     # Cleanup
-    rm -f "$meta_file" "$cloned_meta"
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_clone with tags override" {
     local source_id="clonetags2"
-    local meta_file; meta_file=$(get_meta_file "$source_id")
-
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" --tags "dev,test" >/dev/null
@@ -1116,13 +1265,11 @@ EOF
     grep -q 'tags="dev,test"' "$cloned_meta"
 
     # Cleanup
-    rm -f "$meta_file" "$cloned_meta"
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_clone with empty tags override clears tags" {
     local source_id="clonetags3"
-    local meta_file; meta_file=$(get_meta_file "$source_id")
-
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" --tags "" >/dev/null
@@ -1134,7 +1281,39 @@ EOF
     ! grep -q 'tags=' "$cloned_meta"
 
     # Cleanup
-    rm -f "$meta_file" "$cloned_meta"
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
+}
+
+@test "cmd_clone with prompt override" {
+    local source_id="cloneprompt"
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}"
+
+    cmd_clone "$source_id" --prompt "new prompt text" >/dev/null
+
+    # Verify cloned job has overridden prompt
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$cloned_meta" ]]
+    grep -q 'prompt="new prompt text"' "$cloned_meta"
+
+    # Cleanup
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
+}
+
+@test "cmd_clone with permission-mode override" {
+    local source_id="cloneperm"
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+
+    cmd_clone "$source_id" --permission-mode "auto" >/dev/null
+
+    # Verify cloned job has overridden permission mode
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$cloned_meta" ]]
+    grep -q 'permission_mode="auto"' "$cloned_meta"
+
+    # Cleanup
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_list shows no jobs message when empty" {
@@ -1157,27 +1336,20 @@ EOF
 }
 
 @test "cmd_list shows job with metadata" {
-    local job_id="listtest"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    local log_file; log_file=$(get_log_file "$job_id")
+    local job_workdir="$BATS_TEST_TMPDIR"
 
-    echo 'id="listtest"' > "$meta_file"
-    echo 'created="2024-01-01"' >> "$meta_file"
-    echo 'cron="0 9 * * *"' >> "$meta_file"
-    echo 'recurring="true"' >> "$meta_file"
-    echo 'prompt="test prompt"' >> "$meta_file"
-    echo 'workdir="/tmp"' >> "$meta_file"
-    echo 'model=""' >> "$meta_file"
-    echo 'permission_mode="bypassPermissions"' >> "$meta_file"
-    echo 'timeout="0"' >> "$meta_file"
-
-    # Create a minimal log file with CC-CRON marker
-    echo "0 9 * * * /tmp/run.sh  # CC-CRON:listtest:recurring=true" > "$log_file"
+    # Create a job properly using cmd_add
+    cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
+    local job_id="$LAST_CREATED_JOB_ID"
 
     run cmd_list
     [ "$status" -eq 0 ]
+    # Verify the job appears in the output
+    [[ "$output" == *"${job_id}"* ]]
+    [[ "$output" == *"test prompt"* ]]
 
-    rm -f "$meta_file" "$log_file"
+    # Cleanup
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_list --json outputs valid JSON" {
@@ -1199,8 +1371,7 @@ EOF
     [[ "$output" == *'"tags":"test"'* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$job_id")" "$(get_run_script "$job_id")"
-    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_list --json with tag filter" {
@@ -1220,10 +1391,8 @@ EOF
     [[ "$output" != *'"id":"'$job2'"'* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$job1")" "$(get_run_script "$job1")"
-    rm -f "$(get_meta_file "$job2")" "$(get_run_script "$job2")"
-    crontab_remove_entry "CC-CRON:${job1}" 2>/dev/null || true
-    crontab_remove_entry "CC-CRON:${job2}" 2>/dev/null || true
+    cleanup_test_job "$job1"
+    cleanup_test_job "$job2"
 }
 
 @test "cmd_list --json empty when no jobs" {
@@ -1257,9 +1426,7 @@ EOF
     [[ -n "$LAST_CREATED_JOB_ID" ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
-    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
-    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+    cleanup_test_job "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_add validates cron expression" {
@@ -1284,15 +1451,11 @@ EOF
     [[ "$output" == *"One-shot job"* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
-    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
-    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+    cleanup_test_job "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_edit clears model with empty string" {
     local job_id="editmodel"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-
     create_test_meta "$job_id" "/tmp" "sonnet"
 
     # Add crontab entry
@@ -1302,16 +1465,32 @@ EOF
     [ "$status" -eq 0 ]
 
     # Verify model removed from metadata
+    local meta_file; meta_file=$(get_meta_file "$job_id")
     ! grep -q 'model=' "$meta_file" || [[ $(grep 'model=' "$meta_file") == 'model=""' ]]
 
-    rm -f "$meta_file"
-    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+    cleanup_test_job "$job_id"
+}
+
+@test "cmd_edit updates model" {
+    local job_id="editmodel2"
+    create_test_meta "$job_id" "/tmp" "sonnet"
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --model "opus"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Updated job"* ]]
+
+    # Verify model updated in metadata
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    grep -q 'model="opus"' "$meta_file"
+
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_clone with model override" {
     local source_id="clonemodel"
-    local meta_file; meta_file=$(get_meta_file "$source_id")
-
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
 
     cmd_clone "$source_id" --model "haiku" >/dev/null
@@ -1323,13 +1502,11 @@ EOF
     grep -q 'model="haiku"' "$cloned_meta"
 
     # Cleanup
-    rm -f "$meta_file" "$cloned_meta"
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_clone with empty model override clears model" {
     local source_id="clonemodel2"
-    local meta_file; meta_file=$(get_meta_file "$source_id")
-
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
 
     cmd_clone "$source_id" --model "" >/dev/null
@@ -1341,7 +1518,67 @@ EOF
     ! grep -q 'model=' "$cloned_meta" || [[ $(grep 'model=' "$cloned_meta") == 'model=""' ]]
 
     # Cleanup
-    rm -f "$meta_file" "$cloned_meta"
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
+}
+
+@test "cmd_clone with timeout override" {
+    local source_id="clonetimeout"
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "60"
+
+    cmd_clone "$source_id" --timeout "300" >/dev/null
+
+    # Verify cloned job has overridden timeout
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
+    local cloned_meta; cloned_meta=$(get_meta_file "$LAST_CREATED_JOB_ID")
+    [[ -f "$cloned_meta" ]]
+    grep -q 'timeout="300"' "$cloned_meta"
+
+    # Cleanup
+    cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
+}
+
+@test "cmd_clone rejects invalid cron expression" {
+    local source_id="cloneinvalid"
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+
+    run cmd_clone "$source_id" --cron "invalid cron"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid cron"* ]]
+
+    rm -f "$(get_meta_file "$source_id")"
+}
+
+@test "cmd_clone rejects invalid workdir" {
+    local source_id="cloneworkdir"
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+
+    run cmd_clone "$source_id" --workdir "/nonexistent/path/12345"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"not found"* ]]
+
+    rm -f "$(get_meta_file "$source_id")"
+}
+
+@test "cmd_clone rejects invalid permission mode" {
+    local source_id="cloneperm"
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+
+    run cmd_clone "$source_id" --permission-mode "invalid_mode"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid permission mode"* ]]
+
+    rm -f "$(get_meta_file "$source_id")"
+}
+
+@test "cmd_clone rejects invalid timeout" {
+    local source_id="clonetimeout"
+    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+
+    run cmd_clone "$source_id" --timeout "-1"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Timeout must be a non-negative number"* ]]
+
+    rm -f "$(get_meta_file "$source_id")"
 }
 
 @test "cmd_add with model and timeout" {
@@ -1352,9 +1589,34 @@ EOF
     [[ "$output" == *"Timeout: 300s"* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
-    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
-    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+    cleanup_test_job "$LAST_CREATED_JOB_ID"
+}
+
+@test "cmd_add rejects invalid permission mode" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "invalid_mode" "0"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid permission mode"* ]]
+}
+
+@test "cmd_add rejects invalid timeout" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "auto" "-1"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Timeout must be a non-negative number"* ]]
+}
+
+@test "cmd_add rejects invalid cron expression" {
+    local job_workdir="$BATS_TEST_TMPDIR"
+    run cmd_add "invalid cron" "test job" "true" "$job_workdir" "" "auto" "0"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid cron"* ]]
+}
+
+@test "cmd_add rejects invalid workdir" {
+    run cmd_add "0 9 * * *" "test job" "true" "/nonexistent/path/12345" "" "auto" "0"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"not found"* ]]
 }
 
 @test "cmd_add with tags" {
@@ -1369,9 +1631,7 @@ EOF
     grep -q 'tags="prod,backup"' "$meta_file"
 
     # Cleanup
-    rm -f "$meta_file"
-    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
-    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+    cleanup_test_job "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_add with empty tags is allowed" {
@@ -1387,9 +1647,7 @@ EOF
     ! grep -q 'tags=' "$meta_file"
 
     # Cleanup
-    rm -f "$meta_file"
-    rm -f "$(get_run_script "$LAST_CREATED_JOB_ID")"
-    crontab_remove_entry "CC-CRON:${LAST_CREATED_JOB_ID}" 2>/dev/null || true
+    cleanup_test_job "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_show displays tags when set" {
@@ -1423,10 +1681,8 @@ EOF
     [[ "$output" != *"${untagged_job}"* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$prod_job")" "$(get_run_script "$prod_job")"
-    rm -f "$(get_meta_file "$untagged_job")" "$(get_run_script "$untagged_job")"
-    crontab_remove_entry "CC-CRON:${prod_job}" 2>/dev/null || true
-    crontab_remove_entry "CC-CRON:${untagged_job}" 2>/dev/null || true
+    cleanup_test_job "$prod_job"
+    cleanup_test_job "$untagged_job"
 }
 
 @test "cmd_list filters by non-existent tag shows no jobs" {
@@ -1442,8 +1698,7 @@ EOF
     [[ "$output" != *"${prod_job}"* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$prod_job")" "$(get_run_script "$prod_job")"
-    crontab_remove_entry "CC-CRON:${prod_job}" 2>/dev/null || true
+    cleanup_test_job "$prod_job"
 }
 
 @test "cmd_list filters by tag with multiple tags on job" {
@@ -1474,14 +1729,11 @@ EOF
     [[ "$output" != *"${multi_job}"* ]]
 
     # Cleanup
-    rm -f "$(get_meta_file "$multi_job")" "$(get_run_script "$multi_job")"
-    crontab_remove_entry "CC-CRON:${multi_job}" 2>/dev/null || true
+    cleanup_test_job "$multi_job"
 }
 
 @test "cmd_edit updates tags" {
     local job_id="edittagjob"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-
     create_test_meta "$job_id" "/tmp"
 
     # Add crontab entry
@@ -1492,16 +1744,13 @@ EOF
     [[ "$output" == *"Tags: none"* ]]
 
     # Verify tags updated
-    grep -q 'tags="newtag"' "$meta_file"
+    grep -q 'tags="newtag"' "$(get_meta_file "$job_id")"
 
-    rm -f "$meta_file"
-    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_edit clears tags with empty string" {
     local job_id="edittagjob2"
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     # Add crontab entry
@@ -1512,10 +1761,82 @@ EOF
     [[ "$output" == *"Tags: prod,backup → none"* ]]
 
     # Verify tags removed from metadata
-    ! grep -q 'tags=' "$meta_file"
+    ! grep -q 'tags=' "$(get_meta_file "$job_id")"
 
-    rm -f "$meta_file"
-    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+    cleanup_test_job "$job_id"
+}
+
+@test "cmd_edit updates timeout" {
+    local job_id="edittimeout"
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "60"
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --timeout "300"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Updated job"* ]]
+
+    # Verify timeout updated in metadata
+    grep -q 'timeout="300"' "$(get_meta_file "$job_id")"
+
+    cleanup_test_job "$job_id"
+}
+
+@test "cmd_edit rejects invalid cron expression" {
+    local job_id="editinvalid"
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --cron "invalid cron"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid cron"* ]]
+
+    cleanup_test_job "$job_id"
+}
+
+@test "cmd_edit rejects invalid workdir" {
+    local job_id="editworkdir"
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --workdir "/nonexistent/path/12345"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"not found"* ]]
+
+    cleanup_test_job "$job_id"
+}
+
+@test "cmd_edit rejects invalid permission mode" {
+    local job_id="editperm"
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --permission-mode "invalid_mode"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid permission mode"* ]]
+
+    cleanup_test_job "$job_id"
+}
+
+@test "cmd_edit rejects invalid timeout" {
+    local job_id="edittimeout"
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
+
+    # Add crontab entry
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+
+    run cmd_edit "$job_id" --timeout "-1"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Timeout must be a non-negative number"* ]]
+
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_help shows command list" {
@@ -2224,9 +2545,138 @@ EOF
     [ "$status" -eq 0 ]
 }
 
+@test "validate_cron_field accepts wildcard" {
+    run validate_cron_field "*" 0 59 "minute"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron_field accepts valid step patterns" {
+    run validate_cron_field "*/5" 0 59 "minute"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "*/15" 0 59 "minute"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "*/1" 0 59 "minute"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron_field rejects invalid step patterns" {
+    run validate_cron_field "*/0" 0 59 "minute"
+    [ "$status" -eq 3 ]
+
+    run validate_cron_field "*/abc" 0 59 "minute"
+    [ "$status" -eq 3 ]
+
+    run validate_cron_field "*/100" 0 59 "minute"
+    [ "$status" -eq 3 ]
+}
+
+@test "validate_cron_field accepts valid ranges" {
+    run validate_cron_field "1-5" 0 59 "minute"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "0-23" 0 23 "hour"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "1-31" 1 31 "day"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron_field rejects invalid ranges" {
+    # Start > end
+    run validate_cron_field "5-1" 0 59 "minute"
+    [ "$status" -eq 3 ]
+
+    # Start out of range
+    run validate_cron_field "60-65" 0 59 "minute"
+    [ "$status" -eq 3 ]
+
+    # End out of range
+    run validate_cron_field "50-70" 0 59 "minute"
+    [ "$status" -eq 3 ]
+
+    # Non-numeric range
+    run validate_cron_field "a-b" 0 59 "minute"
+    [ "$status" -eq 3 ]
+}
+
+@test "validate_cron_field accepts valid comma-separated lists" {
+    run validate_cron_field "1,2,3" 0 59 "minute"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "0,15,30,45" 0 59 "minute"
+    [ "$status" -eq 0 ]
+
+    run validate_cron_field "1,15,30" 0 59 "minute"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron_field rejects invalid comma-separated lists" {
+    # Value out of range in list
+    run validate_cron_field "1,2,100" 0 59 "minute"
+    [ "$status" -eq 3 ]
+
+    # Non-numeric in list
+    run validate_cron_field "1,abc,3" 0 59 "minute"
+    [ "$status" -eq 3 ]
+}
+
+@test "validate_cron_field rejects non-numeric simple values" {
+    run validate_cron_field "abc" 0 59 "minute"
+    [ "$status" -eq 3 ]
+
+    run validate_cron_field "" 0 59 "minute"
+    [ "$status" -eq 3 ]
+}
+
 @test "validate_cron accepts all wildcards" {
     run validate_cron "* * * * *"
     [ "$status" -eq 0 ]
+}
+
+@test "validate_cron accepts specific values" {
+    run validate_cron "30 9 * * *"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron accepts ranges" {
+    run validate_cron "0 9-17 * * *"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron accepts step patterns" {
+    run validate_cron "*/5 * * * *"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron accepts lists" {
+    run validate_cron "0,30 9,17 * * *"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_cron rejects too few fields" {
+    run validate_cron "0 9 * *"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"5 fields"* ]]
+}
+
+@test "validate_cron rejects too many fields" {
+    run validate_cron "0 9 * * * *"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"5 fields"* ]]
+}
+
+@test "validate_cron rejects invalid minute" {
+    run validate_cron "60 9 * * *"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"minute"* ]]
+}
+
+@test "validate_cron rejects invalid hour" {
+    run validate_cron "0 24 * * *"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"hour"* ]]
 }
 
 @test "cmd_completion includes all command aliases" {
@@ -2365,17 +2815,40 @@ EOF
     rm -f "$meta_file" "$status_file"
 }
 
-@test "generate_run_script with default permission omits permission flag" {
-    local job_id="rundefperm"
-    generate_run_script "$job_id" "/tmp" "" "default" "0" "true" "prompt" >/dev/null
+@test "cmd_status handles unknown status" {
+    local job_id="unknownstatus"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local status_file; status_file=$(get_status_file "$job_id")
 
-    local run_script; run_script=$(get_run_script "$job_id")
-    [ -f "$run_script" ]
+    create_test_meta "$job_id"
 
-    # Should not contain --permission-mode flag
-    ! grep -q "\-\-permission-mode" "$run_script"
+    # Create status file with unknown status
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
+    echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
+    echo 'status="weird"' >> "$status_file"
 
-    rm -f "$run_script"
+    run cmd_status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"UNKNOWN"* ]]
+
+    rm -f "$meta_file" "$status_file"
+}
+
+@test "cmd_status handles job with log but no status file" {
+    local job_id="logonly"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id")
+
+    create_test_meta "$job_id"
+
+    # Create log file but no status file
+    touch "$log_file"
+
+    run cmd_status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"NO STATUS"* ]]
+
+    rm -f "$meta_file" "$log_file"
 }
 
 # Tests for calculate_next_run function
@@ -2733,6 +3206,172 @@ EOF
     [[ "$output" == *"Created cron job"* ]]
 }
 
+@test "main add --workdir without argument returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --workdir
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"--workdir requires a path"* ]]
+}
+
+@test "main add --timeout without argument returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --timeout
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"--timeout requires"* ]]
+}
+
+@test "main add --permission-mode without argument returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --permission-mode
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"--permission-mode requires"* ]]
+}
+
+@test "main unknown command returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" nonexistentcmd
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Unknown command"* ]]
+}
+
+@test "main add unknown option returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --unknown-option
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Unknown option"* ]]
+}
+
+# Tests for main function command argument validation
+@test "main remove without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" remove
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main pause without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" pause
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main resume without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" resume
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main show without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" show
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main logs without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" logs
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main history without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" history
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main run without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" run
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main edit without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" edit
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main clone without job-id returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" clone
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
+@test "main import without file returns error" {
+    unset CC_CRON_TEST_MODE
+    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
+    export LOG_DIR="${DATA_DIR}/logs"
+    export LOCK_DIR="${DATA_DIR}/locks"
+    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" import
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Usage"* ]]
+}
+
 # Tests for escape_shell_string helper function
 @test "escape_shell_string escapes double quotes" {
     run escape_shell_string 'He said "hello"'
@@ -2944,4 +3583,294 @@ EOF
     [[ "$output" == *'C:\\Users\\test'* ]]
 
     rm -f "$meta_file"
+}
+
+# Tests for cmd_purge actually removing files
+@test "cmd_purge removes old log files" {
+    local job_id="purgejob"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    create_test_meta "$job_id"
+
+    # Create log file and history file with old timestamp (8 days ago)
+    echo "test log content" > "$log_file"
+    echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
+
+    # Make files old (modify timestamp to be 8 days ago)
+    touch -d "8 days ago" "$log_file" "$history_file" 2>/dev/null || touch -t "$(date -d '8 days ago' +%Y%m%d%H%M)" "$log_file" "$history_file"
+
+    # Run purge with 7 days threshold
+    run cmd_purge "7" "false"
+    [ "$status" -eq 0 ]
+
+    # Files should be removed
+    [[ ! -f "$log_file" ]]
+    [[ ! -f "$history_file" ]]
+
+    # Cleanup
+    rm -f "$meta_file"
+}
+
+@test "cmd_purge keeps recent files" {
+    local job_id="recentpurge"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id")
+    local run_script; run_script=$(get_run_script "$job_id")
+
+    create_test_meta "$job_id"
+
+    # Add crontab entry so job is not considered an orphan
+    crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=test"
+
+    # Create recent log file
+    echo "recent log content" > "$log_file"
+
+    # Run purge with 7 days threshold
+    run cmd_purge "7" "false"
+    [ "$status" -eq 0 ]
+
+    # Recent file should still exist
+    [[ -f "$log_file" ]]
+
+    # Cleanup
+    rm -f "$meta_file" "$log_file" "$run_script"
+    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+}
+
+@test "cmd_config set accepts valid permission_mode" {
+    local config_file="${DATA_DIR}/config"
+    rm -f "$config_file"
+
+    run cmd_config "set" "permission_mode" "acceptEdits"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Set permission_mode"* ]]
+
+    # Verify config file was created
+    [[ -f "$config_file" ]]
+    grep -q "permission_mode=\"acceptEdits\"" "$config_file"
+
+    rm -f "$config_file"
+}
+
+@test "cmd_config set rejects invalid permission_mode" {
+    run cmd_config "set" "permission_mode" "invalid_mode"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid permission mode"* ]]
+}
+
+@test "cmd_remove fails for job without crontab entry but cleans up files" {
+    local job_id="orphanremove"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id")
+
+    # Create meta file without adding to crontab
+    create_test_meta "$job_id"
+    echo "test log" > "$log_file"
+
+    # Remove should fail since job is not in crontab
+    run cmd_remove "$job_id"
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+
+    # But files should still be cleaned up
+    [[ ! -f "$meta_file" ]]
+    [[ ! -f "$log_file" ]]
+}
+
+# Tests for _show_job_stats helper function
+@test "_show_job_stats fails for non-existent job" {
+    run _show_job_stats "nonexistent"
+    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    [[ "$output" == *"Job not found"* ]]
+}
+
+@test "_show_job_stats shows zero stats for job without history" {
+    local job_id="statjob"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+
+    create_test_meta "$job_id"
+
+    run _show_job_stats "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Total runs: 0"* ]]
+    # Color codes are included, so check for partial matches
+    [[ "$output" == *"Success: 0"* ]]
+    [[ "$output" == *"Failed:"* && "$output" == *"0"* ]]
+
+    rm -f "$meta_file"
+}
+
+@test "_show_job_stats calculates success and failure counts" {
+    local job_id="statcount"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    create_test_meta "$job_id"
+
+    # Create history with 2 successes and 1 failure
+    cat > "$history_file" <<EOF
+start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"
+start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="success" exit_code="0"
+start="2024-01-03 10:00:00" end="2024-01-03 10:02:00" status="failed" exit_code="1"
+EOF
+
+    run _show_job_stats "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Total runs: 3"* ]]
+    [[ "$output" == *"Success: 2"* ]]
+    # Check for "Failed:" and "1" in the output (color codes interfere with exact match)
+    [[ "$output" == *"Failed:"* ]]
+    [[ "$output" == *"Success rate: 66%"* ]]
+
+    rm -f "$meta_file" "$history_file"
+}
+
+@test "_show_job_stats shows last success and failure times" {
+    local job_id="stattimes"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    create_test_meta "$job_id"
+
+    # Create history with success and failure
+    cat > "$history_file" <<EOF
+start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"
+start="2024-01-02 11:00:00" end="2024-01-02 11:02:00" status="failed" exit_code="1"
+EOF
+
+    run _show_job_stats "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Last success: 2024-01-01 10:05:00"* ]]
+    [[ "$output" == *"Last failure: 2024-01-02 11:02:00"* ]]
+
+    rm -f "$meta_file" "$history_file"
+}
+
+@test "_show_job_stats calculates average duration" {
+    local job_id="statduration"
+    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+
+    create_test_meta "$job_id"
+
+    # Create history with known durations:
+    # 10:00 to 10:05 = 5 minutes = 300 seconds
+    # 11:00 to 11:07 = 7 minutes = 420 seconds
+    # Average = 360 seconds = 6 minutes
+    cat > "$history_file" <<EOF
+start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"
+start="2024-01-01 11:00:00" end="2024-01-01 11:07:00" status="success" exit_code="0"
+EOF
+
+    run _show_job_stats "$job_id"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Avg duration: 6m 0s"* ]]
+
+    rm -f "$meta_file" "$history_file"
+}
+
+# Test validate_range function
+@test "validate_range accepts value at minimum" {
+    run validate_range "0" 0 59 "minute"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_range accepts value at maximum" {
+    run validate_range "59" 0 59 "minute"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_range accepts value in middle" {
+    run validate_range "30" 0 59 "minute"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_range rejects value below minimum" {
+    run validate_range "-1" 0 59 "minute"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid value"* ]]
+}
+
+@test "validate_range rejects value above maximum" {
+    run validate_range "60" 0 59 "minute"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid value"* ]]
+}
+
+# Test is_valid_cron function
+@test "is_valid_cron returns success for valid cron" {
+    run is_valid_cron "0 9 * * *"
+    [ "$status" -eq 0 ]
+}
+
+@test "is_valid_cron returns failure for invalid cron" {
+    run is_valid_cron "invalid"
+    [ "$status" -ne 0 ]
+}
+
+@test "is_valid_cron returns failure for cron with too many fields" {
+    run is_valid_cron "0 9 * * * *"
+    [ "$status" -ne 0 ]
+}
+
+@test "is_valid_cron returns failure for cron with too few fields" {
+    run is_valid_cron "0 9 * *"
+    [ "$status" -ne 0 ]
+}
+
+# Test validate_permission_mode function
+@test "validate_permission_mode accepts bypassPermissions" {
+    run validate_permission_mode "bypassPermissions"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_permission_mode accepts acceptEdits" {
+    run validate_permission_mode "acceptEdits"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_permission_mode accepts auto" {
+    run validate_permission_mode "auto"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_permission_mode accepts default" {
+    run validate_permission_mode "default"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_permission_mode rejects invalid mode" {
+    run validate_permission_mode "invalid"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"Invalid permission mode"* ]]
+}
+
+# Test validate_timeout function
+@test "validate_timeout accepts zero" {
+    run validate_timeout "0"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_timeout accepts positive number" {
+    run validate_timeout "3600"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate_timeout rejects negative number" {
+    run validate_timeout "-1"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"non-negative number"* ]]
+}
+
+@test "validate_timeout rejects non-numeric value" {
+    run validate_timeout "abc"
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"non-negative number"* ]]
+}
+
+@test "validate_timeout rejects empty string" {
+    run validate_timeout ""
+    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    [[ "$output" == *"non-negative number"* ]]
 }

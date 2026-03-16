@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.19"
+readonly VERSION="2.4.54"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -601,12 +601,13 @@ cmd_add() {
     local job_timeout="${7:-${CC_TIMEOUT:-0}}"
     local quiet="${8:-false}"
     local job_tags="${9:-}"
-    # Ensure timeout is numeric
-    job_timeout=$(safe_numeric "$job_timeout" "0")
 
     validate_cron "$cron_expr"
     validate_workdir "$job_workdir"
     validate_permission_mode "$job_permission"
+    validate_timeout "$job_timeout"
+    # Ensure timeout is numeric
+    job_timeout=$(safe_numeric "$job_timeout" "0")
 
     local job_id
     job_id=$(generate_job_id)

@@ -5,6 +5,211 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.54] - 2025-03-16
+
+### Refactor
+- Continue refactoring tests to use `cleanup_test_job` helper
+
+## [2.4.53] - 2025-03-16
+
+### Refactor
+- Continue refactoring tests to use `cleanup_test_job` helper
+
+## [2.4.52] - 2025-03-16
+
+### Refactor
+- Use `cleanup_test_job` helper in several tests to reduce code duplication
+
+## [2.4.51] - 2025-03-16
+
+### Improved
+- Add `cleanup_test_job` helper function to reduce test code duplication
+
+## [2.4.50] - 2025-03-16
+
+### Tests
+- Add test for `load_config` handling malformed config lines
+
+## [2.4.49] - 2025-03-16
+
+### Fixed
+- Add timeout validation to `cmd_add` to properly reject invalid timeout values (previously silently converted to 0)
+
+## [2.4.48] - 2025-03-16
+
+### Tests
+- Add tests for `cmd_config set/unset` without arguments
+
+## [2.4.47] - 2025-03-16
+
+### Tests
+- Add test for `cmd_config` with unknown action
+
+## [2.4.46] - 2025-03-16
+
+### Tests
+- Add test for `cmd_purge` with negative days argument
+
+## [2.4.45] - 2025-03-16
+
+### Tests
+- Add test for `cmd_add` with invalid workdir
+
+## [2.4.44] - 2025-03-16
+
+### Tests
+- Add test for `cmd_add` with invalid cron expression
+
+## [2.4.43] - 2025-03-16
+
+### Tests
+- Add test for `cmd_add` with invalid permission mode
+- Add test for `cmd_add` with invalid timeout
+
+## [2.4.42] - 2025-03-16
+
+### Tests
+- Add test for `cmd_clone` with invalid permission mode
+- Add test for `cmd_clone` with invalid timeout
+
+## [2.4.41] - 2025-03-16
+
+### Tests
+- Add test for `cmd_edit` with invalid timeout
+
+## [2.4.40] - 2025-03-16
+
+### Tests
+- Add test for `cmd_edit` with invalid permission mode
+
+## [2.4.39] - 2025-03-16
+
+### Tests
+- Add test for `cmd_clone` with invalid workdir
+
+## [2.4.38] - 2025-03-16
+
+### Tests
+- Add test for `cmd_edit` with invalid workdir
+
+## [2.4.37] - 2025-03-16
+
+### Tests
+- Add test for `cmd_clone` with invalid cron expression
+
+## [2.4.36] - 2025-03-16
+
+### Tests
+- Add test for `cmd_edit` with invalid cron expression
+
+## [2.4.35] - 2025-03-16
+
+### Tests
+- Add comprehensive tests for `validate_cron_field` function (wildcards, step patterns, ranges, lists, invalid inputs)
+
+## [2.4.34] - 2025-03-16
+
+### Fixed
+- Correct test assertions in main function argument validation tests (match actual error output)
+
+## [2.4.33] - 2025-03-16
+
+### Tests
+- Add test for `cmd_export` writing to file
+
+## [2.4.32] - 2025-03-16
+
+### Tests
+- Add comprehensive tests for `validate_cron` function (specific values, ranges, step patterns, lists, invalid inputs)
+
+## [2.4.31] - 2025-03-16
+
+### Tests
+- Add tests for `cmd_doctor` checking data directory, lock files, and job consistency
+
+## [2.4.30] - 2025-03-16
+
+### Tests
+- Add test for `cmd_status` with unknown status
+- Add test for `cmd_status` with job that has log but no status file
+
+## [2.4.29] - 2025-03-16
+
+### Tests
+- Add tests for main function argument validation (remove, pause, resume, show, logs, history, run, edit, clone, import)
+
+## [2.4.28] - 2025-03-16
+
+### Tests
+- Add tests for `validate_range` helper function
+- Add tests for `is_valid_cron` helper function
+- Add tests for `validate_permission_mode` helper function
+- Add tests for `validate_timeout` helper function
+
+## [2.4.27] - 2025-03-16
+
+### Tests
+- Add test for `cmd_import` handling paused job
+
+## [2.4.26] - 2025-03-16
+
+### Tests
+- Add test for `cmd_clone` with prompt override
+- Add test for `cmd_clone` with permission-mode override
+
+## [2.4.25] - 2025-03-16
+
+### Tests
+- Add test for `cmd_edit` updating cron expression
+- Add test for `cmd_edit` updating workdir
+
+## [2.4.24] - 2025-03-16
+
+### Tests
+- Add test for `main` unknown command error handling
+- Add test for `main add` unknown option error handling
+
+## [2.4.23] - 2025-03-16
+
+### Tests
+- Add tests for `_show_job_stats` helper function
+- Add test for `main add --workdir` without argument
+- Add test for `main add --timeout` without argument
+- Add test for `main add --permission-mode` without argument
+
+## [2.4.22] - 2025-03-16
+
+### Tests
+- Add tests for `_show_job_stats` helper function
+- Add test for `_show_job_stats` with non-existent job
+- Add test for `_show_job_stats` with job without history
+- Add test for `_show_job_stats` success/failure counting
+- Add test for `_show_job_stats` last success/failure times
+- Add test for `_show_job_stats` average duration calculation
+
+## [2.4.21] - 2025-03-16
+
+### Tests
+- Add test for `cmd_purge` removing old log files
+- Add test for `cmd_purge` keeping recent files
+- Add test for `cmd_config set` with valid permission_mode
+- Add test for `cmd_config set` rejecting invalid permission_mode
+- Add test for `cmd_remove` edge case with job not in crontab
+
+## [2.4.20] - 2025-03-16
+
+### Fixed
+- Fix cmd_list test to properly create a job with crontab entry (was writing to wrong file)
+
+### Refactor
+- Remove duplicate test for generate_run_script with default permission
+
+### Tests
+- Add tests for cmd_config set with valid values
+- Add test for cmd_clone with timeout override
+- Add test for cmd_edit with timeout update
+- Add test for cmd_edit with model update
+
 ## [2.4.19] - 2025-03-16
 
 ### Refactor
