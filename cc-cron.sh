@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.147"
+readonly VERSION="2.4.148"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -790,8 +790,7 @@ calculate_next_run() {
             if [[ "$hour_step" =~ ^[0-9]+$ ]]; then
                 # Every N hours at specific minute
                 local current_hour current_minute
-                current_hour=$(date +%H)
-                current_minute=$(date +%M)
+                current_hour=$(date +%H); current_minute=$(date +%M)
                 current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
                 local target_minute=$((10#$minute))
 
@@ -807,8 +806,7 @@ calculate_next_run() {
         else
             # Daily at specific time
             local current_hour current_minute
-            current_hour=$(date +%H)
-            current_minute=$(date +%M)
+            current_hour=$(date +%H); current_minute=$(date +%M)
             current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
 
             local target_hour=$((10#$hour)) target_minute=$((10#$minute))
