@@ -689,18 +689,7 @@ cmd_list() {
 
                 # Filter by tag if specified
                 if [[ -n "$filter_tag" ]]; then
-                    # Check if job has tags and if filter matches
-                    if [[ -z "${tags:-}" ]]; then
-                        continue
-                    fi
-                    # Check if filter_tag is in the comma-separated tags
-                    local tag_match=0
-                    local IFS=','
-                    local t
-                    for t in $tags; do
-                        [[ "$t" == "$filter_tag" ]] && tag_match=1 && break
-                    done
-                    [[ $tag_match -eq 0 ]] && continue
+                    [[ -n "${tags:-}" && ",${tags}," == *",${filter_tag},"* ]] || continue
                 fi
 
                 found=1
