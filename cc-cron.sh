@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.186"
+readonly VERSION="2.4.187"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1058,9 +1058,7 @@ cmd_status() {
             # Check if job is currently running (has start_time but no end_time, or status=running)
             if [[ "${status:-}" == "running" ]] || { [[ -n "${start_time:-}" ]] && [[ -z "${end_time:-}" ]]; }; then
                 status_icon="${YELLOW}◉ RUNNING${NC}"
-                echo -e "  ${id}: ${status_icon}"
-                echo "    Start: ${start_time:-unknown}"
-                echo "    Workdir: ${workdir}"
+                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    Workdir: ${workdir}"
                 echo
                 ((running_count++)) || true
             else
@@ -1078,11 +1076,9 @@ cmd_status() {
                         ((unknown_count++)) || true
                         ;;
                 esac
-                echo -e "  ${id}: ${status_icon}"
-                echo "    Start: ${start_time:-unknown}"
-                echo "    End:   ${end_time:-unknown}"
+                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    End:   ${end_time:-unknown}"
                 [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}" || true
-                echo "    Workdir: ${workdir}"
+                echo -e "    Workdir: ${workdir}"
                 echo
             fi
         elif [[ -f "$log_file" ]]; then
