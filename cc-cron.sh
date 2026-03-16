@@ -1531,8 +1531,7 @@ cmd_doctor() {
         echo "   ! Some jobs may be stuck or running"
         for lock_file in "$LOCK_DIR"/*.lock; do
             [[ -f "$lock_file" ]] || continue
-            local lock_age current_time age_minutes
-            lock_age=$(get_stat "$lock_file" mtime_unix); current_time=$(date +%s); age_minutes=$(( (current_time - lock_age) / 60 ))
+            local lock_age current_time age_minutes; lock_age=$(get_stat "$lock_file" mtime_unix); current_time=$(date +%s); age_minutes=$(( (current_time - lock_age) / 60 ))
             [[ $age_minutes -gt 60 ]] && {
                 echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)"
                 ((warnings++)) || true
