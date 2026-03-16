@@ -1273,17 +1273,8 @@ cmd_edit() {
         return 0
     fi
 
-    # Check if job is paused
-    local paused_file="${DATA_DIR}/${job_id}.paused"
-    local was_paused=0
-    if [[ -f "$paused_file" ]]; then
-        was_paused=1
-    fi
-
     # Remove old crontab entry if not paused
-    if [[ "$was_paused" -eq 0 ]]; then
-        crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
-    fi
+    [[ ! -f "${DATA_DIR}/${job_id}.paused" ]] && crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
 
     # Update metadata file using helper
     local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
@@ -1296,9 +1287,7 @@ cmd_edit() {
         "$new_timeout" "$recurring" "$new_prompt" > /dev/null
 
     # Re-add to crontab if not paused
-    if [[ "$was_paused" -eq 0 ]]; then
-        crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
-    fi
+    [[ ! -f "${DATA_DIR}/${job_id}.paused" ]] && crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
 
     success "Updated job: ${job_id}"
     if [[ "$cron" != "$new_cron" ]]; then
