@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.98"
+readonly VERSION="2.4.99"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -147,7 +147,6 @@ remove_file() {
 
     # Return file size via global for tracking
     REMOVE_FILE_SIZE="$file_size"
-    return 0
 }
 
 # Helper to remove a file and track purge stats (increments PURGE_COUNT, PURGE_BYTES)
