@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.79"
+readonly VERSION="2.4.80"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1136,7 +1136,7 @@ cmd_run() {
 
     local run_script; run_script=$(get_run_script "$job_id")
 
-    [[ ! -f "$run_script" ]] && error "Run script not found for job: ${job_id}" "$EXIT_NOT_FOUND"
+    [[ ! -f "$run_script" ]] && error "Run script not found for job: ${job_id}" "$EXIT_NOT_FOUND" || true
 
     info "Running job ${job_id} immediately..."
     info "Workdir: ${workdir}"
@@ -1148,11 +1148,7 @@ cmd_run() {
     local exit_code=$?
 
     echo
-    if [[ $exit_code -eq 0 ]]; then
-        success "Job completed successfully"
-    else
-        warn "Job exited with code: ${exit_code}"
-    fi
+    [[ $exit_code -eq 0 ]] && success "Job completed successfully" || warn "Job exited with code: ${exit_code}"
 
     return $exit_code
 }
@@ -1184,7 +1180,7 @@ cmd_edit() {
     fi
 
     # Remove old crontab entry if not paused
-    [[ ! -f "${DATA_DIR}/${job_id}.paused" ]] && crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
+    [[ -f "${DATA_DIR}/${job_id}.paused" ]] || crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
 
     # Update metadata file using helper
     local timestamp; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
@@ -1197,7 +1193,7 @@ cmd_edit() {
         "$new_timeout" "$recurring" "$new_prompt" > /dev/null
 
     # Re-add to crontab if not paused
-    [[ ! -f "${DATA_DIR}/${job_id}.paused" ]] && crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
+    [[ -f "${DATA_DIR}/${job_id}.paused" ]] || crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
 
     success "Updated job: ${job_id}"
     [[ "$cron" != "$new_cron" ]] && info "Schedule: ${cron} → ${new_cron}" || true
