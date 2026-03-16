@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.168"
+readonly VERSION="2.4.169"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1258,8 +1258,7 @@ cmd_export() {
     [[ ${#jobs[@]} -eq 0 ]] && { warn "No jobs to export"; return 0; }
 
     # Build JSON output
-    local json_output timestamp first=1
-    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local json_output timestamp first=1; timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     json_output='{"version":"1.0","exported_at":"'"${timestamp}"'","jobs":['
 
     for job_id in "${jobs[@]}"; do
