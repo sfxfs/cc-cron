@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.175"
+readonly VERSION="2.4.176"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1483,8 +1483,7 @@ cmd_config() {
             fi
             ;;
         set)
-            local key="${2:-}"
-            local value="${3:-}"
+            local key="${2:-}" value="${3:-}"
 
             [[ -z "$key" || -z "$value" ]] && error "Usage: cc-cron config set <key> <value>" "$EXIT_INVALID_ARGS"
 
