@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.114] - 2026-03-16
+
+### Fixed
+- Correct incorrectly combined local declarations that caused 37 tests to fail
+- Add `|| true` to conditional statements in `calculate_next_run()` and `cmd_next()` to handle `set -e` edge cases
+
 ## [2.4.113] - 2026-03-16
 
 ### Refactor
