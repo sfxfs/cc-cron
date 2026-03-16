@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.123"
+readonly VERSION="2.4.124"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -842,8 +842,7 @@ calculate_next_run() {
         # Check if weekday is a simple single value (not a range or list)
         if [[ "$weekday" =~ ^[0-6]$ ]]; then
             # Weekly on a specific day
-            local current_weekday; current_weekday=$(date +%u)  # 1-7, Monday is 1
-            current_weekday=$((current_weekday % 7))  # Convert to 0-6, Sunday is 0
+            local current_weekday; current_weekday=$(($(date +%u) % 7))  # 0-6, Sunday is 0
 
             local target_weekday=$((10#$weekday))
 
