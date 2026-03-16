@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.55"
+readonly VERSION="2.4.56"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1565,10 +1565,7 @@ cmd_export() {
 
         # Check if paused
         local paused_file="${DATA_DIR}/${job_id}.paused"
-        local is_paused="false"
-        if [[ -f "$paused_file" ]]; then
-            is_paused="true"
-        fi
+        local is_paused; is_paused="$([[ -f "$paused_file" ]] && echo true || echo false)"
 
         if [[ "$first" -eq 1 ]]; then
             first=0
