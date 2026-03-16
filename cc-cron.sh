@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.62"
+readonly VERSION="2.4.63"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -474,12 +474,8 @@ generate_run_script() {
 
     # Build claude options
     local claude_opts="-p"
-    if [[ -n "$job_model" ]]; then
-        claude_opts="$claude_opts --model $job_model"
-    fi
-    if [[ "$job_permission" != "default" ]]; then
-        claude_opts="$claude_opts --permission-mode $job_permission"
-    fi
+    [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
+    [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
 
     # Sanitize prompt for safe shell embedding
     local safe_prompt="${prompt//\'/\'\\\'\'}"
@@ -570,9 +566,7 @@ write_meta_file() {
     {
         echo "id=\"${job_id}\""
         echo "created=\"${created}\""
-        if [[ -n "$modified" ]]; then
-            echo "modified=\"$(escape_shell_string "$modified")\""
-        fi
+        [[ -n "$modified" ]] && echo "modified=\"$(escape_shell_string "$modified")\""
         echo "cron=\"${cron}\""
         echo "recurring=\"${recurring}\""
         echo "prompt=\"${safe_prompt}\""
@@ -580,9 +574,7 @@ write_meta_file() {
         echo "model=\"${safe_model}\""
         echo "permission_mode=\"${safe_permission}\""
         echo "timeout=\"${timeout}\""
-        if [[ -n "$tags" ]]; then
-            echo "tags=\"$(escape_shell_string "$tags")\""
-        fi
+        [[ -n "$tags" ]] && echo "tags=\"$(escape_shell_string "$tags")\""
         echo "run_script=\"${safe_run_script}\""
     } > "$meta_file"
 }
