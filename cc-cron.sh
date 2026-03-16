@@ -1035,16 +1035,13 @@ cmd_status() {
             else
                 case "${status:-}" in
                     success)
-                        status_icon="${GREEN}✓ SUCCESS${NC}"
-                        ((success_count++)) || true
+                        status_icon="${GREEN}✓ SUCCESS${NC}"; ((success_count++)) || true
                         ;;
                     failed)
-                        status_icon="${RED}✗ FAILED${NC}"
-                        ((failed_count++)) || true
+                        status_icon="${RED}✗ FAILED${NC}"; ((failed_count++)) || true
                         ;;
                     *)
-                        status_icon="${YELLOW}? UNKNOWN${NC}"
-                        ((unknown_count++)) || true
+                        status_icon="${YELLOW}? UNKNOWN${NC}"; ((unknown_count++)) || true
                         ;;
                 esac
                 echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    End:   ${end_time:-unknown}"
