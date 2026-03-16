@@ -429,7 +429,8 @@ generate_run_script() {
     local job_id="$1" job_workdir="$2" job_model="$3" job_permission="$4" job_timeout="$5" recurring="$6" prompt="$7"
 
     local log_file; log_file=$(get_log_file "$job_id")
-    local status_file; status_file=$(get_status_file "$job_id") lock_file; lock_file=$(get_lock_file "$job_workdir")
+    local status_file; status_file=$(get_status_file "$job_id")
+    local lock_file; lock_file=$(get_lock_file "$job_workdir")
     local run_script; run_script=$(get_run_script "$job_id")
 
     # Build claude options
@@ -884,7 +885,7 @@ calculate_next_run() {
         next_time=0
     fi
 
-    [[ $next_time -gt 0 ]] && { date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null; }
+    [[ $next_time -gt 0 ]] && { date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null; } || true
 }
 
 # Show next scheduled run times
@@ -929,7 +930,7 @@ cmd_next() {
         fi
     done <<< "$crontab_content"
 
-    [[ $found -eq 0 ]] && { [[ -n "$job_id" ]] && info "Job not found: ${job_id}" || info "No scheduled jobs found."; }
+    [[ $found -eq 0 ]] && { [[ -n "$job_id" ]] && info "Job not found: ${job_id}" || info "No scheduled jobs found."; } || true
 }
 
 # Show detailed information for a specific job
@@ -998,7 +999,8 @@ cmd_show() {
 # Show execution history for a job
 cmd_history() {
     local job_id="$1" lines="${2:-20}"
-    local history_file; history_file=$(get_history_file "$job_id") log_file; log_file=$(get_log_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+    local log_file; log_file=$(get_log_file "$job_id")
 
     [[ -f "$log_file" ]] || {
         [[ -f "$(get_meta_file "$job_id")" ]] && \
@@ -1154,7 +1156,8 @@ cmd_status() {
         local tags="" model="" modified=""
         source "$meta_file"
 
-        local status_file; status_file=$(get_status_file "$id") log_file; log_file=$(get_log_file "$id")
+        local status_file; status_file=$(get_status_file "$id")
+        local log_file; log_file=$(get_log_file "$id")
 
         if [[ -f "$status_file" ]]; then
             source "$status_file"
@@ -1225,7 +1228,8 @@ cmd_stats() {
 # Helper function to show stats for a single job
 _show_job_stats() {
     local job_id="$1"
-    local history_file; history_file=$(get_history_file "$job_id") meta_file; meta_file=$(get_meta_file "$job_id")
+    local history_file; history_file=$(get_history_file "$job_id")
+    local meta_file; meta_file=$(get_meta_file "$job_id")
 
     [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
 
@@ -1342,8 +1346,10 @@ cmd_export() {
         [[ "$first" -eq 1 ]] && first=0 || json_output+=","
 
         # Escape values for JSON output
-        local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt") escaped_workdir; escaped_workdir=$(escape_json_string "$workdir")
-        local escaped_model; escaped_model=$(escape_json_string "${model:-}") escaped_permission; escaped_permission=$(escape_json_string "$permission_mode")
+        local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt")
+        local escaped_workdir; escaped_workdir=$(escape_json_string "$workdir")
+        local escaped_model; escaped_model=$(escape_json_string "${model:-}")
+        local escaped_permission; escaped_permission=$(escape_json_string "$permission_mode")
         local escaped_tags; escaped_tags=$(escape_json_string "${tags:-}")
 
         json_output+='{'
@@ -1707,7 +1713,8 @@ cmd_doctor() {
         echo "   ! Some jobs may be stuck or running"
         for lock_file in "$LOCK_DIR"/*.lock; do
             [[ -f "$lock_file" ]] || continue
-            local lock_age; lock_age=$(get_stat "$lock_file" mtime_unix) current_time; current_time=$(date +%s)
+            local lock_age; lock_age=$(get_stat "$lock_file" mtime_unix)
+            local current_time; current_time=$(date +%s)
             local age_minutes=$(( (current_time - lock_age) / 60 ))
             [[ $age_minutes -gt 60 ]] && {
                 echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)"
