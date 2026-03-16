@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.121"
+readonly VERSION="2.4.122"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -252,8 +252,7 @@ validate_cron_field() {
     # Handle range n-m
     case "$value" in
         *-*)
-            local start="${value%%-*}"
-            local end="${value#*-}"
+            local start="${value%%-*}" end="${value#*-}"
             [[ "$start" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"
             [[ "$end" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"
             validate_range "$start" "$min" "$max" "$field_name range start"
