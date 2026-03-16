@@ -302,8 +302,7 @@ teardown() {
 }
 
 @test "cmd_run executes job successfully" {
-    local job_id="runsuccess" job_workdir="$BATS_TEST_TMPDIR"
-    local run_script; run_script=$(get_run_script "$job_id")
+    local job_id="runsuccess" job_workdir="$BATS_TEST_TMPDIR" run_script; run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "$job_workdir"
 
@@ -324,8 +323,7 @@ EOF
 }
 
 @test "cmd_run handles job failure" {
-    local job_id="runfail" job_workdir="$BATS_TEST_TMPDIR"
-    local run_script; run_script=$(get_run_script "$job_id")
+    local job_id="runfail" job_workdir="$BATS_TEST_TMPDIR" run_script; run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "$job_workdir"
 
@@ -2407,8 +2405,7 @@ EOF
 }
 
 @test "cmd_purge handles orphaned run scripts" {
-    local job_id="orphanscript"
-    local run_script; run_script=$(get_run_script "$job_id")
+    local job_id="orphanscript" run_script; run_script=$(get_run_script "$job_id")
 
     # Create an orphan run script (no crontab entry, no metadata)
     mkdir -p "$DATA_DIR"
