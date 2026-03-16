@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.117"
+readonly VERSION="2.4.118"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -811,8 +811,7 @@ calculate_next_run() {
                 local current_hour current_minute
                 current_hour=$(date +%H)
                 current_minute=$(date +%M)
-                current_hour=$((10#$current_hour))
-                current_minute=$((10#$current_minute))
+                current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
                 local target_minute=$((10#$minute))
 
                 local hours_until=$(( (hour_step - current_hour % hour_step) % hour_step ))
