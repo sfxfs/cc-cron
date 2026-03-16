@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.144"
+readonly VERSION="2.4.145"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1300,10 +1300,9 @@ cmd_export() {
     [[ ${#jobs[@]} -eq 0 ]] && { warn "No jobs to export"; return 0; }
 
     # Build JSON output
-    local json_output timestamp
+    local json_output timestamp first=1
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     json_output='{"version":"1.0","exported_at":"'"${timestamp}"'","jobs":['
-    local first=1
 
     for job_id in "${jobs[@]}"; do
         local meta_file; meta_file=$(get_meta_file "$job_id")
@@ -1318,11 +1317,8 @@ cmd_export() {
         [[ "$first" -eq 1 ]] && first=0 || json_output+=","
 
         # Escape values for JSON output
-        local escaped_prompt; escaped_prompt=$(escape_json_string "$prompt")
-        local escaped_workdir; escaped_workdir=$(escape_json_string "$workdir")
-        local escaped_model; escaped_model=$(escape_json_string "${model:-}")
-        local escaped_permission; escaped_permission=$(escape_json_string "$permission_mode")
-        local escaped_tags; escaped_tags=$(escape_json_string "${tags:-}")
+        local escaped_prompt escaped_workdir escaped_model escaped_permission escaped_tags
+        escaped_prompt=$(escape_json_string "$prompt"); escaped_workdir=$(escape_json_string "$workdir"); escaped_model=$(escape_json_string "${model:-}"); escaped_permission=$(escape_json_string "$permission_mode"); escaped_tags=$(escape_json_string "${tags:-}")
 
         json_output+='{'
         json_output+='"id":"'"${id}"'",'
