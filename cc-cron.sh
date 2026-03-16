@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.100"
+readonly VERSION="2.4.101"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -924,9 +924,7 @@ calculate_next_run() {
         next_time=0
     fi
 
-    if [[ $next_time -gt 0 ]]; then
-        date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null
-    fi
+    [[ $next_time -gt 0 ]] && { date -d "@${next_time}" "+%Y-%m-%d %H:%M" 2>/dev/null || date -r "$next_time" "+%Y-%m-%d %H:%M" 2>/dev/null; }
 }
 
 # Show next scheduled run times
