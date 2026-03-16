@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.189"
+readonly VERSION="2.4.190"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -598,8 +598,7 @@ cmd_list() {
                 if [[ "$json_output" == "true" ]]; then
                     jobs+=("{\"id\":\"${job_id}\",\"error\":\"metadata missing\"}")
                 else
-                    echo -e "Job ID: ${job_id} (metadata missing)\n  Raw: ${line}"
-                    echo
+                    echo -e "Job ID: ${job_id} (metadata missing)\n  Raw: ${line}\n"
                 fi
             fi
         fi
@@ -809,8 +808,7 @@ calculate_next_run() {
 cmd_next() {
     local job_id="${1:-}" count="${2:-5}"
 
-    echo -e "Upcoming Scheduled Runs:\n========================="
-    echo
+    echo -e "Upcoming Scheduled Runs:\n=========================\n"
 
     local crontab_content found=0; crontab_content=$(get_crontab) || { info "No crontab configured"; return 0; }
 
@@ -831,8 +829,7 @@ cmd_next() {
 
             echo -e "  ${GREEN}${id}${NC}${paused_status}\n    Schedule: ${cron}"
             [[ -n "$next_run" ]] && echo "    Next run: ${next_run}"
-            echo -e "    Prompt:   ${prompt:0:50}${prompt:50:+...}"
-            echo
+            echo -e "    Prompt:   ${prompt:0:50}${prompt:50:+...}\n"
 
             found=$((found + 1))
         fi
@@ -854,9 +851,7 @@ cmd_show() {
     echo "  Permission:   ${permission_mode}"
     [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s" || true
     [[ -n "${tags:-}" ]] && echo "  Tags:         ${tags}" || true
-    echo
-    echo -e "  Prompt:\n    ${prompt}"
-    echo
+    echo -e "\n  Prompt:\n    ${prompt}\n"
 
     # Check if paused
     local paused_file="${DATA_DIR}/${job_id}.paused"
@@ -881,8 +876,7 @@ cmd_show() {
     if [[ -f "$history_file" ]]; then
         local total_runs success_runs failed_runs
         total_runs=$(wc -l < "$history_file"); success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0"); failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
-        echo -e "  Statistics:\n    Total runs:    ${total_runs}\n    Successful:    ${GREEN}${success_runs}${NC}\n    Failed:        ${RED}${failed_runs}${NC}"
-        echo
+        echo -e "  Statistics:\n    Total runs:    ${total_runs}\n    Successful:    ${GREEN}${success_runs}${NC}\n    Failed:        ${RED}${failed_runs}${NC}\n"
     fi
 
     # Show log file location
@@ -901,8 +895,7 @@ cmd_history() {
             error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     }
 
-    echo -e "Execution History for ${job_id}:\n================================="
-    echo
+    echo -e "Execution History for ${job_id}:\n=================================\n"
 
     # Show from history file if exists (structured format)
     if [[ -f "$history_file" ]]; then
@@ -1024,8 +1017,7 @@ cmd_clone() {
 # Show status of all jobs and recent executions
 cmd_status() {
     info "CC-Cron Status Report"
-    echo -e "======================"
-    echo
+    echo -e "======================\n"
 
     # Count jobs from crontab
     local crontab_content; crontab_content=$(get_crontab) || { warn "No crontab configured for current user"; return; }; local job_count; job_count=$(echo "$crontab_content" | { grep "${CRON_COMMENT_PREFIX}" || true; } | wc -l)
@@ -1051,8 +1043,7 @@ cmd_status() {
             # Check if job is currently running (has start_time but no end_time, or status=running)
             if [[ "${status:-}" == "running" ]] || { [[ -n "${start_time:-}" ]] && [[ -z "${end_time:-}" ]]; }; then
                 status_icon="${YELLOW}◉ RUNNING${NC}"
-                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    Workdir: ${workdir}"
-                echo
+                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    Workdir: ${workdir}\n"
                 ((running_count++)) || true
             else
                 case "${status:-}" in
@@ -1071,14 +1062,12 @@ cmd_status() {
                 esac
                 echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    End:   ${end_time:-unknown}"
                 [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}" || true
-                echo -e "    Workdir: ${workdir}"
-                echo
+                echo -e "    Workdir: ${workdir}\n"
             fi
         elif [[ -f "$log_file" ]]; then
             # Has log but no status (old format or running)
             local last_run; last_run=$(get_stat "$log_file" mtime | cut -d. -f1)
-            echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})\n    Workdir: ${workdir}"
-            echo
+            echo -e "  ${id}: ${YELLOW}? NO STATUS${NC} (last activity: ${last_run})\n    Workdir: ${workdir}\n"
             ((unknown_count++)) || true
         fi
     done
@@ -1513,8 +1502,7 @@ cmd_config() {
 cmd_doctor() {
     local issues=0 warnings=0
 
-    echo -e "CC-Cron Health Check\n===================="
-    echo
+    echo -e "CC-Cron Health Check\n====================\n"
 
     # Check 1: Data directory
     echo "1. Checking data directory..."
