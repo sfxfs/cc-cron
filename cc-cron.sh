@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.232"
+readonly VERSION="2.4.233"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -564,11 +564,7 @@ cmd_list() {
                     job_json+="}"
                     jobs+=("$job_json")
                 else
-                    echo "Job ID: ${id}"
-                    echo "  Created: ${created}"
-                    echo "  Schedule: ${cron}"
-                    echo "  Recurring: ${recurring}"
-                    echo "  Workdir: ${workdir:-$CC_WORKDIR}"
+                    echo -e "Job ID: ${id}\n  Created: ${created}\n  Schedule: ${cron}\n  Recurring: ${recurring}\n  Workdir: ${workdir:-$CC_WORKDIR}"
                     [[ -n "${model:-}" ]] && echo "  Model: ${model}"
                     echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
                     [[ -n "${tags:-}" ]] && echo "  Tags: ${tags}"
