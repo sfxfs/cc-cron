@@ -1379,8 +1379,7 @@ cmd_purge() {
     ((freed_bytes += PURGE_BYTES)) || true
 
     # Summary
-    local freed_mb_int=$((freed_bytes * 100 / 1048576)) freed_mb
-    [[ $freed_mb_int -lt 100 ]] && freed_mb="0.${freed_mb_int}" || freed_mb="${freed_mb_int:0:-2}.${freed_mb_int: -2}"
+    local freed_mb_int=$((freed_bytes * 100 / 1048576)) freed_mb; [[ $freed_mb_int -lt 100 ]] && freed_mb="0.${freed_mb_int}" || freed_mb="${freed_mb_int:0:-2}.${freed_mb_int: -2}"
     echo
     [[ "$dry_run" == "true" ]] && info "Dry-run summary:" || success "Purge complete:"
     echo -e "  Logs purged:     ${purged_logs}\n  History purged:  ${purged_history}\n  Orphans removed: ${purged_orphans}\n  Space freed:     ${freed_mb} MB"
