@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.146"
+readonly VERSION="2.4.147"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1198,9 +1198,8 @@ cmd_stats() {
 
 # Helper function to show stats for a single job
 _show_job_stats() {
-    local job_id="$1"
-    local history_file; history_file=$(get_history_file "$job_id")
-    local meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="$1" history_file meta_file
+    history_file=$(get_history_file "$job_id"); meta_file=$(get_meta_file "$job_id")
 
     [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
 
