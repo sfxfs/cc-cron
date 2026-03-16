@@ -1107,12 +1107,10 @@ _show_job_stats() {
 
             case "$h_status" in
                 success)
-                    ((success_count++)) || true
-                    last_success="$h_end"
+                    ((success_count++)) || true; last_success="$h_end"
                     ;;
                 failed)
-                    ((failed_count++)) || true
-                    last_failure="$h_end"
+                    ((failed_count++)) || true; last_failure="$h_end"
                     ;;
             esac
 
