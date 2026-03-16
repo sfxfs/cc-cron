@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.201"
+readonly VERSION="2.4.202"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2283,8 +2283,7 @@ Options:
 
             # Parse optional flags
             local recurring="true" job_workdir="$CC_WORKDIR" job_model="$CC_MODEL" job_permission="$CC_PERMISSION_MODE"
-            local job_timeout; job_timeout=$(safe_numeric "${CC_TIMEOUT:-0}" "0")
-            local quiet="false" job_tags=""
+            local job_timeout quiet="false" job_tags=""; job_timeout=$(safe_numeric "${CC_TIMEOUT:-0}" "0")
 
             while [[ $# -gt 0 ]]; do
                 case "$1" in
