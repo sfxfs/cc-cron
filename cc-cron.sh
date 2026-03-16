@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.188"
+readonly VERSION="2.4.189"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1519,8 +1519,7 @@ cmd_doctor() {
     # Check 1: Data directory
     echo "1. Checking data directory..."
     [[ -d "$DATA_DIR" ]] && echo "   ✓ Data directory exists: ${DATA_DIR}" || {
-        echo "   ✗ Data directory not found: ${DATA_DIR}"
-        echo "     Fix: Run 'cc-cron add' to create it automatically"
+        echo -e "   ✗ Data directory not found: ${DATA_DIR}\n     Fix: Run 'cc-cron add' to create it automatically"
         ((issues++)) || true
     }
 
@@ -1539,8 +1538,7 @@ cmd_doctor() {
         echo "   ✓ Claude CLI found: $(command -v claude)"
         claude --version &>/dev/null && echo "     Version: $(claude --version 2>&1 | head -1)"
     else
-        echo "   ✗ Claude CLI not found in PATH"
-        echo "     Fix: Install Claude CLI from https://claude.ai/code"
+        echo -e "   ✗ Claude CLI not found in PATH\n     Fix: Install Claude CLI from https://claude.ai/code"
         ((issues++)) || true
     fi
 
@@ -1561,8 +1559,7 @@ cmd_doctor() {
     echo
     echo "5. Checking optional tools..."
     command -v jq &>/dev/null && echo "   ✓ jq available (for import/export)" || {
-        echo "   ! jq not found (needed for import command)"
-        echo "     Install: apt-get install jq or brew install jq"
+        echo -e "   ! jq not found (needed for import command)\n     Install: apt-get install jq or brew install jq"
         ((warnings++)) || true
     }
 
