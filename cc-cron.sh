@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.139"
+readonly VERSION="2.4.140"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -196,11 +196,7 @@ escape_shell_string() {
 # Escape string for JSON output
 # Escapes backslashes, double quotes, and control characters
 escape_json_string() {
-    local s="${1//\\/\\\\}"  # Escape backslashes first
-    s="${s//\"/\\\"}"        # Then escape double quotes
-    s="${s//$'\n'/\\n}"      # Escape newlines
-    s="${s//$'\r'/\\r}"      # Escape carriage returns
-    s="${s//$'\t'/\\t}"      # Escape tabs
+    local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"; s="${s//$'\n'/\\n}"; s="${s//$'\r'/\\r}"; s="${s//$'\t'/\\t}"
     echo "$s"
 }
 
