@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.178"
+readonly VERSION="2.4.179"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -827,8 +827,7 @@ calculate_next_run() {
 cmd_next() {
     local job_id="${1:-}" count="${2:-5}"
 
-    echo "Upcoming Scheduled Runs:"
-    echo "========================="
+    echo -e "Upcoming Scheduled Runs:\n========================="
     echo
 
     local crontab_content found=0; crontab_content=$(get_crontab) || { info "No crontab configured"; return 0; }
@@ -939,8 +938,7 @@ cmd_history() {
 
     # Show from history file if exists (structured format)
     if [[ -f "$history_file" ]]; then
-        echo "Recent executions:"
-        echo "------------------"
+        echo -e "Recent executions:\n------------------"
         tail -n "$lines" "$history_file" | while IFS= read -r line; do
             # Parse using bash parameter expansion (more portable than grep -oP)
             local h_start h_end h_status h_exit
@@ -1067,8 +1065,7 @@ cmd_status() {
     echo
 
     # Show recent executions with status (single pass)
-    echo "Recent executions:"
-    echo "------------------"
+    echo -e "Recent executions:\n------------------"
 
     local success_count=0 failed_count=0 running_count=0 unknown_count=0
 
@@ -1557,8 +1554,7 @@ cmd_config() {
 cmd_doctor() {
     local issues=0 warnings=0
 
-    echo "CC-Cron Health Check"
-    echo "===================="
+    echo -e "CC-Cron Health Check\n===================="
     echo
 
     # Check 1: Data directory
