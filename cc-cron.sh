@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.225"
+readonly VERSION="2.4.226"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -287,16 +287,8 @@ validate_timeout() {
 # Parse job modification options (--cron, --prompt, --workdir, --model, --permission-mode, --timeout, --tags)
 # Sets global variables: PARSED_CRON, PARSED_PROMPT, PARSED_WORKDIR, PARSED_MODEL, PARSED_PERMISSION, PARSED_TIMEOUT, PARSED_TAGS, PARSED_HAS_CHANGES
 parse_job_options() {
-    PARSED_CRON=""
-    PARSED_PROMPT=""
-    PARSED_WORKDIR=""
-    PARSED_MODEL=""
-    PARSED_MODEL_SET=0
-    PARSED_PERMISSION=""
-    PARSED_TIMEOUT=""
-    PARSED_TAGS=""
-    PARSED_TAGS_SET=0
-    PARSED_HAS_CHANGES=0
+    PARSED_CRON=""; PARSED_PROMPT=""; PARSED_WORKDIR=""; PARSED_MODEL=""; PARSED_MODEL_SET=0
+    PARSED_PERMISSION=""; PARSED_TIMEOUT=""; PARSED_TAGS=""; PARSED_TAGS_SET=0; PARSED_HAS_CHANGES=0
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
