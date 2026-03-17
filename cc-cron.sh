@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.283"
+readonly VERSION="2.4.284"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1021,8 +1021,7 @@ cmd_export() {
         # Export all jobs
         for meta_file in "${LOG_DIR}"/*.meta; do
             [[ -f "$meta_file" ]] || continue
-            local id; id=$(basename "$meta_file" .meta)
-            jobs+=("$id")
+            local id; id=$(basename "$meta_file" .meta); jobs+=("$id")
         done
     fi
 
