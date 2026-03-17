@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.354"
+readonly VERSION="2.4.355"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -749,8 +749,7 @@ cmd_run() {
     info "Running job ${job_id} immediately..."; info "Workdir: ${workdir}"; info "Prompt: ${prompt}"; echo
 
     # Execute the run script
-    "$run_script"
-    local exit_code=$?
+    "$run_script"; local exit_code=$?
 
     echo; [[ $exit_code -eq 0 ]] && success "Job completed successfully" || warn "Job exited with code: ${exit_code}"
 
