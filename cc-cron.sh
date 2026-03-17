@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.282"
+readonly VERSION="2.4.283"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1353,8 +1353,7 @@ cmd_doctor() {
     # Count jobs in crontab
     while IFS= read -r line; do
         [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]] || continue
-        ((crontab_jobs++)) || true
-        local job_id meta_file; job_id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$job_id")
+        ((crontab_jobs++)) || true; local job_id meta_file; job_id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$job_id")
         [[ -f "$meta_file" ]] || { echo "   ! Missing metadata for job: ${job_id}"; ((orphaned++)) || true; }
     done < <(get_crontab)
 
