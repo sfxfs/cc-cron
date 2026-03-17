@@ -144,8 +144,7 @@ teardown() {
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create a job
-    cmd_add "0 9 * * *" "job to pause" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    local job_id="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "job to pause" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
     # Verify job is in crontab
     crontab_has_entry "CC-CRON:${job_id}"
@@ -167,8 +166,7 @@ teardown() {
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create a job
-    cmd_add "0 9 * * *" "job to pause" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    local job_id="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "job to pause" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
     # Pause the job
     cmd_pause "$job_id" >/dev/null
@@ -184,8 +182,7 @@ teardown() {
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create a job
-    cmd_add "0 9 * * *" "job to resume" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    local job_id="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "job to resume" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
     # Pause the job
     cmd_pause "$job_id" >/dev/null
@@ -311,8 +308,7 @@ EOF
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create a job with hourly schedule
-    cmd_add "30 * * * *" "hourly test job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    local job_id="$LAST_CREATED_JOB_ID"
+    cmd_add "30 * * * *" "hourly test job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
     run cmd_next "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"Next run"* ]]
 
@@ -324,11 +320,9 @@ EOF
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create two jobs
-    cmd_add "0 * * * *" "job1" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    local job1="$LAST_CREATED_JOB_ID"
+    cmd_add "0 * * * *" "job1" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job1="$LAST_CREATED_JOB_ID"
 
-    cmd_add "30 * * * *" "job2" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    local job2="$LAST_CREATED_JOB_ID"
+    cmd_add "30 * * * *" "job2" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job2="$LAST_CREATED_JOB_ID"
 
     run cmd_next; [ "$status" -eq 0 ]; [[ "$output" == *"${job1}"* ]]; [[ "$output" == *"${job2}"* ]]
 
@@ -346,8 +340,7 @@ EOF
 }
 
 @test "cmd_edit with no options shows warning" {
-    local job_id="testedit"
-    create_test_meta "$job_id" "/tmp"
+    local job_id="testedit"; create_test_meta "$job_id" "/tmp"
 
     run cmd_edit "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"No changes specified"* ]]
 
@@ -355,8 +348,7 @@ EOF
 }
 
 @test "cmd_edit updates cron expression" {
-    local job_id="editcron" run_script; run_script=$(get_run_script "$job_id")
-    create_test_meta "$job_id" "/tmp"
+    local job_id="editcron" run_script; run_script=$(get_run_script "$job_id"); create_test_meta "$job_id" "/tmp"
 
     # Add crontab entry
     crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=test"
@@ -370,8 +362,7 @@ EOF
 }
 
 @test "cmd_edit updates workdir" {
-    local job_id="editworkdir" run_script; run_script=$(get_run_script "$job_id")
-    create_test_meta "$job_id" "/tmp"
+    local job_id="editworkdir" run_script; run_script=$(get_run_script "$job_id"); create_test_meta "$job_id" "/tmp"
 
     # Add crontab entry
     crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=test"
@@ -430,8 +421,7 @@ EOF
 }
 
 @test "cmd_export creates valid JSON structure" {
-    local job_id="testexp"
-    create_test_meta "$job_id"
+    local job_id="testexp"; create_test_meta "$job_id"
 
     run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'"version":"1.0"'* ]]; [[ "$output" == *'"jobs":['* ]]; [[ "$output" == *'"id":"testexp"'* ]]
 
@@ -439,8 +429,7 @@ EOF
 }
 
 @test "cmd_export writes to file" {
-    local job_id="fileexp" output_file="${BATS_TEST_TMPDIR}/export.json"
-    create_test_meta "$job_id"
+    local job_id="fileexp" output_file="${BATS_TEST_TMPDIR}/export.json"; create_test_meta "$job_id"
 
     run cmd_export "$job_id" "$output_file"; [ "$status" -eq 0 ]; [ -f "$output_file" ]
 
@@ -517,8 +506,7 @@ EOF
 }
 
 @test "load_config handles missing file gracefully" {
-    local orig_config="$CONFIG_FILE"
-    CONFIG_FILE="/nonexistent/config/file"
+    local orig_config="$CONFIG_FILE"; CONFIG_FILE="/nonexistent/config/file"
 
     # Should not error
     load_config
@@ -547,8 +535,7 @@ EOF
     echo 'line without equals' >> "$config_file"
     echo 'model="sonnet"' >> "$config_file"
 
-    local orig_config="$CONFIG_FILE"
-    CONFIG_FILE="$config_file"
+    local orig_config="$CONFIG_FILE"; CONFIG_FILE="$config_file"
 
     # Should not error, just skip malformed line
     load_config
@@ -657,8 +644,7 @@ EOF
 }
 
 @test "cmd_logs shows log content" {
-    local job_id="testlog" log_file; log_file=$(get_log_file "$job_id")
-    echo "Test log entry" > "$log_file"
+    local job_id="testlog" log_file; log_file=$(get_log_file "$job_id"); echo "Test log entry" > "$log_file"
 
     run cmd_logs "$job_id" "false"; [ "$status" -eq 0 ]; [[ "$output" == *"Test log entry"* ]]
 
@@ -666,8 +652,7 @@ EOF
 }
 
 @test "cmd_logs defaults to non-follow mode" {
-    local job_id="testcat" log_file; log_file=$(get_log_file "$job_id")
-    echo "Log content" > "$log_file"
+    local job_id="testcat" log_file; log_file=$(get_log_file "$job_id"); echo "Log content" > "$log_file"
 
     run cmd_logs "$job_id" "false"; [ "$status" -eq 0 ]; [[ "$output" == *"Logs for job"* ]]; [[ "$output" != *"Following logs"* ]]
 
@@ -744,9 +729,8 @@ EOF
 }
 
 @test "cmd_history parses structured history" {
-    local job_id="histtest" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
+    local job_id="histtest" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id"); echo "Some log entry" > "$log_file"
 
-    echo "Some log entry" > "$log_file"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
 
     run cmd_history "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"2024-01-01 10:00:00"* ]]; [[ "$output" == *"✓"* ]]
@@ -755,9 +739,8 @@ EOF
 }
 
 @test "cmd_history shows failed status" {
-    local job_id="histfail" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
+    local job_id="histfail" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id"); echo "Log entry" > "$log_file"
 
-    echo "Log entry" > "$log_file"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="failed" exit_code="1"' > "$history_file"
 
     run cmd_history "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"exit: 1"* ]]
@@ -766,10 +749,7 @@ EOF
 }
 
 @test "cmd_history falls back to log file when no history" {
-    local job_id="histfallback" log_file; log_file=$(get_log_file "$job_id")
-
-    echo "Log entry line 1" > "$log_file"
-    echo "Log entry line 2" >> "$log_file"
+    local job_id="histfallback" log_file; log_file=$(get_log_file "$job_id"); echo "Log entry line 1" > "$log_file"; echo "Log entry line 2" >> "$log_file"
 
     run cmd_history "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"No structured history available"* ]]; [[ "$output" == *"Log entry line 1"* ]]
 
@@ -777,9 +757,8 @@ EOF
 }
 
 @test "cmd_history respects lines argument" {
-    local job_id="histlines" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
+    local job_id="histlines" log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id"); echo "Log entry" > "$log_file"
 
-    echo "Log entry" > "$log_file"
     # Create multiple history entries
     for i in {1..5}; do
         echo "start=\"2024-01-0${i} 10:00:00\" end=\"2024-01-0${i} 10:05:00\" status=\"success\" exit_code=\"0\"" >> "$history_file"
@@ -836,8 +815,7 @@ EOF
         skip "crontab not available in test environment"
     fi
     # Add a test entry to crontab
-    local test_entry="0 9 * * * /tmp/test.sh  # CC-CRON:test123:recurring=true"
-    crontab_add_entry "$test_entry"
+    local test_entry="0 9 * * * /tmp/test.sh  # CC-CRON:test123:recurring=true"; crontab_add_entry "$test_entry"
 
     run crontab_has_entry "CC-CRON:test123"; [ "$status" -eq 0 ]
 
@@ -855,8 +833,7 @@ EOF
         skip "crontab not available in test environment"
     fi
     # Add a test entry
-    local test_entry="0 9 * * * /tmp/test.sh  # CC-CRON:removeme:recurring=true"
-    crontab_add_entry "$test_entry"
+    local test_entry="0 9 * * * /tmp/test.sh  # CC-CRON:removeme:recurring=true"; crontab_add_entry "$test_entry"
 
     # Verify it exists
     crontab_has_entry "CC-CRON:removeme"
@@ -885,8 +862,7 @@ EOF
 }
 
 @test "generate_run_script creates executable script" {
-    local job_id="testgen"
-    generate_run_script "$job_id" "/tmp" "sonnet" "auto" "0" "true" "test prompt" >/dev/null
+    local job_id="testgen"; generate_run_script "$job_id" "/tmp" "sonnet" "auto" "0" "true" "test prompt" >/dev/null
 
     local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; [ -x "$run_script" ]
 
@@ -898,8 +874,7 @@ EOF
 }
 
 @test "generate_run_script handles empty model" {
-    local job_id="testnomodel"
-    generate_run_script "$job_id" "/tmp" "" "bypassPermissions" "0" "true" "prompt" >/dev/null
+    local job_id="testnomodel"; generate_run_script "$job_id" "/tmp" "" "bypassPermissions" "0" "true" "prompt" >/dev/null
 
     local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]
 
@@ -942,8 +917,7 @@ EOF
 }
 
 @test "cmd_clone creates new job from existing" {
-    local source_id="clonesrc"
-    create_test_meta "$source_id" "/tmp" "sonnet" "auto" "60"
+    local source_id="clonesrc"; create_test_meta "$source_id" "/tmp" "sonnet" "auto" "60"
 
     run cmd_clone "$source_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Cloned job"* ]]; [[ "$output" == *"Created cron job"* ]]
 
@@ -952,8 +926,7 @@ EOF
 }
 
 @test "cmd_clone with options overrides source values" {
-    local source_id="clonesrc2"
-    create_test_meta "$source_id" "/tmp"
+    local source_id="clonesrc2"; create_test_meta "$source_id" "/tmp"
 
     # Clone with custom cron
     run cmd_clone "$source_id" --cron "0 12 * * *"; [ "$status" -eq 0 ]; [[ "$output" == *"Cloned job"* ]]
@@ -963,8 +936,7 @@ EOF
 }
 
 @test "cmd_clone preserves tags from source" {
-    local source_id="clonetags"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
+    local source_id="clonetags"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
@@ -973,8 +945,7 @@ EOF
 }
 
 @test "cmd_clone with tags override" {
-    local source_id="clonetags2"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
+    local source_id="clonetags2"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" --tags "dev,test" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="dev,test"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
@@ -983,8 +954,7 @@ EOF
 }
 
 @test "cmd_clone with empty tags override clears tags" {
-    local source_id="clonetags3"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
+    local source_id="clonetags3"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
     cmd_clone "$source_id" --tags "" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
@@ -993,8 +963,7 @@ EOF
 }
 
 @test "cmd_clone with prompt override" {
-    local source_id="cloneprompt"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}"
+    local source_id="cloneprompt"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}"
 
     cmd_clone "$source_id" --prompt "new prompt text" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'prompt="new prompt text"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
@@ -1003,8 +972,7 @@ EOF
 }
 
 @test "cmd_clone with permission-mode override" {
-    local source_id="cloneperm"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+    local source_id="cloneperm"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
     cmd_clone "$source_id" --permission-mode "auto" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'permission_mode="auto"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
@@ -1030,8 +998,7 @@ EOF
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create a job properly using cmd_add
-    cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    local job_id="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
     run cmd_list; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"test prompt"* ]]
 
@@ -1043,8 +1010,7 @@ EOF
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create a job
-    cmd_add "0 9 * * *" "json test job" "true" "$job_workdir" "sonnet" "bypassPermissions" "0" "false" "test" >/dev/null
-    local job_id="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "json test job" "true" "$job_workdir" "sonnet" "bypassPermissions" "0" "false" "test" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
     run cmd_list "" "true"; [ "$status" -eq 0 ]; [[ "$output" == "["*"]" ]]; [[ "$output" == *'"id":"'$job_id'"'* ]]; [[ "$output" == *'"model":"sonnet"'* ]]; [[ "$output" == *'"tags":"test"'* ]]
 
@@ -1056,11 +1022,9 @@ EOF
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create two jobs with different tags
-    cmd_add "0 9 * * *" "job one" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null
-    local job1="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "job one" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null; local job1="$LAST_CREATED_JOB_ID"
 
-    cmd_add "0 10 * * *" "job two" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "dev" >/dev/null
-    local job2="$LAST_CREATED_JOB_ID"
+    cmd_add "0 10 * * *" "job two" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "dev" >/dev/null; local job2="$LAST_CREATED_JOB_ID"
 
     # Filter by prod tag
     run cmd_list "prod" "true"; [ "$status" -eq 0 ]; [[ "$output" == *'"id":"'$job1'"'* ]]; [[ "$output" != *'"id":"'$job2'"'* ]]
@@ -1133,8 +1097,7 @@ EOF
 }
 
 @test "cmd_clone with model override" {
-    local source_id="clonemodel"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
+    local source_id="clonemodel"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
 
     cmd_clone "$source_id" --model "haiku" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'model="haiku"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
@@ -1143,8 +1106,7 @@ EOF
 }
 
 @test "cmd_clone with empty model override clears model" {
-    local source_id="clonemodel2"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
+    local source_id="clonemodel2"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
 
     cmd_clone "$source_id" --model "" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; local meta_content; meta_content=$(cat "$(get_meta_file "$LAST_CREATED_JOB_ID")"); [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
 
@@ -1153,8 +1115,7 @@ EOF
 }
 
 @test "cmd_clone with timeout override" {
-    local source_id="clonetimeout"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "60"
+    local source_id="clonetimeout"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "60"
 
     cmd_clone "$source_id" --timeout "300" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'timeout="300"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
@@ -1163,8 +1124,7 @@ EOF
 }
 
 @test "cmd_clone rejects invalid cron expression" {
-    local source_id="cloneinvalid"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+    local source_id="cloneinvalid"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
     run cmd_clone "$source_id" --cron "invalid cron"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
 
@@ -1172,8 +1132,7 @@ EOF
 }
 
 @test "cmd_clone rejects invalid workdir" {
-    local source_id="cloneworkdir"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+    local source_id="cloneworkdir"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
     run cmd_clone "$source_id" --workdir "/nonexistent/path/12345"; [ "$status" -eq 3 ]; [[ "$output" == *"not found"* ]]  # EXIT_INVALID_ARGS
 
@@ -1181,8 +1140,7 @@ EOF
 }
 
 @test "cmd_clone rejects invalid permission mode" {
-    local source_id="cloneperm"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+    local source_id="cloneperm"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
     run cmd_clone "$source_id" --permission-mode "invalid_mode"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
 
@@ -1190,8 +1148,7 @@ EOF
 }
 
 @test "cmd_clone rejects invalid timeout" {
-    local source_id="clonetimeout"
-    create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
+    local source_id="clonetimeout"; create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
     run cmd_clone "$source_id" --timeout "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
 
