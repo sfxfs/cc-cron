@@ -1701,8 +1701,7 @@ EOF
 }
 
 @test "cmd_resume fails when job is not paused" {
-    local job_id="notpaused"
-    create_test_meta "$job_id"
+    local job_id="notpaused"; create_test_meta "$job_id"
 
     run cmd_resume "$job_id"; [ "$status" -eq 3 ]; [[ "$output" == *"is not paused"* ]]  # EXIT_INVALID_ARGS
 
@@ -1710,46 +1709,24 @@ EOF
 }
 
 @test "crontab_add_entry and remove work together" {
-    # Skip if crontab not available
-    if ! crontab -l &>/dev/null; then
-        skip "crontab not available"
-    fi
+    if ! crontab -l &>/dev/null; then skip "crontab not available"; fi
 
-    local test_marker="CC-CRON:testaddremove123"
-    local test_entry="0 9 * * * /tmp/test.sh  # ${test_marker}:recurring=true"
-
-    # Add entry
-    crontab_add_entry "$test_entry"
-
-    # Verify it exists
-    crontab_has_entry "$test_marker"; [ "$?" -eq 0 ]
-
-    # Remove it
-    crontab_remove_entry "$test_marker"
-
-    # Verify it's gone
-    run crontab_has_entry "$test_marker"; [ "$status" -ne 0 ]
+    local test_marker="CC-CRON:testaddremove123" test_entry="0 9 * * * /tmp/test.sh  # ${test_marker}:recurring=true"
+    crontab_add_entry "$test_entry"; crontab_has_entry "$test_marker"; [ "$?" -eq 0 ]
+    crontab_remove_entry "$test_marker"; run crontab_has_entry "$test_marker"; [ "$status" -ne 0 ]
 }
 
 @test "cmd_list handles job with missing metadata" {
-    # Create a fake crontab entry with a job ID that has no metadata
-    local job_id="missingmeta" meta_file; meta_file=$(get_meta_file "$job_id")
-
-    # Ensure metadata doesn't exist
-    rm -f "$meta_file" 2>/dev/null || true
-
-    # Add a fake crontab entry
+    local job_id="missingmeta" meta_file; meta_file=$(get_meta_file "$job_id"); rm -f "$meta_file" 2>/dev/null || true
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_list; [ "$status" -eq 0 ]; [[ "$output" == *"missingmeta"* ]] || [[ "$output" == *"metadata missing"* ]] || [[ "$output" == *"No scheduled jobs"* ]]
 
-    # Cleanup
     crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
 }
 
 @test "generate_run_script with non-default permission mode" {
-    local job_id="permjob"
-    generate_run_script "$job_id" "/tmp" "sonnet" "acceptEdits" "0" "true" "test prompt" >/dev/null
+    local job_id="permjob"; generate_run_script "$job_id" "/tmp" "sonnet" "acceptEdits" "0" "true" "test prompt" >/dev/null
 
     local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; grep -q "acceptEdits" "$run_script"
 
@@ -1757,8 +1734,7 @@ EOF
 }
 
 @test "generate_run_script with default permission omits flag" {
-    local job_id="defaultperm"
-    generate_run_script "$job_id" "/tmp" "" "default" "0" "true" "test prompt" >/dev/null
+    local job_id="defaultperm"; generate_run_script "$job_id" "/tmp" "" "default" "0" "true" "test prompt" >/dev/null
 
     local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; ! grep -q "\-\-permission-mode" "$run_script"
 
@@ -1766,12 +1742,8 @@ EOF
 }
 
 @test "cmd_status handles running jobs" {
-    local job_id="runningstatus"
-    create_test_meta "$job_id"
-    local status_file; status_file=$(get_status_file "$job_id")
-
-    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
-    echo 'status="running"' >> "$status_file"
+    local job_id="runningstatus" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'status="running"' >> "$status_file"
 
     run cmd_status; [ "$status" -eq 0 ]
 
@@ -1779,14 +1751,8 @@ EOF
 }
 
 @test "cmd_status handles failed jobs" {
-    local job_id="failedstatus"
-    create_test_meta "$job_id"
-    local status_file; status_file=$(get_status_file "$job_id")
-
-    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
-    echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
-    echo 'status="failed"' >> "$status_file"
-    echo 'exit_code="1"' >> "$status_file"
+    local job_id="failedstatus" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"; echo 'status="failed"' >> "$status_file"; echo 'exit_code="1"' >> "$status_file"
 
     run cmd_status; [ "$status" -eq 0 ]
 
@@ -1794,9 +1760,7 @@ EOF
 }
 
 @test "cmd_status handles paused jobs" {
-    local job_id="pausedstatus"
-    create_test_meta "$job_id"
-    touch "${DATA_DIR}/${job_id}.paused"
+    local job_id="pausedstatus"; create_test_meta "$job_id"; touch "${DATA_DIR}/${job_id}.paused"
 
     run cmd_status; [ "$status" -eq 0 ]
 
@@ -1804,40 +1768,23 @@ EOF
 }
 
 @test "cmd_purge handles orphaned run scripts" {
-    local job_id="orphanscript" run_script; run_script=$(get_run_script "$job_id")
+    local job_id="orphanscript" run_script; run_script=$(get_run_script "$job_id"); mkdir -p "$DATA_DIR"
+    echo "#!/bin/bash" > "$run_script"; echo "echo test" >> "$run_script"; chmod +x "$run_script"
 
-    # Create an orphan run script (no crontab entry, no metadata)
-    mkdir -p "$DATA_DIR"
-    echo "#!/bin/bash" > "$run_script"
-    echo "echo test" >> "$run_script"
-    chmod +x "$run_script"
-
-    [ -f "$run_script" ]
-
-    run cmd_purge "0" "false"; [ "$status" -eq 0 ]; [[ ! -f "$run_script" ]] || [[ "$output" == *"orphan"* ]]
+    [ -f "$run_script" ]; run cmd_purge "0" "false"; [ "$status" -eq 0 ]; [[ ! -f "$run_script" ]] || [[ "$output" == *"orphan"* ]]
 }
 
 @test "write_meta_file with all fields" {
-    local job_id="fullmeta"
-    write_meta_file "$job_id" "2024-01-01 10:00:00" "*/5 * * * *" "false" "complex prompt with 'quotes'" "/home/user" "opus" "auto" "3600" "/tmp/run-fullmeta.sh"
+    local job_id="fullmeta"; write_meta_file "$job_id" "2024-01-01 10:00:00" "*/5 * * * *" "false" "complex prompt with 'quotes'" "/home/user" "opus" "auto" "3600" "/tmp/run-fullmeta.sh"
 
     local meta_file; meta_file=$(get_meta_file "$job_id"); [ -f "$meta_file" ]
 
-    source "$meta_file"
-    [ "$id" == "fullmeta" ]
-    [ "$cron" == "*/5 * * * *" ]
-    [ "$recurring" == "false" ]
-    [ "$prompt" == "complex prompt with 'quotes'" ]
-    [ "$workdir" == "/home/user" ]
-    [ "$model" == "opus" ]
-    [ "$permission_mode" == "auto" ]
-    [ "$timeout" == "3600" ]
+    source "$meta_file"; [ "$id" == "fullmeta" ]; [ "$cron" == "*/5 * * * *" ]; [ "$recurring" == "false" ]; [ "$prompt" == "complex prompt with 'quotes'" ]; [ "$workdir" == "/home/user" ]; [ "$model" == "opus" ]; [ "$permission_mode" == "auto" ]; [ "$timeout" == "3600" ]
 
     rm -f "$meta_file"
 }
 
 @test "validate_cron_field handles edge case ranges" {
-    # Test boundary values
     run validate_cron_field "0" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "59" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "23" 0 23 "hour"; [ "$status" -eq 0 ]; run validate_cron_field "31" 1 31 "day"; [ "$status" -eq 0 ]; run validate_cron_field "12" 1 12 "month"; [ "$status" -eq 0 ]; run validate_cron_field "6" 0 6 "weekday"; [ "$status" -eq 0 ]
 }
 
