@@ -1896,15 +1896,13 @@ EOF
     crontab_add_entry "$test_entry"
 
     # Verify it exists
-    crontab_has_entry "$test_marker"
-    [ "$?" -eq 0 ]
+    crontab_has_entry "$test_marker"; [ "$?" -eq 0 ]
 
     # Remove it
     crontab_remove_entry "$test_marker"
 
     # Verify it's gone
-    run crontab_has_entry "$test_marker"
-    [ "$status" -ne 0 ]
+    run crontab_has_entry "$test_marker"; [ "$status" -ne 0 ]
 }
 
 @test "cmd_list handles job with missing metadata" {
@@ -1917,9 +1915,7 @@ EOF
     # Add a fake crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_list
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"missingmeta"* ]] || [[ "$output" == *"metadata missing"* ]] || [[ "$output" == *"No scheduled jobs"* ]]
+    run cmd_list; [ "$status" -eq 0 ]; [[ "$output" == *"missingmeta"* ]] || [[ "$output" == *"metadata missing"* ]] || [[ "$output" == *"No scheduled jobs"* ]]
 
     # Cleanup
     crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
@@ -1929,9 +1925,7 @@ EOF
     local job_id="permjob"
     generate_run_script "$job_id" "/tmp" "sonnet" "acceptEdits" "0" "true" "test prompt" >/dev/null
 
-    local run_script; run_script=$(get_run_script "$job_id")
-    [ -f "$run_script" ]
-    grep -q "acceptEdits" "$run_script"
+    local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; grep -q "acceptEdits" "$run_script"
 
     rm -f "$run_script"
 }
@@ -1940,9 +1934,7 @@ EOF
     local job_id="defaultperm"
     generate_run_script "$job_id" "/tmp" "" "default" "0" "true" "test prompt" >/dev/null
 
-    local run_script; run_script=$(get_run_script "$job_id")
-    [ -f "$run_script" ]
-    ! grep -q "\-\-permission-mode" "$run_script"
+    local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; ! grep -q "\-\-permission-mode" "$run_script"
 
     rm -f "$run_script"
 }
@@ -1955,8 +1947,7 @@ EOF
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'status="running"' >> "$status_file"
 
-    run cmd_status
-    [ "$status" -eq 0 ]
+    run cmd_status; [ "$status" -eq 0 ]
 
     rm -f "$(get_meta_file "$job_id")" "$status_file"
 }
@@ -1971,8 +1962,7 @@ EOF
     echo 'status="failed"' >> "$status_file"
     echo 'exit_code="1"' >> "$status_file"
 
-    run cmd_status
-    [ "$status" -eq 0 ]
+    run cmd_status; [ "$status" -eq 0 ]
 
     rm -f "$(get_meta_file "$job_id")" "$status_file"
 }
@@ -1982,8 +1972,7 @@ EOF
     create_test_meta "$job_id"
     touch "${DATA_DIR}/${job_id}.paused"
 
-    run cmd_status
-    [ "$status" -eq 0 ]
+    run cmd_status; [ "$status" -eq 0 ]
 
     rm -f "$(get_meta_file "$job_id")" "${DATA_DIR}/${job_id}.paused"
 }
@@ -2210,9 +2199,7 @@ EOF
     [[ -n "$LAST_CREATED_JOB_ID" ]]
 
     # Verify the output is just the job ID (8 chars)
-    run cmd_add "0 10 * * *" "quiet test" "true" "$job_workdir" "" "bypassPermissions" "0" "true"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[a-z0-9]{8}$ ]]
+    run cmd_add "0 10 * * *" "quiet test" "true" "$job_workdir" "" "bypassPermissions" "0" "true"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[a-z0-9]{8}$ ]]
 
     # Cleanup
     rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
@@ -2221,10 +2208,7 @@ EOF
 
 @test "cmd_add normal output includes SUCCESS message" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 11 * * *" "normal test" "true" "$job_workdir" "" "bypassPermissions" "0" "false"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"SUCCESS"* ]]
-    [[ "$output" == *"Created cron job"* ]]
+    run cmd_add "0 11 * * *" "normal test" "true" "$job_workdir" "" "bypassPermissions" "0" "false"; [ "$status" -eq 0 ]; [[ "$output" == *"SUCCESS"* ]]; [[ "$output" == *"Created cron job"* ]]
 
     # Cleanup
     rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
@@ -2244,9 +2228,7 @@ EOF
     touch "$paused_file"
 
     # Should be able to edit a paused job
-    run cmd_edit "$job_id" --prompt "new prompt"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Updated job"* ]]
+    run cmd_edit "$job_id" --prompt "new prompt"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
 
     rm -f "$meta_file" "$paused_file"
 }
@@ -2257,10 +2239,7 @@ EOF
     # Create job metadata without model
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Job Details"* ]]
-    [[ "$output" != *"Model:"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job Details"* ]]; [[ "$output" != *"Model:"* ]]
 
     rm -f "$meta_file"
 }
@@ -2271,9 +2250,7 @@ EOF
     # Create job metadata with model
     create_test_meta "$job_id" "/tmp" "sonnet" "bypassPermissions" "0"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Model:        sonnet"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Model:        sonnet"* ]]
 
     rm -f "$meta_file"
 }
@@ -2284,9 +2261,7 @@ EOF
     # Create job metadata with timeout
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Timeout:      300s"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Timeout:      300s"* ]]
 
     rm -f "$meta_file"
 }
@@ -2305,9 +2280,7 @@ EOF
     echo 'exit_code="1"' >> "$status_file"
     echo 'workdir="/tmp"' >> "$status_file"
 
-    run cmd_status
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Exit code: 1"* ]]
+    run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"Exit code: 1"* ]]
 
     rm -f "$meta_file" "$status_file"
 }
@@ -2323,9 +2296,7 @@ EOF
     echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
     echo 'status="weird"' >> "$status_file"
 
-    run cmd_status
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"UNKNOWN"* ]]
+    run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"UNKNOWN"* ]]
 
     rm -f "$meta_file" "$status_file"
 }
@@ -2339,110 +2310,75 @@ EOF
     # Create log file but no status file
     touch "$log_file"
 
-    run cmd_status
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"NO STATUS"* ]]
+    run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"NO STATUS"* ]]
 
     rm -f "$meta_file" "$log_file"
 }
 
 # Tests for calculate_next_run function
 @test "calculate_next_run handles every minute schedule" {
-    run calculate_next_run "* * * * *"
-    [ "$status" -eq 0 ]
-    # Should output a valid date-time format
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "* * * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles hourly schedule" {
-    run calculate_next_run "30 * * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "30 * * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles daily schedule" {
-    run calculate_next_run "0 9 * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "0 9 * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles weekly schedule" {
-    run calculate_next_run "0 9 * * 1"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "0 9 * * 1"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles weekly schedule Sunday (0)" {
-    run calculate_next_run "0 10 * * 0"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "0 10 * * 0"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles weekly schedule Saturday (6)" {
-    run calculate_next_run "0 14 * * 6"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "0 14 * * 6"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run returns empty for complex schedule" {
     # Monthly schedule is not supported, should return empty
-    run calculate_next_run "0 9 15 * *"
-    [ "$status" -eq 0 ]
-    [ -z "$output" ]
+    run calculate_next_run "0 9 15 * *"; [ "$status" -eq 0 ]; [ -z "$output" ]
 }
 
 @test "calculate_next_run handles midnight schedule" {
-    run calculate_next_run "0 0 * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "0 0 * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles end of day schedule" {
-    run calculate_next_run "59 23 * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "59 23 * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles minute step pattern" {
-    run calculate_next_run "*/5 * * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "*/5 * * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles minute step pattern */10" {
-    run calculate_next_run "*/10 * * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "*/10 * * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles minute step pattern */15" {
-    run calculate_next_run "*/15 * * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "*/15 * * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles hour step pattern" {
-    run calculate_next_run "0 */2 * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "0 */2 * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run handles hour step pattern */6" {
-    run calculate_next_run "0 */6 * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
+    run calculate_next_run "0 */6 * * *"; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]
 }
 
 @test "calculate_next_run returns empty for weekday range" {
-    run calculate_next_run "0 9 * * 1-5"
-    [ "$status" -eq 0 ]
-    [ -z "$output" ]
+    run calculate_next_run "0 9 * * 1-5"; [ "$status" -eq 0 ]; [ -z "$output" ]
 }
 
 @test "calculate_next_run returns empty for weekday list" {
-    run calculate_next_run "0 9 * * 1,3,5"
-    [ "$status" -eq 0 ]
-    [ -z "$output" ]
+    run calculate_next_run "0 9 * * 1,3,5"; [ "$status" -eq 0 ]; [ -z "$output" ]
 }
 
 # Tests for cmd_stats function
@@ -2450,9 +2386,7 @@ EOF
     # Clear any existing meta files
     rm -f "${LOG_DIR}"/*.meta 2>/dev/null || true
 
-    run cmd_stats
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"No jobs found"* ]]
+    run cmd_stats; [ "$status" -eq 0 ]; [[ "$output" == *"No jobs found"* ]]
 }
 
 @test "cmd_stats shows stats for specific job" {
@@ -2467,23 +2401,13 @@ EOF
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="success" exit_code="0"' >> "$history_file"
     echo 'start="2024-01-03 10:00:00" end="2024-01-03 10:02:00" status="failed" exit_code="1"' >> "$history_file"
 
-    run cmd_stats "$job_id"
-    [ "$status" -eq 0 ]
-    # Job ID appears in output (color codes may be present)
-    [[ "$output" == *"${job_id}"* ]]
-    [[ "$output" == *"Total runs: 3"* ]]
-    [[ "$output" == *"Success: 2"* ]]
-    [[ "$output" == *"Failed"* ]]
-    [[ "$output" == *"1"* ]]
-    [[ "$output" == *"Success rate: 66%"* ]]
+    run cmd_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"Total runs: 3"* ]]; [[ "$output" == *"Success: 2"* ]]; [[ "$output" == *"Failed"* ]]; [[ "$output" == *"1"* ]]; [[ "$output" == *"Success rate: 66%"* ]]
 
     rm -f "$meta_file" "$history_file"
 }
 
 @test "cmd_stats fails for non-existent job" {
-    run cmd_stats "nonexistent123"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
-    [[ "$output" == *"not found"* ]]
+    run cmd_stats "nonexistent123"; [ "$status" -eq 2 ]; [[ "$output" == *"not found"* ]]
 }
 
 @test "cmd_stats shows stats for all jobs" {
@@ -2498,11 +2422,7 @@ EOF
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file1"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:05:00" status="failed" exit_code="1"' > "$history_file2"
 
-    run cmd_stats
-    [ "$status" -eq 0 ]
-    # Job IDs appear in output (color codes may be present)
-    [[ "$output" == *"${job_id1}"* ]]
-    [[ "$output" == *"${job_id2}"* ]]
+    run cmd_stats; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id1}"* ]]; [[ "$output" == *"${job_id2}"* ]]
 
     rm -f "$meta_file1" "$meta_file2" "$history_file1" "$history_file2"
 }
@@ -2512,87 +2432,49 @@ EOF
 
     create_test_meta "$job_id"
 
-    run cmd_stats "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Total runs: 0"* ]]
-    [[ "$output" == *"Success: 0"* ]]
-    # Failed has extra space for alignment
-    [[ "$output" == *"Failed"* ]]
-    [[ "$output" == *"0"* ]]
+    run cmd_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 0"* ]]; [[ "$output" == *"Success: 0"* ]]; [[ "$output" == *"Failed"* ]]; [[ "$output" == *"0"* ]]
 
     rm -f "$meta_file"
 }
 
 @test "cmd_help stats shows detailed help" {
-    run cmd_help "stats"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron stats"* ]]
-    [[ "$output" == *"execution statistics"* ]]
+    run cmd_help "stats"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron stats"* ]]; [[ "$output" == *"execution statistics"* ]]
 }
 
 @test "cmd_help pause shows detailed help" {
-    run cmd_help "pause"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron pause"* ]]
-    [[ "$output" == *"Temporarily disable"* ]]
-    [[ "$output" == *"Alias: disable"* ]]
+    run cmd_help "pause"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron pause"* ]]; [[ "$output" == *"Temporarily disable"* ]]; [[ "$output" == *"Alias: disable"* ]]
 }
 
 @test "cmd_help resume shows detailed help" {
-    run cmd_help "resume"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron resume"* ]]
-    [[ "$output" == *"Re-enable a paused job"* ]]
-    [[ "$output" == *"Alias: enable"* ]]
+    run cmd_help "resume"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron resume"* ]]; [[ "$output" == *"Re-enable a paused job"* ]]; [[ "$output" == *"Alias: enable"* ]]
 }
 
 @test "cmd_help disable shows pause help" {
-    run cmd_help "disable"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron pause"* ]]
-    [[ "$output" == *"Alias: disable"* ]]
+    run cmd_help "disable"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron pause"* ]]; [[ "$output" == *"Alias: disable"* ]]
 }
 
 @test "cmd_help enable shows resume help" {
-    run cmd_help "enable"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron resume"* ]]
-    [[ "$output" == *"Alias: enable"* ]]
+    run cmd_help "enable"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron resume"* ]]; [[ "$output" == *"Alias: enable"* ]]
 }
 
 @test "cmd_help export shows detailed help" {
-    run cmd_help "export"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron export"* ]]
-    [[ "$output" == *"Export jobs to JSON"* ]]
+    run cmd_help "export"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron export"* ]]; [[ "$output" == *"Export jobs to JSON"* ]]
 }
 
 @test "cmd_help import shows detailed help" {
-    run cmd_help "import"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron import"* ]]
-    [[ "$output" == *"Import jobs from JSON"* ]]
+    run cmd_help "import"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron import"* ]]; [[ "$output" == *"Import jobs from JSON"* ]]
 }
 
 @test "cmd_help remove shows detailed help" {
-    run cmd_help "remove"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron remove"* ]]
-    [[ "$output" == *"Remove a scheduled job"* ]]
+    run cmd_help "remove"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron remove"* ]]; [[ "$output" == *"Remove a scheduled job"* ]]
 }
 
 @test "cmd_help doctor shows detailed help" {
-    run cmd_help "doctor"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron doctor"* ]]
-    [[ "$output" == *"Diagnose issues"* ]]
+    run cmd_help "doctor"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron doctor"* ]]; [[ "$output" == *"Diagnose issues"* ]]
 }
 
 @test "cmd_help version shows detailed help" {
-    run cmd_help "version"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron version"* ]]
-    [[ "$output" == *"Show version"* ]]
+    run cmd_help "version"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron version"* ]]; [[ "$output" == *"Show version"* ]]
 }
 
 @test "cmd_stats handles malformed history entries gracefully" {
@@ -2606,10 +2488,7 @@ EOF
     echo 'malformed line without proper format' >> "$history_file"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="failed" exit_code="1"' >> "$history_file"
 
-    run cmd_stats "$job_id"
-    [ "$status" -eq 0 ]
-    # Should still show stats for valid entries
-    [[ "$output" == *"Total runs: 3"* ]]
+    run cmd_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 3"* ]]
 
     rm -f "$meta_file" "$history_file"
 }
@@ -2630,12 +2509,7 @@ EOF
     [ -f "$(get_meta_file "$untagged_job")" ]
 
     # Run stats for all jobs - should not show tags for untagged job
-    run cmd_stats
-    [ "$status" -eq 0 ]
-    # Tagged job should be shown (output has ANSI color codes)
-    [[ "$output" == *"${tagged_job}"* ]]
-    # Untagged job should also be shown
-    [[ "$output" == *"${untagged_job}"* ]]
+    run cmd_stats; [ "$status" -eq 0 ]; [[ "$output" == *"${tagged_job}"* ]]; [[ "$output" == *"${untagged_job}"* ]]
 
     # Cleanup
     rm -f "$(get_meta_file "$tagged_job")" "$(get_run_script "$tagged_job")"
@@ -2654,9 +2528,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --model
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"--model requires"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --model; [ "$status" -eq 3 ]; [[ "$output" == *"--model requires"* ]]
 }
 
 @test "main add --tags without argument returns error" {
@@ -2665,9 +2537,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --tags
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"--tags requires"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --tags; [ "$status" -eq 3 ]; [[ "$output" == *"--tags requires"* ]]
 }
 
 @test "main add --model with empty string is allowed" {
@@ -2676,10 +2546,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --model ""
-    [ "$status" -eq 0 ]
-    # Output includes ANSI color codes, so check for key text
-    [[ "$output" == *"Created cron job"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --model ""; [ "$status" -eq 0 ]; [[ "$output" == *"Created cron job"* ]]
 }
 
 @test "main add --tags with empty string is allowed" {
@@ -2688,10 +2555,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --tags ""
-    [ "$status" -eq 0 ]
-    # Output includes ANSI color codes, so check for key text
-    [[ "$output" == *"Created cron job"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --tags ""; [ "$status" -eq 0 ]; [[ "$output" == *"Created cron job"* ]]
 }
 
 @test "main add --workdir without argument returns error" {
@@ -2700,9 +2564,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --workdir
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"--workdir requires a path"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --workdir; [ "$status" -eq 3 ]; [[ "$output" == *"--workdir requires a path"* ]]
 }
 
 @test "main add --timeout without argument returns error" {
@@ -2711,9 +2573,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --timeout
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"--timeout requires"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --timeout; [ "$status" -eq 3 ]; [[ "$output" == *"--timeout requires"* ]]
 }
 
 @test "main add --permission-mode without argument returns error" {
@@ -2722,9 +2582,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --permission-mode
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"--permission-mode requires"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --permission-mode; [ "$status" -eq 3 ]; [[ "$output" == *"--permission-mode requires"* ]]
 }
 
 @test "main unknown command returns error" {
@@ -2733,9 +2591,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" nonexistentcmd
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Unknown command"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" nonexistentcmd; [ "$status" -eq 3 ]; [[ "$output" == *"Unknown command"* ]]
 }
 
 @test "main add unknown option returns error" {
@@ -2744,9 +2600,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --unknown-option
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Unknown option"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --unknown-option; [ "$status" -eq 3 ]; [[ "$output" == *"Unknown option"* ]]
 }
 
 # Tests for main function command argument validation
@@ -2756,9 +2610,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" remove
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" remove; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main pause without job-id returns error" {
@@ -2767,9 +2619,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" pause
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" pause; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main resume without job-id returns error" {
@@ -2778,9 +2628,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" resume
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" resume; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main show without job-id returns error" {
@@ -2789,9 +2637,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" show
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" show; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main logs without job-id returns error" {
@@ -2800,9 +2646,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" logs
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" logs; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main history without job-id returns error" {
@@ -2811,9 +2655,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" history
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" history; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main run without job-id returns error" {
@@ -2822,9 +2664,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" run
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" run; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main edit without job-id returns error" {
@@ -2833,9 +2673,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" edit
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" edit; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main clone without job-id returns error" {
@@ -2844,9 +2682,7 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" clone
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" clone; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main import without file returns error" {
@@ -2855,71 +2691,49 @@ EOF
     export LOG_DIR="${DATA_DIR}/logs"
     export LOCK_DIR="${DATA_DIR}/locks"
     mkdir -p "$LOG_DIR" "$LOCK_DIR"
-    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" import
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run "${BATS_TEST_DIRNAME}/../cc-cron.sh" import; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 # Tests for escape_shell_string helper function
 @test "escape_shell_string escapes double quotes" {
-    run escape_shell_string 'He said "hello"'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'He said \"hello\"' ]
+    run escape_shell_string 'He said "hello"'; [ "$status" -eq 0 ]; [ "$output" == 'He said \"hello\"' ]
 }
 
 @test "escape_shell_string escapes backslashes" {
-    run escape_shell_string 'C:\Users\test'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'C:\\Users\\test' ]
+    run escape_shell_string 'C:\Users\test'; [ "$status" -eq 0 ]; [ "$output" == 'C:\\Users\\test' ]
 }
 
 @test "escape_shell_string escapes both quotes and backslashes" {
-    run escape_shell_string 'Test "path" C:\folder'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'Test \"path\" C:\\folder' ]
+    run escape_shell_string 'Test "path" C:\folder'; [ "$status" -eq 0 ]; [ "$output" == 'Test \"path\" C:\\folder' ]
 }
 
 @test "escape_shell_string handles empty string" {
-    run escape_shell_string ""
-    [ "$status" -eq 0 ]
-    [ "$output" == "" ]
+    run escape_shell_string ""; [ "$status" -eq 0 ]; [ "$output" == "" ]
 }
 
 @test "escape_shell_string handles string without special chars" {
-    run escape_shell_string "normal string"
-    [ "$status" -eq 0 ]
-    [ "$output" == "normal string" ]
+    run escape_shell_string "normal string"; [ "$status" -eq 0 ]; [ "$output" == "normal string" ]
 }
 
 # Tests for escape_json_string helper function
 @test "escape_json_string escapes double quotes" {
-    run escape_json_string 'He said "hello"'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'He said \"hello\"' ]
+    run escape_json_string 'He said "hello"'; [ "$status" -eq 0 ]; [ "$output" == 'He said \"hello\"' ]
 }
 
 @test "escape_json_string escapes backslashes" {
-    run escape_json_string 'C:\Users\test'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'C:\\Users\\test' ]
+    run escape_json_string 'C:\Users\test'; [ "$status" -eq 0 ]; [ "$output" == 'C:\\Users\\test' ]
 }
 
 @test "escape_json_string escapes newlines" {
-    run escape_json_string $'line1\nline2'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'line1\nline2' ]
+    run escape_json_string $'line1\nline2'; [ "$status" -eq 0 ]; [ "$output" == 'line1\nline2' ]
 }
 
 @test "escape_json_string escapes tabs" {
-    run escape_json_string $'col1\tcol2'
-    [ "$status" -eq 0 ]
-    [ "$output" == 'col1\tcol2' ]
+    run escape_json_string $'col1\tcol2'; [ "$status" -eq 0 ]; [ "$output" == 'col1\tcol2' ]
 }
 
 @test "escape_json_string handles empty string" {
-    run escape_json_string ""
-    [ "$status" -eq 0 ]
-    [ "$output" == "" ]
+    run escape_json_string ""; [ "$status" -eq 0 ]; [ "$output" == "" ]
 }
 
 # Tests for write_meta_file special character escaping
@@ -3039,10 +2853,7 @@ EOF
     # Add crontab entry so the job is listed
     crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=Path: C"
 
-    run cmd_list "" "true"
-    [ "$status" -eq 0 ]
-    # Check that backslash is escaped in JSON output (single \ becomes \\)
-    [[ "$output" == *'Path: C:\\Users\\test'* ]]
+    run cmd_list "" "true"; [ "$status" -eq 0 ]; [[ "$output" == *'Path: C:\\Users\\test'* ]]
 
     rm -f "$meta_file" "$run_script"
     crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
@@ -3055,10 +2866,7 @@ EOF
     # Override prompt with backslash-containing value
     echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
 
-    run cmd_export "$job_id"
-    [ "$status" -eq 0 ]
-    # Check that backslash is escaped in JSON output (single \ becomes \\)
-    [[ "$output" == *'C:\\Users\\test'* ]]
+    run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'C:\\Users\\test'* ]]
 
     rm -f "$meta_file"
 }
@@ -3077,12 +2885,7 @@ EOF
     touch -d "8 days ago" "$log_file" "$history_file" 2>/dev/null || touch -t "$(date -d '8 days ago' +%Y%m%d%H%M)" "$log_file" "$history_file"
 
     # Run purge with 7 days threshold
-    run cmd_purge "7" "false"
-    [ "$status" -eq 0 ]
-
-    # Files should be removed
-    [[ ! -f "$log_file" ]]
-    [[ ! -f "$history_file" ]]
+    run cmd_purge "7" "false"; [ "$status" -eq 0 ]; [[ ! -f "$log_file" ]]; [[ ! -f "$history_file" ]]
 
     # Cleanup
     rm -f "$meta_file"
@@ -3100,11 +2903,7 @@ EOF
     echo "recent log content" > "$log_file"
 
     # Run purge with 7 days threshold
-    run cmd_purge "7" "false"
-    [ "$status" -eq 0 ]
-
-    # Recent file should still exist
-    [[ -f "$log_file" ]]
+    run cmd_purge "7" "false"; [ "$status" -eq 0 ]; [[ -f "$log_file" ]]
 
     # Cleanup
     rm -f "$meta_file" "$log_file" "$run_script"
@@ -3115,21 +2914,13 @@ EOF
     local config_file="${DATA_DIR}/config"
     rm -f "$config_file"
 
-    run cmd_config "set" "permission_mode" "acceptEdits"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Set permission_mode"* ]]
-
-    # Verify config file was created
-    [[ -f "$config_file" ]]
-    grep -q "permission_mode=\"acceptEdits\"" "$config_file"
+    run cmd_config "set" "permission_mode" "acceptEdits"; [ "$status" -eq 0 ]; [[ "$output" == *"Set permission_mode"* ]]; [[ -f "$config_file" ]]; grep -q "permission_mode=\"acceptEdits\"" "$config_file"
 
     rm -f "$config_file"
 }
 
 @test "cmd_config set rejects invalid permission_mode" {
-    run cmd_config "set" "permission_mode" "invalid_mode"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid permission mode"* ]]
+    run cmd_config "set" "permission_mode" "invalid_mode"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]
 }
 
 @test "cmd_remove fails for job without crontab entry but cleans up files" {
@@ -3140,19 +2931,12 @@ EOF
     echo "test log" > "$log_file"
 
     # Remove should fail since job is not in crontab
-    run cmd_remove "$job_id"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
-
-    # But files should still be cleaned up
-    [[ ! -f "$meta_file" ]]
-    [[ ! -f "$log_file" ]]
+    run cmd_remove "$job_id"; [ "$status" -eq 2 ]; [[ ! -f "$meta_file" ]]; [[ ! -f "$log_file" ]]
 }
 
 # Tests for _show_job_stats helper function
 @test "_show_job_stats fails for non-existent job" {
-    run _show_job_stats "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
-    [[ "$output" == *"Job not found"* ]]
+    run _show_job_stats "nonexistent"; [ "$status" -eq 2 ]; [[ "$output" == *"Job not found"* ]]
 }
 
 @test "_show_job_stats shows zero stats for job without history" {
@@ -3204,10 +2988,7 @@ start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code
 start="2024-01-02 11:00:00" end="2024-01-02 11:02:00" status="failed" exit_code="1"
 EOF
 
-    run _show_job_stats "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Last success: 2024-01-01 10:05:00"* ]]
-    [[ "$output" == *"Last failure: 2024-01-02 11:02:00"* ]]
+    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Last success: 2024-01-01 10:05:00"* ]]; [[ "$output" == *"Last failure: 2024-01-02 11:02:00"* ]]
 
     rm -f "$meta_file" "$history_file"
 }
@@ -3226,114 +3007,87 @@ start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code
 start="2024-01-01 11:00:00" end="2024-01-01 11:07:00" status="success" exit_code="0"
 EOF
 
-    run _show_job_stats "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Avg duration: 6m 0s"* ]]
+    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Avg duration: 6m 0s"* ]]
 
     rm -f "$meta_file" "$history_file"
 }
 
 # Test validate_range function
 @test "validate_range accepts value at minimum" {
-    run validate_range "0" 0 59 "minute"
-    [ "$status" -eq 0 ]
+    run validate_range "0" 0 59 "minute"; [ "$status" -eq 0 ]
 }
 
 @test "validate_range accepts value at maximum" {
-    run validate_range "59" 0 59 "minute"
-    [ "$status" -eq 0 ]
+    run validate_range "59" 0 59 "minute"; [ "$status" -eq 0 ]
 }
 
 @test "validate_range accepts value in middle" {
-    run validate_range "30" 0 59 "minute"
-    [ "$status" -eq 0 ]
+    run validate_range "30" 0 59 "minute"; [ "$status" -eq 0 ]
 }
 
 @test "validate_range rejects value below minimum" {
-    run validate_range "-1" 0 59 "minute"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid value"* ]]
+    run validate_range "-1" 0 59 "minute"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid value"* ]]
 }
 
 @test "validate_range rejects value above maximum" {
-    run validate_range "60" 0 59 "minute"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid value"* ]]
+    run validate_range "60" 0 59 "minute"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid value"* ]]
 }
 
 # Test is_valid_cron function
 @test "is_valid_cron returns success for valid cron" {
-    run is_valid_cron "0 9 * * *"
-    [ "$status" -eq 0 ]
+    run is_valid_cron "0 9 * * *"; [ "$status" -eq 0 ]
 }
 
 @test "is_valid_cron returns failure for invalid cron" {
-    run is_valid_cron "invalid"
-    [ "$status" -ne 0 ]
+    run is_valid_cron "invalid"; [ "$status" -ne 0 ]
 }
 
 @test "is_valid_cron returns failure for cron with too many fields" {
-    run is_valid_cron "0 9 * * * *"
-    [ "$status" -ne 0 ]
+    run is_valid_cron "0 9 * * * *"; [ "$status" -ne 0 ]
 }
 
 @test "is_valid_cron returns failure for cron with too few fields" {
-    run is_valid_cron "0 9 * *"
-    [ "$status" -ne 0 ]
+    run is_valid_cron "0 9 * *"; [ "$status" -ne 0 ]
 }
 
 # Test validate_permission_mode function
 @test "validate_permission_mode accepts bypassPermissions" {
-    run validate_permission_mode "bypassPermissions"
-    [ "$status" -eq 0 ]
+    run validate_permission_mode "bypassPermissions"; [ "$status" -eq 0 ]
 }
 
 @test "validate_permission_mode accepts acceptEdits" {
-    run validate_permission_mode "acceptEdits"
-    [ "$status" -eq 0 ]
+    run validate_permission_mode "acceptEdits"; [ "$status" -eq 0 ]
 }
 
 @test "validate_permission_mode accepts auto" {
-    run validate_permission_mode "auto"
-    [ "$status" -eq 0 ]
+    run validate_permission_mode "auto"; [ "$status" -eq 0 ]
 }
 
 @test "validate_permission_mode accepts default" {
-    run validate_permission_mode "default"
-    [ "$status" -eq 0 ]
+    run validate_permission_mode "default"; [ "$status" -eq 0 ]
 }
 
 @test "validate_permission_mode rejects invalid mode" {
-    run validate_permission_mode "invalid"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid permission mode"* ]]
+    run validate_permission_mode "invalid"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]
 }
 
 # Test validate_timeout function
 @test "validate_timeout accepts zero" {
-    run validate_timeout "0"
-    [ "$status" -eq 0 ]
+    run validate_timeout "0"; [ "$status" -eq 0 ]
 }
 
 @test "validate_timeout accepts positive number" {
-    run validate_timeout "3600"
-    [ "$status" -eq 0 ]
+    run validate_timeout "3600"; [ "$status" -eq 0 ]
 }
 
 @test "validate_timeout rejects negative number" {
-    run validate_timeout "-1"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"non-negative number"* ]]
+    run validate_timeout "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"non-negative number"* ]]
 }
 
 @test "validate_timeout rejects non-numeric value" {
-    run validate_timeout "abc"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"non-negative number"* ]]
+    run validate_timeout "abc"; [ "$status" -eq 3 ]; [[ "$output" == *"non-negative number"* ]]
 }
 
 @test "validate_timeout rejects empty string" {
-    run validate_timeout ""
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"non-negative number"* ]]
+    run validate_timeout ""; [ "$status" -eq 3 ]; [[ "$output" == *"non-negative number"* ]]
 }
