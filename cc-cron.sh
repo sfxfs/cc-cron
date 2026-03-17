@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.249"
+readonly VERSION="2.4.250"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -238,8 +238,7 @@ validate_cron_field() {
             [[ "$end" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"
             validate_range "$start" "$min" "$max" "$field_name range start"
             validate_range "$end" "$min" "$max" "$field_name range end"
-            [[ "$start" -gt "$end" ]] && \
-                error "Invalid range '$value' for $field_name (start > end)" "$EXIT_INVALID_ARGS"
+            [[ "$start" -gt "$end" ]] && error "Invalid range '$value' for $field_name (start > end)" "$EXIT_INVALID_ARGS"
             return 0
             ;;
     esac
@@ -621,9 +620,7 @@ cmd_logs() {
     local job_id="$1" follow="${2:-false}" log_file; log_file=$(get_log_file "$job_id")
 
     [[ -f "$log_file" ]] || {
-        [[ -f "$(get_meta_file "$job_id")" ]] && \
-            error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND" || \
-            error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
+        [[ -f "$(get_meta_file "$job_id")" ]] && error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND" || error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     }
 
     if [[ "$follow" == "true" ]]; then
@@ -665,9 +662,7 @@ cmd_resume() {
     local paused_file="${DATA_DIR}/${job_id}.paused"
 
     [[ -f "$paused_file" ]] || {
-        [[ -f "$(get_meta_file "$job_id")" ]] && \
-            error "Job ${job_id} is not paused" "$EXIT_INVALID_ARGS" || \
-            error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
+        [[ -f "$(get_meta_file "$job_id")" ]] && error "Job ${job_id} is not paused" "$EXIT_INVALID_ARGS" || error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     }
 
     # Load metadata (errors if not found)
@@ -858,9 +853,7 @@ cmd_history() {
     local job_id="$1" lines="${2:-20}" history_file log_file; history_file=$(get_history_file "$job_id"); log_file=$(get_log_file "$job_id")
 
     [[ -f "$log_file" ]] || {
-        [[ -f "$(get_meta_file "$job_id")" ]] && \
-            error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND" || \
-            error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
+        [[ -f "$(get_meta_file "$job_id")" ]] && error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND" || error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     }
 
     echo -e "Execution History for ${job_id}:\n=================================\n"
@@ -2083,21 +2076,15 @@ _cc_cron_completion() {
             COMPREPLY=($(compgen -W "$(_get_tags)" -- "${cur}"))
             ;;
         logs)
-            if [[ ${#words[@]} -eq 3 ]]; then
-                COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
-            elif [[ ${#words[@]} -eq 4 ]]; then
-                COMPREPLY=($(compgen -W "--tail -f" -- "${cur}"))
-            fi
+            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
+            [[ ${#words[@]} -eq 4 ]] && COMPREPLY=($(compgen -W "--tail -f" -- "${cur}"))
             ;;
         export)
             [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
             ;;
         config)
-            if [[ ${#words[@]} -eq 3 ]]; then
-                COMPREPLY=($(compgen -W "list set unset" -- "${cur}"))
-            elif [[ ${#words[@]} -eq 4 ]]; then
-                COMPREPLY=($(compgen -W "workdir model permission_mode timeout" -- "${cur}"))
-            fi
+            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "list set unset" -- "${cur}"))
+            [[ ${#words[@]} -eq 4 ]] && COMPREPLY=($(compgen -W "workdir model permission_mode timeout" -- "${cur}"))
             ;;
         edit|clone)
             [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}")) || \
@@ -2107,14 +2094,8 @@ _cc_cron_completion() {
         --permission-mode) COMPREPLY=($(compgen -W "bypassPermissions acceptEdits auto default" -- "${cur}")) ;;
         --workdir) _filedir -d ;;
         add)
-            case ${#words[@]} in
-                3)
-                    COMPREPLY=($(compgen -W '"0 9 * * 1-5" "0 * * * *" "*/5 * * * *" "0 0 * * *"' -- "${cur}"))
-                    ;;
-                *)
-                    COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}"))
-                    ;;
-            esac
+            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W '"0 9 * * 1-5" "0 * * * *" "*/5 * * * *" "0 0 * * *"' -- "${cur}")) || \
+                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}"))
             ;;
         *)
             if [[ " ${words[@]} " =~ " add " ]]; then
