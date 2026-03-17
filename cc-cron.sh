@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.247"
+readonly VERSION="2.4.248"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1009,15 +1009,9 @@ cmd_status() {
                 echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    Workdir: ${workdir}\n"; ((running_count++)) || true
             else
                 case "${status:-}" in
-                    success)
-                        status_icon="${GREEN}✓ SUCCESS${NC}"; ((success_count++)) || true
-                        ;;
-                    failed)
-                        status_icon="${RED}✗ FAILED${NC}"; ((failed_count++)) || true
-                        ;;
-                    *)
-                        status_icon="${YELLOW}? UNKNOWN${NC}"; ((unknown_count++)) || true
-                        ;;
+                    success) status_icon="${GREEN}✓ SUCCESS${NC}"; ((success_count++)) || true ;;
+                    failed) status_icon="${RED}✗ FAILED${NC}"; ((failed_count++)) || true ;;
+                    *) status_icon="${YELLOW}? UNKNOWN${NC}"; ((unknown_count++)) || true ;;
                 esac
                 echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    End:   ${end_time:-unknown}"
                 [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}" || true
@@ -1077,12 +1071,8 @@ _show_job_stats() {
             local h_start h_end; h_start="${line#*start=\"}" && h_start="${h_start%%\"*}"; h_end="${line#*end=\"}" && h_end="${h_end%%\"*}"
 
             case "$h_status" in
-                success)
-                    ((success_count++)) || true; last_success="$h_end"
-                    ;;
-                failed)
-                    ((failed_count++)) || true; last_failure="$h_end"
-                    ;;
+                success) ((success_count++)) || true; last_success="$h_end" ;;
+                failed) ((failed_count++)) || true; last_failure="$h_end" ;;
             esac
 
             # Calculate duration if we have both start and end
