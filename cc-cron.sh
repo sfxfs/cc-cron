@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.348"
+readonly VERSION="2.4.349"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1882,14 +1882,7 @@ Options:
         list)
             ensure_data_dir; local filter_tag="" json_output="false"
             # Support both positional argument and --tag flag
-            while [[ $# -gt 0 ]]; do
-                case "$1" in
-                    --tag) filter_tag="${2:-}"; shift 2 ;;
-                    --json) json_output="true"; shift ;;
-                    -*) shift ;;
-                    *) filter_tag="$1"; shift ;; # Positional argument (tag name)
-                esac
-            done
+            while [[ $# -gt 0 ]]; do case "$1" in --tag) filter_tag="${2:-}"; shift 2 ;; --json) json_output="true"; shift ;; -*) shift ;; *) filter_tag="$1"; shift ;; esac; done
             cmd_list "$filter_tag" "$json_output"
             ;;
         remove) ensure_data_dir; require_job_id "$command" "$@"; cmd_remove "$1" ;;
