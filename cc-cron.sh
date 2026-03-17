@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.295"
+readonly VERSION="2.4.296"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1128,8 +1128,7 @@ purge_old_files() {
         [[ -f "$file" ]] || continue
 
         # Check if file is old enough
-        local file_age; file_age=$(find "$file" -mtime +"$days" 2>/dev/null)
-        [[ -n "$file_age" ]] || continue
+        local file_age; file_age=$(find "$file" -mtime +"$days" 2>/dev/null); [[ -n "$file_age" ]] || continue
 
         local file_size; file_size=$(get_stat "$file" size || echo "0")
 
@@ -1171,8 +1170,7 @@ cmd_purge() {
     # Reset counters for orphan tracking
     PURGE_COUNT=0; PURGE_BYTES=0
     for meta_file in "${LOG_DIR}"/*.meta; do
-        [[ -f "$meta_file" ]] || continue
-        local job_id; job_id=$(basename "$meta_file" .meta)
+        [[ -f "$meta_file" ]] || continue; local job_id; job_id=$(basename "$meta_file" .meta)
 
         # Skip if job is active
         [[ -z "${active_jobs[$job_id]:-}" ]] || continue
