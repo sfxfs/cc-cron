@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.274"
+readonly VERSION="2.4.275"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -581,8 +581,7 @@ cmd_pause() {
     crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
     touch "$paused_file"
 
-    success "Paused job: ${job_id}"
-    info "Run 'cc-cron resume ${job_id}' to resume"
+    success "Paused job: ${job_id}"; info "Run 'cc-cron resume ${job_id}' to resume"
 }
 
 # Resume a paused job
