@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.318"
+readonly VERSION="2.4.319"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -270,8 +270,7 @@ build_cron_entry() {
 }
 
 crontab_add_entry() {
-    local entry="$1"
-    (crontab -l 2>/dev/null; echo "$entry") | crontab -; invalidate_crontab_cache
+    local entry="$1"; (crontab -l 2>/dev/null; echo "$entry") | crontab -; invalidate_crontab_cache
 }
 
 # Get crontab content with caching
