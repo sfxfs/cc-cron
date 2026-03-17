@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.311"
+readonly VERSION="2.4.312"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1859,15 +1859,13 @@ _cc_cron_completion() {
     _init_completion || return
 
     _get_job_ids() {
-        local meta_file
-        for meta_file in ~/.cc-cron/logs/*.meta; do
+        local meta_file; for meta_file in ~/.cc-cron/logs/*.meta; do
             [[ -f "$meta_file" ]] || continue; basename "$meta_file" .meta
         done
     }
 
     _get_tags() {
-        local meta_file tags
-        for meta_file in ~/.cc-cron/logs/*.meta; do
+        local meta_file tags; for meta_file in ~/.cc-cron/logs/*.meta; do
             [[ -f "$meta_file" ]] || continue; grep '^tags=' "$meta_file" 2>/dev/null | sed 's/tags=//; s/"//g' | tr ',' '\n'
         done | sort -u
     }
