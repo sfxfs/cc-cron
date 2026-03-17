@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.343"
+readonly VERSION="2.4.344"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -472,11 +472,7 @@ cmd_list() {
                     job_json+="}"
                     jobs+=("$job_json")
                 else
-                    echo -e "Job ID: ${id}\n  Created: ${created}\n  Schedule: ${cron}\n  Recurring: ${recurring}\n  Workdir: ${workdir:-$CC_WORKDIR}"
-                    [[ -n "${model:-}" ]] && echo "  Model: ${model}"
-                    echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
-                    [[ -n "${tags:-}" ]] && echo "  Tags: ${tags}"
-                    echo -e "  Prompt: ${prompt}\n"
+                    echo -e "Job ID: ${id}\n  Created: ${created}\n  Schedule: ${cron}\n  Recurring: ${recurring}\n  Workdir: ${workdir:-$CC_WORKDIR}"; [[ -n "${model:-}" ]] && echo "  Model: ${model}" || true; echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"; [[ -n "${tags:-}" ]] && echo "  Tags: ${tags}" || true; echo -e "  Prompt: ${prompt}\n"
                 fi
             else
                 # Skip jobs without metadata when filtering
