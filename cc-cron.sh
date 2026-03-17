@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.246"
+readonly VERSION="2.4.247"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2232,48 +2232,20 @@ Options:
             done
             cmd_list "$filter_tag" "$json_output"
             ;;
-        remove)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_remove "$1"
-            ;;
-        logs)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_logs "$1" "$([[ "${2:-}" == "--tail" || "${2:-}" == "-f" ]] && echo true || echo false)"
-            ;;
-        status)
-            ensure_data_dir; cmd_status
-            ;;
-        next)
-            ensure_data_dir; cmd_next "${1:-}" "${2:-}"
-            ;;
-        pause|disable)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_pause "$1"
-            ;;
-        resume|enable)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_resume "$1"
-            ;;
-        show)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_show "$1"
-            ;;
-        history)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_history "$1" "${2:-20}"
-            ;;
-        stats)
-            ensure_data_dir; cmd_stats "${1:-}"
-            ;;
-        run)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_run "$1"
-            ;;
-        edit)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_edit "$1" "${@:2}"
-            ;;
-        clone)
-            ensure_data_dir; require_job_id "$command" "$@"; cmd_clone "$1" "${@:2}"
-            ;;
-        export)
-            ensure_data_dir; cmd_export "${1:-}" "${2:-}"
-            ;;
-        import)
-            ensure_data_dir; [[ $# -lt 1 ]] && error "Usage: cc-cron import <file>" "$EXIT_INVALID_ARGS"; cmd_import "$1"
-            ;;
+        remove) ensure_data_dir; require_job_id "$command" "$@"; cmd_remove "$1" ;;
+        logs) ensure_data_dir; require_job_id "$command" "$@"; cmd_logs "$1" "$([[ "${2:-}" == "--tail" || "${2:-}" == "-f" ]] && echo true || echo false)" ;;
+        status) ensure_data_dir; cmd_status ;;
+        next) ensure_data_dir; cmd_next "${1:-}" "${2:-}" ;;
+        pause|disable) ensure_data_dir; require_job_id "$command" "$@"; cmd_pause "$1" ;;
+        resume|enable) ensure_data_dir; require_job_id "$command" "$@"; cmd_resume "$1" ;;
+        show) ensure_data_dir; require_job_id "$command" "$@"; cmd_show "$1" ;;
+        history) ensure_data_dir; require_job_id "$command" "$@"; cmd_history "$1" "${2:-20}" ;;
+        stats) ensure_data_dir; cmd_stats "${1:-}" ;;
+        run) ensure_data_dir; require_job_id "$command" "$@"; cmd_run "$1" ;;
+        edit) ensure_data_dir; require_job_id "$command" "$@"; cmd_edit "$1" "${@:2}" ;;
+        clone) ensure_data_dir; require_job_id "$command" "$@"; cmd_clone "$1" "${@:2}" ;;
+        export) ensure_data_dir; cmd_export "${1:-}" "${2:-}" ;;
+        import) ensure_data_dir; [[ $# -lt 1 ]] && error "Usage: cc-cron import <file>" "$EXIT_INVALID_ARGS"; cmd_import "$1" ;;
         purge)
             ensure_data_dir; local purge_days="7" dry_run="false"
             while [[ $# -gt 0 ]]; do
@@ -2288,18 +2260,12 @@ Options:
             done
             cmd_purge "$purge_days" "$dry_run"
             ;;
-        config)
-            ensure_data_dir; load_config; cmd_config "${1:-list}" "${2:-}" "${3:-}"
-            ;;
-        doctor)
-            ensure_data_dir; cmd_doctor
-            ;;
+        config) ensure_data_dir; load_config; cmd_config "${1:-list}" "${2:-}" "${3:-}" ;;
+        doctor) ensure_data_dir; cmd_doctor ;;
         version|--version|-v) cmd_version ;;
         completion) cmd_completion ;;
         help|--help|-h) cmd_help "${1:-}" ;;
-        *)
-            error "Unknown command: ${command}. Run 'cc-cron help' for usage." "$EXIT_INVALID_ARGS"
-            ;;
+        *) error "Unknown command: ${command}. Run 'cc-cron help' for usage." "$EXIT_INVALID_ARGS" ;;
     esac
 }
 
