@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.244"
+readonly VERSION="2.4.245"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -794,8 +794,7 @@ cmd_next() {
             source "$meta_file"
 
             # Check if paused
-            local paused_file="${DATA_DIR}/${id}.paused" paused_status=""
-            [[ -f "$paused_file" ]] && paused_status=" (PAUSED)"
+            local paused_file="${DATA_DIR}/${id}.paused" paused_status=""; [[ -f "$paused_file" ]] && paused_status=" (PAUSED)"
 
             local next_run; next_run=$(calculate_next_run "$cron")
 
