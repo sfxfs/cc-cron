@@ -578,10 +578,7 @@ EOF
 @test "cmd_config set succeeds for valid model" {
     local config_file="${DATA_DIR}/config"
 
-    run cmd_config set model "sonnet"; [ "$status" -eq 0 ]; [[ "$output" == *"Set model"* ]]
-
-    # Verify value is set
-    grep -q '^model="sonnet"' "$config_file"
+    run cmd_config set model "sonnet"; [ "$status" -eq 0 ]; [[ "$output" == *"Set model"* ]]; grep -q '^model="sonnet"' "$config_file"
 
     rm -f "$config_file"
 }
@@ -589,10 +586,7 @@ EOF
 @test "cmd_config set succeeds for valid timeout" {
     local config_file="${DATA_DIR}/config"
 
-    run cmd_config set timeout "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Set timeout"* ]]
-
-    # Verify value is set
-    grep -q '^timeout="300"' "$config_file"
+    run cmd_config set timeout "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Set timeout"* ]]; grep -q '^timeout="300"' "$config_file"
 
     rm -f "$config_file"
 }
@@ -614,20 +608,15 @@ EOF
 }
 
 @test "cmd_config unset removes key" {
-    local config_file="${DATA_DIR}/config"
-    echo 'workdir="/tmp/test"' > "$config_file"
+    local config_file="${DATA_DIR}/config"; echo 'workdir="/tmp/test"' > "$config_file"
 
-    run cmd_config unset workdir; [ "$status" -eq 0 ]; [[ "$output" == *"Unset"* ]]
-
-    # Verify key is removed
-    ! grep -q "^workdir=" "$config_file"
+    run cmd_config unset workdir; [ "$status" -eq 0 ]; [[ "$output" == *"Unset"* ]]; ! grep -q "^workdir=" "$config_file"
 
     rm -f "$config_file"
 }
 
 @test "cmd_config unset handles missing key" {
-    local config_file="${DATA_DIR}/config"
-    echo 'model="sonnet"' > "$config_file"
+    local config_file="${DATA_DIR}/config"; echo 'model="sonnet"' > "$config_file"
 
     # unset should succeed even if key doesn't exist
     run cmd_config unset workdir; [ "$status" -eq 0 ]
@@ -640,34 +629,27 @@ EOF
 }
 
 @test "cmd_doctor runs without error" {
-    run cmd_doctor
-    # Doctor returns non-zero if issues found, but should still produce output
-    [[ "$output" == *"Health Check"* ]]
+    run cmd_doctor; [[ "$output" == *"Health Check"* ]]
 }
 
 @test "cmd_doctor checks claude CLI" {
-    run cmd_doctor
-    [[ "$output" == *"Claude CLI"* ]]
+    run cmd_doctor; [[ "$output" == *"Claude CLI"* ]]
 }
 
 @test "cmd_doctor checks required tools" {
-    run cmd_doctor
-    [[ "$output" == *"flock"* ]]
+    run cmd_doctor; [[ "$output" == *"flock"* ]]
 }
 
 @test "cmd_doctor checks data directory" {
-    run cmd_doctor
-    [[ "$output" == *"data directory"* ]]
+    run cmd_doctor; [[ "$output" == *"data directory"* ]]
 }
 
 @test "cmd_doctor checks lock files" {
-    run cmd_doctor
-    [[ "$output" == *"lock files"* ]]
+    run cmd_doctor; [[ "$output" == *"lock files"* ]]
 }
 
 @test "cmd_doctor checks job consistency" {
-    run cmd_doctor
-    [[ "$output" == *"job consistency"* ]]
+    run cmd_doctor; [[ "$output" == *"job consistency"* ]]
 }
 
 @test "cmd_logs fails for non-existent job" {
