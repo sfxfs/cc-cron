@@ -113,14 +113,11 @@ teardown() {
     local job_workdir="$BATS_TEST_TMPDIR"
 
     # Create a job
-    cmd_add "0 9 * * *" "test job to remove" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    local job_id="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "test job to remove" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
-    # Create a log file for the job
+    # Create a log file and history file for the job
     local log_file history_file; log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
     echo "Test log" > "$log_file"
-
-    # Create a history file
     echo "2024-01-01 10:00:00|2024-01-01 10:05:00|success|0" > "$history_file"
 
     # Verify files exist
@@ -146,16 +143,12 @@ teardown() {
     # Create a job
     cmd_add "0 9 * * *" "job to pause" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
-    # Verify job is in crontab
+    # Verify job is in crontab, then pause it
     crontab_has_entry "CC-CRON:${job_id}"
-
-    # Pause the job
     run cmd_pause "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Paused job"* ]]
 
-    # Verify paused file exists
+    # Verify paused file exists and job is NOT in crontab
     [[ -f "${DATA_DIR}/${job_id}.paused" ]]
-
-    # Verify job is NOT in crontab
     ! crontab_has_entry "CC-CRON:${job_id}"
 
     # Cleanup
@@ -165,10 +158,8 @@ teardown() {
 @test "cmd_pause on already paused job shows warning" {
     local job_workdir="$BATS_TEST_TMPDIR"
 
-    # Create a job
+    # Create a job and pause it
     cmd_add "0 9 * * *" "job to pause" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
-
-    # Pause the job
     cmd_pause "$job_id" >/dev/null
 
     # Try to pause again
@@ -181,10 +172,8 @@ teardown() {
 @test "cmd_resume resumes paused job" {
     local job_workdir="$BATS_TEST_TMPDIR"
 
-    # Create a job
+    # Create a job and pause it
     cmd_add "0 9 * * *" "job to resume" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
-
-    # Pause the job
     cmd_pause "$job_id" >/dev/null
 
     # Verify job is NOT in crontab
@@ -193,10 +182,8 @@ teardown() {
     # Resume the job
     run cmd_resume "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Resumed job"* ]]
 
-    # Verify paused file is removed
+    # Verify paused file is removed and job is back in crontab
     [[ ! -f "${DATA_DIR}/${job_id}.paused" ]]
-
-    # Verify job is back in crontab
     crontab_has_entry "CC-CRON:${job_id}"
 
     # Cleanup
@@ -213,9 +200,7 @@ teardown() {
     echo 'created="2024-01-01"' >> "$meta_file"
 
     # Run in a subshell to test variable setting
-    local result; result=$(load_job_meta "$job_id" && echo "$id"); [ "$result" == "testmeta" ]
-
-    rm -f "$meta_file"
+    local result; result=$(load_job_meta "$job_id" && echo "$id"); [ "$result" == "testmeta" ]; rm -f "$meta_file"
 }
 
 @test "extract_job_id parses crontab comment" {
@@ -248,9 +233,7 @@ teardown() {
     # Create metadata but no run script
     create_test_meta "$job_id"
 
-    run cmd_run "$job_id"; [ "$status" -eq 2 ]; [[ "$output" == *"Run script not found"* ]]  # EXIT_NOT_FOUND
-
-    rm -f "$(get_meta_file "$job_id")"
+    run cmd_run "$job_id"; [ "$status" -eq 2 ]; [[ "$output" == *"Run script not found"* ]]; rm -f "$(get_meta_file "$job_id")"  # EXIT_NOT_FOUND
 }
 
 @test "cmd_run executes job successfully" {
@@ -266,9 +249,7 @@ exit 0
 EOF
     chmod +x "$run_script"
 
-    run cmd_run "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job executed successfully"* ]]; [[ "$output" == *"Job completed successfully"* ]]
-
-    cleanup_test_job "$job_id"
+    run cmd_run "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job executed successfully"* ]]; [[ "$output" == *"Job completed successfully"* ]]; cleanup_test_job "$job_id"
 }
 
 @test "cmd_run handles job failure" {
@@ -284,9 +265,7 @@ exit 1
 EOF
     chmod +x "$run_script"
 
-    run cmd_run "$job_id"; [ "$status" -eq 1 ]; [[ "$output" == *"Job failed intentionally"* ]]; [[ "$output" == *"exited with code: 1"* ]]
-
-    cleanup_test_job "$job_id"
+    run cmd_run "$job_id"; [ "$status" -eq 1 ]; [[ "$output" == *"Job failed intentionally"* ]]; [[ "$output" == *"exited with code: 1"* ]]; cleanup_test_job "$job_id"
 }
 
 @test "cmd_next shows no jobs message when empty" {
@@ -310,10 +289,7 @@ EOF
     # Create a job with hourly schedule
     cmd_add "30 * * * *" "hourly test job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job_id="$LAST_CREATED_JOB_ID"
 
-    run cmd_next "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"Next run"* ]]
-
-    # Cleanup
-    cleanup_test_job "$job_id"
+    run cmd_next "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"Next run"* ]]; cleanup_test_job "$job_id"
 }
 
 @test "cmd_next shows all jobs when no job_id specified" {
@@ -321,14 +297,9 @@ EOF
 
     # Create two jobs
     cmd_add "0 * * * *" "job1" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job1="$LAST_CREATED_JOB_ID"
-
     cmd_add "30 * * * *" "job2" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; local job2="$LAST_CREATED_JOB_ID"
 
-    run cmd_next; [ "$status" -eq 0 ]; [[ "$output" == *"${job1}"* ]]; [[ "$output" == *"${job2}"* ]]
-
-    # Cleanup
-    cleanup_test_job "$job1"
-    cleanup_test_job "$job2"
+    run cmd_next; [ "$status" -eq 0 ]; [[ "$output" == *"${job1}"* ]]; [[ "$output" == *"${job2}"* ]]; cleanup_test_job "$job1"; cleanup_test_job "$job2"
 }
 
 @test "cmd_help next shows detailed help" {
@@ -342,9 +313,7 @@ EOF
 @test "cmd_edit with no options shows warning" {
     local job_id="testedit"; create_test_meta "$job_id" "/tmp"
 
-    run cmd_edit "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"No changes specified"* ]]
-
-    rm -f "$(get_meta_file "$job_id")"
+    run cmd_edit "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"No changes specified"* ]]; rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "cmd_edit updates cron expression" {
@@ -356,9 +325,7 @@ EOF
     run cmd_edit "$job_id" --cron "0 10 * * *"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
 
     # Verify cron updated in metadata
-    grep -q 'cron="0 10' "$(get_meta_file "$job_id")"
-
-    cleanup_test_job "$job_id"
+    grep -q 'cron="0 10' "$(get_meta_file "$job_id")"; cleanup_test_job "$job_id"
 }
 
 @test "cmd_edit updates workdir" {
@@ -370,9 +337,7 @@ EOF
     run cmd_edit "$job_id" --workdir "$BATS_TEST_TMPDIR"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
 
     # Verify workdir updated in metadata
-    grep -q "workdir=\"${BATS_TEST_TMPDIR}\"" "$(get_meta_file "$job_id")"
-
-    cleanup_test_job "$job_id"
+    grep -q "workdir=\"${BATS_TEST_TMPDIR}\"" "$(get_meta_file "$job_id")"; cleanup_test_job "$job_id"
 }
 
 @test "cmd_export outputs empty array when no jobs" {
@@ -2289,19 +2254,13 @@ EOF
 }
 
 @test "_show_job_stats shows zero stats for job without history" {
-    local job_id="statjob" meta_file; meta_file=$(get_meta_file "$job_id")
+    local job_id="statjob" meta_file; meta_file=$(get_meta_file "$job_id"); create_test_meta "$job_id"
 
-    create_test_meta "$job_id"
-
-    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 0"* ]]; [[ "$output" == *"Success: 0"* ]]; [[ "$output" == *"Failed:"* && "$output" == *"0"* ]]
-
-    rm -f "$meta_file"
+    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 0"* ]]; [[ "$output" == *"Success: 0"* ]]; [[ "$output" == *"Failed:"* && "$output" == *"0"* ]]; rm -f "$meta_file"
 }
 
 @test "_show_job_stats calculates success and failure counts" {
-    local job_id="statcount" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id")
-
-    create_test_meta "$job_id"
+    local job_id="statcount" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id"); create_test_meta "$job_id"
 
     # Create history with 2 successes and 1 failure
     cat > "$history_file" <<EOF
@@ -2310,15 +2269,11 @@ start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="success" exit_code
 start="2024-01-03 10:00:00" end="2024-01-03 10:02:00" status="failed" exit_code="1"
 EOF
 
-    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 3"* ]]; [[ "$output" == *"Success: 2"* ]]; [[ "$output" == *"Failed:"* ]]; [[ "$output" == *"Success rate: 66%"* ]]
-
-    rm -f "$meta_file" "$history_file"
+    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 3"* ]]; [[ "$output" == *"Success: 2"* ]]; [[ "$output" == *"Failed:"* ]]; [[ "$output" == *"Success rate: 66%"* ]]; rm -f "$meta_file" "$history_file"
 }
 
 @test "_show_job_stats shows last success and failure times" {
-    local job_id="stattimes" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id")
-
-    create_test_meta "$job_id"
+    local job_id="stattimes" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id"); create_test_meta "$job_id"
 
     # Create history with success and failure
     cat > "$history_file" <<EOF
@@ -2326,15 +2281,11 @@ start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code
 start="2024-01-02 11:00:00" end="2024-01-02 11:02:00" status="failed" exit_code="1"
 EOF
 
-    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Last success: 2024-01-01 10:05:00"* ]]; [[ "$output" == *"Last failure: 2024-01-02 11:02:00"* ]]
-
-    rm -f "$meta_file" "$history_file"
+    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Last success: 2024-01-01 10:05:00"* ]]; [[ "$output" == *"Last failure: 2024-01-02 11:02:00"* ]]; rm -f "$meta_file" "$history_file"
 }
 
 @test "_show_job_stats calculates average duration" {
-    local job_id="statduration" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id")
-
-    create_test_meta "$job_id"
+    local job_id="statduration" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id"); create_test_meta "$job_id"
 
     # Create history with known durations:
     # 10:00 to 10:05 = 5 minutes = 300 seconds
@@ -2345,9 +2296,7 @@ start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code
 start="2024-01-01 11:00:00" end="2024-01-01 11:07:00" status="success" exit_code="0"
 EOF
 
-    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Avg duration: 6m 0s"* ]]
-
-    rm -f "$meta_file" "$history_file"
+    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Avg duration: 6m 0s"* ]]; rm -f "$meta_file" "$history_file"
 }
 
 # Test validate_range function
