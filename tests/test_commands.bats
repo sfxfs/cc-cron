@@ -2644,35 +2644,30 @@ EOF
 }
 
 @test "write_meta_file handles consecutive backslashes" {
-    local job_id="escmultislash" meta_file; meta_file=$(get_meta_file "$job_id")
-    local prompt='UNC path: \\server\share\folder'
+    local job_id="escmultislash" meta_file prompt='UNC path: \\server\share\folder'; meta_file=$(get_meta_file "$job_id")
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
 
     # Source the meta file and verify prompt is correctly preserved
-    source "$meta_file"
-    [ "$prompt" == 'UNC path: \\server\share\folder' ]
+    source "$meta_file"; [ "$prompt" == 'UNC path: \\server\share\folder' ]
 
     rm -f "$meta_file"
 }
 
 @test "write_meta_file escapes special characters in model name" {
-    local job_id="escmodel" meta_file; meta_file=$(get_meta_file "$job_id")
-    local model='model"with"quotes'
+    local job_id="escmodel" meta_file model='model"with"quotes'; meta_file=$(get_meta_file "$job_id")
 
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "/tmp" "$model" "auto" "0" "/tmp/run.sh"
 
     # Source the meta file and verify model is correctly preserved
-    source "$meta_file"
-    [ "$model" == 'model"with"quotes' ]
+    source "$meta_file"; [ "$model" == 'model"with"quotes' ]
 
     rm -f "$meta_file"
 }
 
 # Tests for JSON output with special characters
 @test "cmd_list --json escapes backslashes in prompt" {
-    local job_id="jsonbackslash" meta_file; meta_file=$(get_meta_file "$job_id")
-    local run_script; run_script=$(get_run_script "$job_id")
+    local job_id="jsonbackslash" meta_file run_script; meta_file=$(get_meta_file "$job_id"); run_script=$(get_run_script "$job_id")
 
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
     # Override prompt with backslash-containing value
@@ -2772,12 +2767,7 @@ EOF
 
     create_test_meta "$job_id"
 
-    run _show_job_stats "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Total runs: 0"* ]]
-    # Color codes are included, so check for partial matches
-    [[ "$output" == *"Success: 0"* ]]
-    [[ "$output" == *"Failed:"* && "$output" == *"0"* ]]
+    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 0"* ]]; [[ "$output" == *"Success: 0"* ]]; [[ "$output" == *"Failed:"* && "$output" == *"0"* ]]
 
     rm -f "$meta_file"
 }
@@ -2794,13 +2784,7 @@ start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="success" exit_code
 start="2024-01-03 10:00:00" end="2024-01-03 10:02:00" status="failed" exit_code="1"
 EOF
 
-    run _show_job_stats "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Total runs: 3"* ]]
-    [[ "$output" == *"Success: 2"* ]]
-    # Check for "Failed:" and "1" in the output (color codes interfere with exact match)
-    [[ "$output" == *"Failed:"* ]]
-    [[ "$output" == *"Success rate: 66%"* ]]
+    run _show_job_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 3"* ]]; [[ "$output" == *"Success: 2"* ]]; [[ "$output" == *"Failed:"* ]]; [[ "$output" == *"Success rate: 66%"* ]]
 
     rm -f "$meta_file" "$history_file"
 }
