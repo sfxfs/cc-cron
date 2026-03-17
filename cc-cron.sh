@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.255"
+readonly VERSION="2.4.256"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -199,37 +199,17 @@ validate_cron_field() {
 
     # Handle comma-separated list first (before step/range checks)
     case "$value" in
-        *,*)
-            local IFS=',' part
-            for part in $value; do
-                validate_cron_field "$part" "$min" "$max" "$field_name"
-            done
-            return 0
-            ;;
+        *,*) local IFS=',' part; for part in $value; do validate_cron_field "$part" "$min" "$max" "$field_name"; done; return 0 ;;
     esac
 
     # Handle */n (step) - use case instead of regex for ~20% speedup
     case "$value" in
-        */*)
-            local step="${value#*/}"
-            step="${step%%/*}"
-            [[ "$step" =~ ^[0-9]+$ ]] || error "Invalid step value in '$value' for $field_name" "$EXIT_INVALID_ARGS"
-            [[ "$step" -ge 1 && "$step" -le "$max" ]] && return 0
-            error "Invalid step value '$step' in '$value' for $field_name (must be 1-$max)" "$EXIT_INVALID_ARGS"
-            ;;
+        */*) local step="${value#*/}"; step="${step%%/*}"; [[ "$step" =~ ^[0-9]+$ ]] || error "Invalid step value in '$value' for $field_name" "$EXIT_INVALID_ARGS"; [[ "$step" -ge 1 && "$step" -le "$max" ]] && return 0; error "Invalid step value '$step' in '$value' for $field_name (must be 1-$max)" "$EXIT_INVALID_ARGS" ;;
     esac
 
     # Handle range n-m
     case "$value" in
-        *-*)
-            local start="${value%%-*}" end="${value#*-}"
-            [[ "$start" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"
-            [[ "$end" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"
-            validate_range "$start" "$min" "$max" "$field_name range start"
-            validate_range "$end" "$min" "$max" "$field_name range end"
-            [[ "$start" -gt "$end" ]] && error "Invalid range '$value' for $field_name (start > end)" "$EXIT_INVALID_ARGS"
-            return 0
-            ;;
+        *-*) local start="${value%%-*}" end="${value#*-}"; [[ "$start" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"; [[ "$end" =~ ^[0-9]+$ ]] || error "Invalid range '$value' for $field_name" "$EXIT_INVALID_ARGS"; validate_range "$start" "$min" "$max" "$field_name range start"; validate_range "$end" "$min" "$max" "$field_name range end"; [[ "$start" -gt "$end" ]] && error "Invalid range '$value' for $field_name (start > end)" "$EXIT_INVALID_ARGS"; return 0 ;;
     esac
 
     # Handle simple number
