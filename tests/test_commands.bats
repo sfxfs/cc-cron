@@ -1988,12 +1988,7 @@ EOF
 
     [ -f "$run_script" ]
 
-    # Run purge (should remove orphan files)
-    run cmd_purge "0" "false"
-    [ "$status" -eq 0 ]
-
-    # The orphan script should be removed
-    [[ ! -f "$run_script" ]] || [[ "$output" == *"orphan"* ]]
+    run cmd_purge "0" "false"; [ "$status" -eq 0 ]; [[ ! -f "$run_script" ]] || [[ "$output" == *"orphan"* ]]
 }
 
 @test "write_meta_file with all fields" {
@@ -2125,98 +2120,63 @@ EOF
 @test "cmd_edit works on a paused job" {
     local job_id="editpaused" meta_file; meta_file=$(get_meta_file "$job_id")
     local paused_file="${DATA_DIR}/${job_id}.paused"
-
-    # Create job metadata
     create_test_meta "$job_id"
-
-    # Create paused file
     touch "$paused_file"
-
-    # Should be able to edit a paused job
     run cmd_edit "$job_id" --prompt "new prompt"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
-
     rm -f "$meta_file" "$paused_file"
 }
 
 @test "cmd_show without model does not show Model line" {
     local job_id="shownomodel" meta_file; meta_file=$(get_meta_file "$job_id")
-
-    # Create job metadata without model
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job Details"* ]]; [[ "$output" != *"Model:"* ]]
-
     rm -f "$meta_file"
 }
 
 @test "cmd_show with model shows Model line" {
     local job_id="showmodel" meta_file; meta_file=$(get_meta_file "$job_id")
-
-    # Create job metadata with model
     create_test_meta "$job_id" "/tmp" "sonnet" "bypassPermissions" "0"
-
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Model:        sonnet"* ]]
-
     rm -f "$meta_file"
 }
 
 @test "cmd_show with timeout shows Timeout line" {
     local job_id="showtimeout" meta_file; meta_file=$(get_meta_file "$job_id")
-
-    # Create job metadata with timeout
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
-
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Timeout:      300s"* ]]
-
     rm -f "$meta_file"
 }
 
 @test "cmd_status with exit code shows Exit code" {
     local job_id="statusexit" meta_file; meta_file=$(get_meta_file "$job_id")
     local status_file; status_file=$(get_status_file "$job_id")
-
-    # Create job metadata
     create_test_meta "$job_id"
-
-    # Create status file with exit code
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
     echo 'status="failed"' >> "$status_file"
     echo 'exit_code="1"' >> "$status_file"
     echo 'workdir="/tmp"' >> "$status_file"
-
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"Exit code: 1"* ]]
-
     rm -f "$meta_file" "$status_file"
 }
 
 @test "cmd_status handles unknown status" {
     local job_id="unknownstatus" meta_file; meta_file=$(get_meta_file "$job_id")
     local status_file; status_file=$(get_status_file "$job_id")
-
     create_test_meta "$job_id"
-
-    # Create status file with unknown status
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
     echo 'status="weird"' >> "$status_file"
-
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"UNKNOWN"* ]]
-
     rm -f "$meta_file" "$status_file"
 }
 
 @test "cmd_status handles job with log but no status file" {
     local job_id="logonly" meta_file; meta_file=$(get_meta_file "$job_id")
     local log_file; log_file=$(get_log_file "$job_id")
-
     create_test_meta "$job_id"
-
-    # Create log file but no status file
     touch "$log_file"
-
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"NO STATUS"* ]]
-
     rm -f "$meta_file" "$log_file"
 }
 
@@ -2246,7 +2206,6 @@ EOF
 }
 
 @test "calculate_next_run returns empty for complex schedule" {
-    # Monthly schedule is not supported, should return empty
     run calculate_next_run "0 9 15 * *"; [ "$status" -eq 0 ]; [ -z "$output" ]
 }
 
