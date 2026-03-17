@@ -1086,10 +1086,8 @@ EOF
 }
 
 @test "cmd_add creates job with defaults" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    LAST_CREATED_JOB_ID=""
-    cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null
-    [[ -n "$LAST_CREATED_JOB_ID" ]]
+    local job_workdir="$BATS_TEST_TMPDIR"; LAST_CREATED_JOB_ID=""
+    cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null; [[ -n "$LAST_CREATED_JOB_ID" ]]
 
     # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
@@ -1150,10 +1148,7 @@ EOF
     local source_id="clonemodel"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
 
-    cmd_clone "$source_id" --model "haiku" >/dev/null
-
-    # Verify cloned job has overridden model
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'model="haiku"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    cmd_clone "$source_id" --model "haiku" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'model="haiku"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1163,10 +1158,7 @@ EOF
     local source_id="clonemodel2"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "opus"
 
-    cmd_clone "$source_id" --model "" >/dev/null
-
-    # Verify cloned job has no model (either absent or empty)
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; local meta_content; meta_content=$(cat "$(get_meta_file "$LAST_CREATED_JOB_ID")"); [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
+    cmd_clone "$source_id" --model "" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; local meta_content; meta_content=$(cat "$(get_meta_file "$LAST_CREATED_JOB_ID")"); [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1176,10 +1168,7 @@ EOF
     local source_id="clonetimeout"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "60"
 
-    cmd_clone "$source_id" --timeout "300" >/dev/null
-
-    # Verify cloned job has overridden timeout
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'timeout="300"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    cmd_clone "$source_id" --timeout "300" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'timeout="300"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
