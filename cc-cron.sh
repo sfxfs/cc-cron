@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.280"
+readonly VERSION="2.4.281"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -816,8 +816,7 @@ cmd_run() {
     "$run_script"
     local exit_code=$?
 
-    echo
-    [[ $exit_code -eq 0 ]] && success "Job completed successfully" || warn "Job exited with code: ${exit_code}"
+    echo; [[ $exit_code -eq 0 ]] && success "Job completed successfully" || warn "Job exited with code: ${exit_code}"
 
     return $exit_code
 }
@@ -1160,8 +1159,7 @@ cmd_purge() {
     # Validate days argument
     [[ "$days" =~ ^[0-9]+$ ]] || error "Invalid days argument: ${days}" "$EXIT_INVALID_ARGS"
 
-    info "Purging files older than ${days} days..."; [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"
-    echo
+    info "Purging files older than ${days} days..."; [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"; echo
 
     # Get list of active job IDs from crontab
     local -A active_jobs
