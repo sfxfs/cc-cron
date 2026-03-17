@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.336"
+readonly VERSION="2.4.337"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -429,12 +429,8 @@ cmd_add() {
     else
         success "Created cron job: ${job_id}"
         info "Schedule: ${cron_expr}"; info "Recurring: ${recurring}"; info "Workdir: ${job_workdir}"
-        [[ -n "$job_model" ]] && info "Model: ${job_model}" || true
-        info "Permission: ${job_permission}"
-        [[ "$job_timeout" -gt 0 ]] && info "Timeout: ${job_timeout}s" || true
-        [[ -n "$job_tags" ]] && info "Tags: ${job_tags}" || true
-        info "Prompt: ${prompt}"; info "Log file: $(get_log_file "$job_id")"
-        [[ "$recurring" == "false" ]] && info "One-shot job: will auto-remove after successful execution" || true
+        [[ -n "$job_model" ]] && info "Model: ${job_model}" || true; info "Permission: ${job_permission}"; [[ "$job_timeout" -gt 0 ]] && info "Timeout: ${job_timeout}s" || true; [[ -n "$job_tags" ]] && info "Tags: ${job_tags}" || true
+        info "Prompt: ${prompt}"; info "Log file: $(get_log_file "$job_id")"; [[ "$recurring" == "false" ]] && info "One-shot job: will auto-remove after successful execution" || true
     fi
 }
 
