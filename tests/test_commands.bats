@@ -1114,32 +1114,20 @@ EOF
 }
 
 @test "cmd_edit clears model with empty string" {
-    local job_id="editmodel"
-    create_test_meta "$job_id" "/tmp" "sonnet"
-
-    # Add crontab entry
+    local job_id="editmodel"; create_test_meta "$job_id" "/tmp" "sonnet"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --model ""; [ "$status" -eq 0 ]
-
-    # Verify model removed from metadata (either absent or empty)
-    local meta_content; meta_content=$(cat "$(get_meta_file "$job_id")")
-    [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
+    local meta_content; meta_content=$(cat "$(get_meta_file "$job_id")"); [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
 
     cleanup_test_job "$job_id"
 }
 
 @test "cmd_edit updates model" {
-    local job_id="editmodel2"
-    create_test_meta "$job_id" "/tmp" "sonnet"
-
-    # Add crontab entry
+    local job_id="editmodel2"; create_test_meta "$job_id" "/tmp" "sonnet"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --model "opus"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
-
-    # Verify model updated in metadata
-    grep -q 'model="opus"' "$(get_meta_file "$job_id")"
+    run cmd_edit "$job_id" --model "opus"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]; grep -q 'model="opus"' "$(get_meta_file "$job_id")"
 
     cleanup_test_job "$job_id"
 }
@@ -1238,29 +1226,16 @@ EOF
 }
 
 @test "cmd_add with tags" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    LAST_CREATED_JOB_ID=""
-    cmd_add "0 9 * * *" "tagged job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup" >/dev/null
-    [ -n "$LAST_CREATED_JOB_ID" ]
+    local job_workdir="$BATS_TEST_TMPDIR"; LAST_CREATED_JOB_ID=""
+    cmd_add "0 9 * * *" "tagged job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup" >/dev/null; [ -n "$LAST_CREATED_JOB_ID" ]; grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
-    # Verify tags are stored in metadata
-    grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
-
-    # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_add with empty tags is allowed" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    LAST_CREATED_JOB_ID=""
-    # Empty tags should be allowed (results in no tags field in metadata)
-    cmd_add "0 10 * * *" "no tags job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
-    [ -n "$LAST_CREATED_JOB_ID" ]
+    local job_workdir="$BATS_TEST_TMPDIR"; LAST_CREATED_JOB_ID=""
+    cmd_add "0 10 * * *" "no tags job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null; [ -n "$LAST_CREATED_JOB_ID" ]; ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
-    # Tags field should not be present (empty string means no tags)
-    ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
-
-    # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
 }
 
@@ -1275,110 +1250,68 @@ EOF
 
 @test "cmd_list filters by tag" {
     local job_workdir="$BATS_TEST_TMPDIR"
-
-    # Create job with tag
     cmd_add "0 9 * * *" "prod job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null
     local prod_job="$LAST_CREATED_JOB_ID"
-
-    # Create job without tag
     cmd_add "0 10 * * *" "untagged job" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null
     local untagged_job="$LAST_CREATED_JOB_ID"
 
-    # List jobs with prod tag
     run cmd_list "prod"; [ "$status" -eq 0 ]; [[ "$output" == *"${prod_job}"* ]]; [[ "$output" != *"${untagged_job}"* ]]
 
-    # Cleanup
-    cleanup_test_job "$prod_job"
-    cleanup_test_job "$untagged_job"
+    cleanup_test_job "$prod_job"; cleanup_test_job "$untagged_job"
 }
 
 @test "cmd_list filters by non-existent tag shows no jobs" {
     local job_workdir="$BATS_TEST_TMPDIR"
-
-    # Create job with tag
     cmd_add "0 9 * * *" "prod job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null
     local prod_job="$LAST_CREATED_JOB_ID"
 
-    # List jobs with non-existent tag
     run cmd_list "nonexistent"; [ "$status" -eq 0 ]; [[ "$output" != *"${prod_job}"* ]]
 
-    # Cleanup
     cleanup_test_job "$prod_job"
 }
 
 @test "cmd_list filters by tag with multiple tags on job" {
     local job_workdir="$BATS_TEST_TMPDIR"
-
-    # Create job with multiple tags
     cmd_add "0 9 * * *" "multi-tag job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup,daily" >/dev/null
     local multi_job="$LAST_CREATED_JOB_ID"
 
-    # Filter by first tag
     run cmd_list "prod"; [ "$status" -eq 0 ]; [[ "$output" == *"${multi_job}"* ]]
-
-    # Filter by middle tag
     run cmd_list "backup"; [ "$status" -eq 0 ]; [[ "$output" == *"${multi_job}"* ]]
-
-    # Filter by last tag
     run cmd_list "daily"; [ "$status" -eq 0 ]; [[ "$output" == *"${multi_job}"* ]]
-
-    # Filter by non-matching tag
     run cmd_list "staging"; [ "$status" -eq 0 ]; [[ "$output" != *"${multi_job}"* ]]
 
-    # Cleanup
     cleanup_test_job "$multi_job"
 }
 
 @test "cmd_edit updates tags" {
-    local job_id="edittagjob"
-    create_test_meta "$job_id" "/tmp"
-
-    # Add crontab entry
+    local job_id="edittagjob"; create_test_meta "$job_id" "/tmp"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --tags "newtag"; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: none"* ]]
-
-    # Verify tags updated
-    grep -q 'tags="newtag"' "$(get_meta_file "$job_id")"
+    run cmd_edit "$job_id" --tags "newtag"; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: none"* ]]; grep -q 'tags="newtag"' "$(get_meta_file "$job_id")"
 
     cleanup_test_job "$job_id"
 }
 
 @test "cmd_edit clears tags with empty string" {
-    local job_id="edittagjob2"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
-
-    # Add crontab entry
+    local job_id="edittagjob2"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --tags ""; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: prod,backup → none"* ]]
-
-    # Verify tags removed from metadata
-    ! grep -q 'tags=' "$(get_meta_file "$job_id")"
+    run cmd_edit "$job_id" --tags ""; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: prod,backup → none"* ]]; ! grep -q 'tags=' "$(get_meta_file "$job_id")"
 
     cleanup_test_job "$job_id"
 }
 
 @test "cmd_edit updates timeout" {
-    local job_id="edittimeout"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "60"
-
-    # Add crontab entry
+    local job_id="edittimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "60"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --timeout "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
-
-    # Verify timeout updated in metadata
-    grep -q 'timeout="300"' "$(get_meta_file "$job_id")"
+    run cmd_edit "$job_id" --timeout "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]; grep -q 'timeout="300"' "$(get_meta_file "$job_id")"
 
     cleanup_test_job "$job_id"
 }
 
 @test "cmd_edit rejects invalid cron expression" {
-    local job_id="editinvalid"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-
-    # Add crontab entry
+    local job_id="editinvalid"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --cron "invalid cron"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
@@ -1387,10 +1320,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid workdir" {
-    local job_id="editworkdir"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-
-    # Add crontab entry
+    local job_id="editworkdir"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --workdir "/nonexistent/path/12345"; [ "$status" -eq 3 ]; [[ "$output" == *"not found"* ]]  # EXIT_INVALID_ARGS
@@ -1399,10 +1329,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid permission mode" {
-    local job_id="editperm"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-
-    # Add crontab entry
+    local job_id="editperm"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --permission-mode "invalid_mode"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
@@ -1411,10 +1338,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid timeout" {
-    local job_id="edittimeout"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-
-    # Add crontab entry
+    local job_id="edittimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --timeout "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
