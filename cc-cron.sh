@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.335"
+readonly VERSION="2.4.336"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -806,9 +806,7 @@ cmd_edit() {
     [[ -f "${DATA_DIR}/${job_id}.paused" ]] || crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
 
     success "Updated job: ${job_id}"; [[ "$cron" != "$new_cron" ]] && info "Schedule: ${cron} → ${new_cron}" || true
-    [[ "$prompt" != "$new_prompt" ]] && info "Prompt updated" || true
-    [[ "$workdir" != "$new_workdir" ]] && info "Workdir: ${workdir} → ${new_workdir}" || true
-    [[ "${tags:-}" != "$new_tags" ]] && info "Tags: ${tags:-none} → ${new_tags:-none}" || true
+    [[ "$prompt" != "$new_prompt" ]] && info "Prompt updated" || true; [[ "$workdir" != "$new_workdir" ]] && info "Workdir: ${workdir} → ${new_workdir}" || true; [[ "${tags:-}" != "$new_tags" ]] && info "Tags: ${tags:-none} → ${new_tags:-none}" || true
 }
 
 # Clone an existing job with a new ID
