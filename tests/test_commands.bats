@@ -1644,10 +1644,7 @@ EOF
     local job_id="showtimeout"
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Timeout:"* ]]
-    [[ "$output" == *"300s"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Timeout:"* ]]; [[ "$output" == *"300s"* ]]
 
     rm -f "$(get_meta_file "$job_id")"
 }
@@ -1656,10 +1653,7 @@ EOF
     local job_id="showmodel"
     create_test_meta "$job_id" "/tmp" "sonnet"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Model:"* ]]
-    [[ "$output" == *"sonnet"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Model:"* ]]; [[ "$output" == *"sonnet"* ]]
 
     rm -f "$(get_meta_file "$job_id")"
 }
@@ -1669,9 +1663,7 @@ EOF
     create_test_meta "$job_id"
     touch "${DATA_DIR}/${job_id}.paused"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"PAUSED"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"PAUSED"* ]]
 
     rm -f "$(get_meta_file "$job_id")" "${DATA_DIR}/${job_id}.paused"
 }
@@ -1684,11 +1676,7 @@ EOF
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:05:00" status="failed" exit_code="1"' >> "$history_file"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Statistics:"* ]]
-    [[ "$output" == *"Total runs:"* ]]
-    [[ "$output" == *"2"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Statistics:"* ]]; [[ "$output" == *"Total runs:"* ]]; [[ "$output" == *"2"* ]]
 
     rm -f "$(get_meta_file "$job_id")" "$history_file"
 }
@@ -1697,10 +1685,7 @@ EOF
     local job_id="showmissinghist"
     create_test_meta "$job_id"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Job Details"* ]]
-    [[ "$output" != *"Statistics:"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job Details"* ]]; [[ "$output" != *"Statistics:"* ]]
 
     rm -f "$(get_meta_file "$job_id")"
 }
@@ -1713,9 +1698,7 @@ EOF
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'status="running"' >> "$status_file"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"RUNNING"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"RUNNING"* ]]
 
     rm -f "$(get_meta_file "$job_id")" "$status_file"
 }
@@ -1730,9 +1713,7 @@ EOF
     echo 'status="success"' >> "$status_file"
     echo 'exit_code="0"' >> "$status_file"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"SUCCESS"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"SUCCESS"* ]]
 
     rm -f "$(get_meta_file "$job_id")" "$status_file"
 }
@@ -1747,10 +1728,7 @@ EOF
     echo 'status="failed"' >> "$status_file"
     echo 'exit_code="42"' >> "$status_file"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"FAILED"* ]]
-    [[ "$output" == *"42"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"FAILED"* ]]; [[ "$output" == *"42"* ]]
 
     rm -f "$(get_meta_file "$job_id")" "$status_file"
 }
@@ -1762,44 +1740,28 @@ EOF
     # Skip if there are existing cc-cron jobs
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
-    run cmd_status
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Total scheduled jobs: 0"* ]]
+    run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"Total scheduled jobs: 0"* ]]
 }
 
 @test "build_cron_entry handles special characters in prompt" {
     local prompt="Test with 'single quotes' and \"double quotes\""
-    run build_cron_entry "abc123" "0 9 * * *" "/tmp/run.sh" "true" "$prompt"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"CC-CRON:abc123"* ]]
+    run build_cron_entry "abc123" "0 9 * * *" "/tmp/run.sh" "true" "$prompt"; [ "$status" -eq 0 ]; [[ "$output" == *"CC-CRON:abc123"* ]]
 }
 
 @test "cmd_help logs shows detailed help" {
-    run cmd_help "logs"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron logs"* ]]
-    [[ "$output" == *"--tail"* ]]
+    run cmd_help "logs"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron logs"* ]]; [[ "$output" == *"--tail"* ]]
 }
 
 @test "cmd_help run shows detailed help" {
-    run cmd_help "run"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron run"* ]]
-    [[ "$output" == *"Execute a job immediately"* ]]
+    run cmd_help "run"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron run"* ]]; [[ "$output" == *"Execute a job immediately"* ]]
 }
 
 @test "cmd_help show shows detailed help" {
-    run cmd_help "show"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron show"* ]]
-    [[ "$output" == *"Display job details"* ]]
+    run cmd_help "show"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron show"* ]]; [[ "$output" == *"Display job details"* ]]
 }
 
 @test "cmd_help history shows detailed help" {
-    run cmd_help "history"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron history"* ]]
-    [[ "$output" == *"View execution history"* ]]
+    run cmd_help "history"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron history"* ]]; [[ "$output" == *"View execution history"* ]]
 }
 
 @test "cmd_completion outputs bash completion script" {
