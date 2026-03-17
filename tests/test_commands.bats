@@ -2017,178 +2017,83 @@ EOF
 
 @test "validate_cron_field handles edge case ranges" {
     # Test boundary values
-    run validate_cron_field "0" 0 59 "minute"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "59" 0 59 "minute"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "23" 0 23 "hour"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "31" 1 31 "day"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "12" 1 12 "month"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "6" 0 6 "weekday"
-    [ "$status" -eq 0 ]
+    run validate_cron_field "0" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "59" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "23" 0 23 "hour"; [ "$status" -eq 0 ]; run validate_cron_field "31" 1 31 "day"; [ "$status" -eq 0 ]; run validate_cron_field "12" 1 12 "month"; [ "$status" -eq 0 ]; run validate_cron_field "6" 0 6 "weekday"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron_field accepts wildcard" {
-    run validate_cron_field "*" 0 59 "minute"
-    [ "$status" -eq 0 ]
+    run validate_cron_field "*" 0 59 "minute"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron_field accepts valid step patterns" {
-    run validate_cron_field "*/5" 0 59 "minute"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "*/15" 0 59 "minute"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "*/1" 0 59 "minute"
-    [ "$status" -eq 0 ]
+    run validate_cron_field "*/5" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "*/15" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "*/1" 0 59 "minute"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron_field rejects invalid step patterns" {
-    run validate_cron_field "*/0" 0 59 "minute"
-    [ "$status" -eq 3 ]
-
-    run validate_cron_field "*/abc" 0 59 "minute"
-    [ "$status" -eq 3 ]
-
-    run validate_cron_field "*/100" 0 59 "minute"
-    [ "$status" -eq 3 ]
+    run validate_cron_field "*/0" 0 59 "minute"; [ "$status" -eq 3 ]; run validate_cron_field "*/abc" 0 59 "minute"; [ "$status" -eq 3 ]; run validate_cron_field "*/100" 0 59 "minute"; [ "$status" -eq 3 ]
 }
 
 @test "validate_cron_field accepts valid ranges" {
-    run validate_cron_field "1-5" 0 59 "minute"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "0-23" 0 23 "hour"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "1-31" 1 31 "day"
-    [ "$status" -eq 0 ]
+    run validate_cron_field "1-5" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "0-23" 0 23 "hour"; [ "$status" -eq 0 ]; run validate_cron_field "1-31" 1 31 "day"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron_field rejects invalid ranges" {
-    # Start > end
-    run validate_cron_field "5-1" 0 59 "minute"
-    [ "$status" -eq 3 ]
-
-    # Start out of range
-    run validate_cron_field "60-65" 0 59 "minute"
-    [ "$status" -eq 3 ]
-
-    # End out of range
-    run validate_cron_field "50-70" 0 59 "minute"
-    [ "$status" -eq 3 ]
-
-    # Non-numeric range
-    run validate_cron_field "a-b" 0 59 "minute"
-    [ "$status" -eq 3 ]
+    run validate_cron_field "5-1" 0 59 "minute"; [ "$status" -eq 3 ]; run validate_cron_field "60-65" 0 59 "minute"; [ "$status" -eq 3 ]; run validate_cron_field "50-70" 0 59 "minute"; [ "$status" -eq 3 ]; run validate_cron_field "a-b" 0 59 "minute"; [ "$status" -eq 3 ]
 }
 
 @test "validate_cron_field accepts valid comma-separated lists" {
-    run validate_cron_field "1,2,3" 0 59 "minute"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "0,15,30,45" 0 59 "minute"
-    [ "$status" -eq 0 ]
-
-    run validate_cron_field "1,15,30" 0 59 "minute"
-    [ "$status" -eq 0 ]
+    run validate_cron_field "1,2,3" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "0,15,30,45" 0 59 "minute"; [ "$status" -eq 0 ]; run validate_cron_field "1,15,30" 0 59 "minute"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron_field rejects invalid comma-separated lists" {
-    # Value out of range in list
-    run validate_cron_field "1,2,100" 0 59 "minute"
-    [ "$status" -eq 3 ]
-
-    # Non-numeric in list
-    run validate_cron_field "1,abc,3" 0 59 "minute"
-    [ "$status" -eq 3 ]
+    run validate_cron_field "1,2,100" 0 59 "minute"; [ "$status" -eq 3 ]; run validate_cron_field "1,abc,3" 0 59 "minute"; [ "$status" -eq 3 ]
 }
 
 @test "validate_cron_field rejects non-numeric simple values" {
-    run validate_cron_field "abc" 0 59 "minute"
-    [ "$status" -eq 3 ]
-
-    run validate_cron_field "" 0 59 "minute"
-    [ "$status" -eq 3 ]
+    run validate_cron_field "abc" 0 59 "minute"; [ "$status" -eq 3 ]; run validate_cron_field "" 0 59 "minute"; [ "$status" -eq 3 ]
 }
 
 @test "validate_cron accepts all wildcards" {
-    run validate_cron "* * * * *"
-    [ "$status" -eq 0 ]
+    run validate_cron "* * * * *"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron accepts specific values" {
-    run validate_cron "30 9 * * *"
-    [ "$status" -eq 0 ]
+    run validate_cron "30 9 * * *"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron accepts ranges" {
-    run validate_cron "0 9-17 * * *"
-    [ "$status" -eq 0 ]
+    run validate_cron "0 9-17 * * *"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron accepts step patterns" {
-    run validate_cron "*/5 * * * *"
-    [ "$status" -eq 0 ]
+    run validate_cron "*/5 * * * *"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron accepts lists" {
-    run validate_cron "0,30 9,17 * * *"
-    [ "$status" -eq 0 ]
+    run validate_cron "0,30 9,17 * * *"; [ "$status" -eq 0 ]
 }
 
 @test "validate_cron rejects too few fields" {
-    run validate_cron "0 9 * *"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"5 fields"* ]]
+    run validate_cron "0 9 * *"; [ "$status" -eq 3 ]; [[ "$output" == *"5 fields"* ]]
 }
 
 @test "validate_cron rejects too many fields" {
-    run validate_cron "0 9 * * * *"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"5 fields"* ]]
+    run validate_cron "0 9 * * * *"; [ "$status" -eq 3 ]; [[ "$output" == *"5 fields"* ]]
 }
 
 @test "validate_cron rejects invalid minute" {
-    run validate_cron "60 9 * * *"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"minute"* ]]
+    run validate_cron "60 9 * * *"; [ "$status" -eq 3 ]; [[ "$output" == *"minute"* ]]
 }
 
 @test "validate_cron rejects invalid hour" {
-    run validate_cron "0 24 * * *"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"hour"* ]]
+    run validate_cron "0 24 * * *"; [ "$status" -eq 3 ]; [[ "$output" == *"hour"* ]]
 }
 
 @test "cmd_completion includes all command aliases" {
-    run cmd_completion
-    [ "$status" -eq 0 ]
-    # Check for command aliases
-    [[ "$output" == *"disable"* ]]
-    [[ "$output" == *"enable"* ]]
+    run cmd_completion; [ "$status" -eq 0 ]; [[ "$output" == *"disable"* ]]; [[ "$output" == *"enable"* ]]
 }
 
 @test "cmd_completion includes edit options" {
-    run cmd_completion
-    [ "$status" -eq 0 ]
-    # Check for edit/clone options
-    [[ "$output" == *"--cron"* ]]
-    [[ "$output" == *"--prompt"* ]]
-    [[ "$output" == *"--workdir"* ]]
-    [[ "$output" == *"--model"* ]]
-    [[ "$output" == *"--permission-mode"* ]]
-    [[ "$output" == *"--timeout"* ]]
-    [[ "$output" == *"--tags"* ]]
+    run cmd_completion; [ "$status" -eq 0 ]; [[ "$output" == *"--cron"* ]]; [[ "$output" == *"--prompt"* ]]; [[ "$output" == *"--workdir"* ]]; [[ "$output" == *"--model"* ]]; [[ "$output" == *"--permission-mode"* ]]; [[ "$output" == *"--timeout"* ]]; [[ "$output" == *"--tags"* ]]
 }
 
 @test "cmd_add --quiet outputs only job ID" {
