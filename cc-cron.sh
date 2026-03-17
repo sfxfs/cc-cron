@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.251"
+readonly VERSION="2.4.252"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1337,21 +1337,11 @@ cmd_config() {
 
             # Validate key and value
             case "$key" in
-                workdir)
-                    [[ -d "$value" ]] || error "Directory not found: ${value}" "$EXIT_INVALID_ARGS"
-                    ;;
-                model)
-                    # Accept any model name
-                    ;;
-                permission_mode)
-                    validate_permission_mode "$value"
-                    ;;
-                timeout)
-                    validate_timeout "$value"
-                    ;;
-                *)
-                    error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout" "$EXIT_INVALID_ARGS"
-                    ;;
+                workdir) [[ -d "$value" ]] || error "Directory not found: ${value}" "$EXIT_INVALID_ARGS" ;;
+                model) ;; # Accept any model name
+                permission_mode) validate_permission_mode "$value" ;;
+                timeout) validate_timeout "$value" ;;
+                *) error "Invalid config key: ${key}. Valid keys: workdir, model, permission_mode, timeout" "$EXIT_INVALID_ARGS" ;;
             esac
 
             # Update config file
