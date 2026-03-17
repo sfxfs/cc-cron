@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.316"
+readonly VERSION="2.4.317"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -159,15 +159,13 @@ get_stat() {
 # Escape string for safe embedding in shell variable assignment
 # Escapes backslashes and double quotes
 escape_shell_string() {
-    local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"
-    echo "$s"
+    local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"; echo "$s"
 }
 
 # Escape string for JSON output
 # Escapes backslashes, double quotes, and control characters
 escape_json_string() {
-    local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"; s="${s//$'\n'/\\n}"; s="${s//$'\r'/\\r}"; s="${s//$'\t'/\\t}"
-    echo "$s"
+    local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"; s="${s//$'\n'/\\n}"; s="${s//$'\r'/\\r}"; s="${s//$'\t'/\\t}"; echo "$s"
 }
 
 # Generate unique job ID with collision detection (optimized)
