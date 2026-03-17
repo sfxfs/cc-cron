@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.314"
+readonly VERSION="2.4.315"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -49,8 +49,7 @@ error() {
 
 # Helper to validate and get numeric value safely
 safe_numeric() {
-    local value="$1" default="$2"
-    [[ "$value" =~ ^[0-9]+$ ]] && echo "$value" || echo "$default"
+    local value="$1" default="$2"; [[ "$value" =~ ^[0-9]+$ ]] && echo "$value" || echo "$default"
 }
 
 # Environment configuration (can be overridden by config file)
