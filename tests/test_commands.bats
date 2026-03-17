@@ -1146,11 +1146,7 @@ EOF
 }
 
 @test "cmd_status shows summary" {
-    run cmd_status
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"CC-Cron Status Report"* ]]
-    [[ "$output" == *"Total scheduled jobs"* ]]
-    [[ "$output" == *"Summary"* ]]
+    run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"CC-Cron Status Report"* ]]; [[ "$output" == *"Total scheduled jobs"* ]]; [[ "$output" == *"Summary"* ]]
 }
 
 @test "cmd_add creates job with defaults" {
@@ -1164,25 +1160,20 @@ EOF
 }
 
 @test "cmd_add validates cron expression" {
-    run cmd_add "invalid" "test" "true" "$BATS_TEST_TMPDIR" "" "bypassPermissions" "0"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_add "invalid" "test" "true" "$BATS_TEST_TMPDIR" "" "bypassPermissions" "0"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add validates workdir" {
-    run cmd_add "0 9 * * *" "test" "true" "/nonexistent/path" "" "bypassPermissions" "0"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_add "0 9 * * *" "test" "true" "/nonexistent/path" "" "bypassPermissions" "0"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add validates permission mode" {
-    run cmd_add "0 9 * * *" "test" "true" "$BATS_TEST_TMPDIR" "" "invalid_mode" "0"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_add "0 9 * * *" "test" "true" "$BATS_TEST_TMPDIR" "" "invalid_mode" "0"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add creates one-shot job" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 9 * * *" "one shot" "false" "$job_workdir" "" "bypassPermissions" "0"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"One-shot job"* ]]
+    run cmd_add "0 9 * * *" "one shot" "false" "$job_workdir" "" "bypassPermissions" "0"; [ "$status" -eq 0 ]; [[ "$output" == *"One-shot job"* ]]
 
     # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
@@ -1195,8 +1186,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --model ""
-    [ "$status" -eq 0 ]
+    run cmd_edit "$job_id" --model ""; [ "$status" -eq 0 ]
 
     # Verify model removed from metadata (either absent or empty)
     local meta_content; meta_content=$(cat "$(get_meta_file "$job_id")")
@@ -1212,9 +1202,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --model "opus"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Updated job"* ]]
+    run cmd_edit "$job_id" --model "opus"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
 
     # Verify model updated in metadata
     grep -q 'model="opus"' "$(get_meta_file "$job_id")"
@@ -1229,8 +1217,7 @@ EOF
     cmd_clone "$source_id" --model "haiku" >/dev/null
 
     # Verify cloned job has overridden model
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    grep -q 'model="haiku"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'model="haiku"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1243,9 +1230,7 @@ EOF
     cmd_clone "$source_id" --model "" >/dev/null
 
     # Verify cloned job has no model (either absent or empty)
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    local meta_content; meta_content=$(cat "$(get_meta_file "$LAST_CREATED_JOB_ID")")
-    [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; local meta_content; meta_content=$(cat "$(get_meta_file "$LAST_CREATED_JOB_ID")"); [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1258,8 +1243,7 @@ EOF
     cmd_clone "$source_id" --timeout "300" >/dev/null
 
     # Verify cloned job has overridden timeout
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    grep -q 'timeout="300"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'timeout="300"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1269,9 +1253,7 @@ EOF
     local source_id="cloneinvalid"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
-    run cmd_clone "$source_id" --cron "invalid cron"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid cron"* ]]
+    run cmd_clone "$source_id" --cron "invalid cron"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
 
     rm -f "$(get_meta_file "$source_id")"
 }
@@ -1280,9 +1262,7 @@ EOF
     local source_id="cloneworkdir"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
-    run cmd_clone "$source_id" --workdir "/nonexistent/path/12345"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"not found"* ]]
+    run cmd_clone "$source_id" --workdir "/nonexistent/path/12345"; [ "$status" -eq 3 ]; [[ "$output" == *"not found"* ]]  # EXIT_INVALID_ARGS
 
     rm -f "$(get_meta_file "$source_id")"
 }
@@ -1291,9 +1271,7 @@ EOF
     local source_id="cloneperm"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
-    run cmd_clone "$source_id" --permission-mode "invalid_mode"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid permission mode"* ]]
+    run cmd_clone "$source_id" --permission-mode "invalid_mode"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
 
     rm -f "$(get_meta_file "$source_id")"
 }
@@ -1302,19 +1280,14 @@ EOF
     local source_id="clonetimeout"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
-    run cmd_clone "$source_id" --timeout "-1"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Timeout must be a non-negative number"* ]]
+    run cmd_clone "$source_id" --timeout "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
 
     rm -f "$(get_meta_file "$source_id")"
 }
 
 @test "cmd_add with model and timeout" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 9 * * *" "with model" "true" "$job_workdir" "sonnet" "auto" "300"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Model: sonnet"* ]]
-    [[ "$output" == *"Timeout: 300s"* ]]
+    run cmd_add "0 9 * * *" "with model" "true" "$job_workdir" "sonnet" "auto" "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Model: sonnet"* ]]; [[ "$output" == *"Timeout: 300s"* ]]
 
     # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
