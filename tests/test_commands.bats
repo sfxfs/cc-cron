@@ -1598,10 +1598,7 @@ EOF
     echo 'timeout="0"' >> "$meta_file"
     echo 'run_script="/tmp/run.sh"' >> "$meta_file"
 
-    run cmd_export "$job_id"
-    [ "$status" -eq 0 ]
-    # Check that quotes are escaped in JSON output
-    [[ "$output" == *'\"quotes\"'* ]]
+    run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'\"quotes\"'* ]]  # Check that quotes are escaped in JSON output
 
     rm -f "$meta_file"
 }
@@ -1610,51 +1607,37 @@ EOF
     local job_id="exportags"
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
-    run cmd_export "$job_id"
-    [ "$status" -eq 0 ]
-    # Check that tags are included in JSON output
-    [[ "$output" == *'"tags":"prod,backup"'* ]]
+    run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'"tags":"prod,backup"'* ]]  # Check that tags are included in JSON output
 
     rm -f "$(get_meta_file "$job_id")"
 }
 
 @test "parse_job_options validates permission-mode" {
-    run parse_job_options --permission-mode "invalid_mode"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid permission mode"* ]]
+    run parse_job_options --permission-mode "invalid_mode"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "parse_job_options validates timeout" {
-    run parse_job_options --timeout "not_a_number"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Timeout must be a non-negative number"* ]]
+    run parse_job_options --timeout "not_a_number"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "parse_job_options accepts valid permission-mode" {
-    parse_job_options --permission-mode "auto"
-    [ "$PARSED_PERMISSION" == "auto" ]
+    parse_job_options --permission-mode "auto"; [ "$PARSED_PERMISSION" == "auto" ]
 }
 
 @test "parse_job_options accepts valid timeout" {
-    parse_job_options --timeout "300"
-    [ "$PARSED_TIMEOUT" == "300" ]
+    parse_job_options --timeout "300"; [ "$PARSED_TIMEOUT" == "300" ]
 }
 
 @test "parse_job_options parses workdir" {
-    parse_job_options --workdir "$BATS_TEST_TMPDIR"
-    [ "$PARSED_WORKDIR" == "$BATS_TEST_TMPDIR" ]
+    parse_job_options --workdir "$BATS_TEST_TMPDIR"; [ "$PARSED_WORKDIR" == "$BATS_TEST_TMPDIR" ]
 }
 
 @test "parse_job_options rejects invalid workdir" {
-    run parse_job_options --workdir "/nonexistent/path"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Directory not found"* ]]
+    run parse_job_options --workdir "/nonexistent/path"; [ "$status" -eq 3 ]; [[ "$output" == *"Directory not found"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "parse_job_options rejects unknown option" {
-    run parse_job_options --unknown-option
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Unknown option"* ]]
+    run parse_job_options --unknown-option; [ "$status" -eq 3 ]; [[ "$output" == *"Unknown option"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_show displays timeout when set" {
