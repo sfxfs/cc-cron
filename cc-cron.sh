@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.330"
+readonly VERSION="2.4.331"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -646,8 +646,7 @@ calculate_next_run() {
 
             next_time=$((now + (days_until * 1440 + target_hour * 60 + target_minute - current_hour * 60 - current_minute) * 60))
 
-            local day_names=("Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday")
-            schedule_desc="weekly on ${day_names[$target_weekday]} at ${hour}:${minute}"
+            local day_names=("Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"); schedule_desc="weekly on ${day_names[$target_weekday]} at ${hour}:${minute}"
         else
             # Complex weekday pattern (range, list, etc.)
             schedule_desc="custom schedule (${cron})"; next_time=0
