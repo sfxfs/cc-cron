@@ -1018,8 +1018,7 @@ EOF
     cmd_clone "$source_id" >/dev/null
 
     # Verify cloned job has tags
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1032,8 +1031,7 @@ EOF
     cmd_clone "$source_id" --tags "dev,test" >/dev/null
 
     # Verify cloned job has overridden tags
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    grep -q 'tags="dev,test"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="dev,test"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1046,8 +1044,7 @@ EOF
     cmd_clone "$source_id" --tags "" >/dev/null
 
     # Verify cloned job has no tags
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1060,8 +1057,7 @@ EOF
     cmd_clone "$source_id" --prompt "new prompt text" >/dev/null
 
     # Verify cloned job has overridden prompt
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    grep -q 'prompt="new prompt text"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'prompt="new prompt text"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1074,8 +1070,7 @@ EOF
     cmd_clone "$source_id" --permission-mode "auto" >/dev/null
 
     # Verify cloned job has overridden permission mode
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    grep -q 'permission_mode="auto"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'permission_mode="auto"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1092,9 +1087,7 @@ EOF
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
     # If crontab is empty or has no CC-CRON entries, test the output
-    run cmd_list
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"No scheduled jobs found"* ]] || [[ "$output" == *"Scheduled Claude Code Cron Jobs"* ]]
+    run cmd_list; [ "$status" -eq 0 ]; [[ "$output" == *"No scheduled jobs found"* ]] || [[ "$output" == *"Scheduled Claude Code Cron Jobs"* ]]
 }
 
 @test "cmd_list shows job with metadata" {
@@ -1104,11 +1097,7 @@ EOF
     cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
     local job_id="$LAST_CREATED_JOB_ID"
 
-    run cmd_list
-    [ "$status" -eq 0 ]
-    # Verify the job appears in the output
-    [[ "$output" == *"${job_id}"* ]]
-    [[ "$output" == *"test prompt"* ]]
+    run cmd_list; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"test prompt"* ]]
 
     # Cleanup
     cleanup_test_job "$job_id"
@@ -1121,16 +1110,7 @@ EOF
     cmd_add "0 9 * * *" "json test job" "true" "$job_workdir" "sonnet" "bypassPermissions" "0" "false" "test" >/dev/null
     local job_id="$LAST_CREATED_JOB_ID"
 
-    run cmd_list "" "true"
-    [ "$status" -eq 0 ]
-    # Should be valid JSON array
-    [[ "$output" == "["*"]" ]]
-    # Should contain job id
-    [[ "$output" == *'"id":"'$job_id'"'* ]]
-    # Should contain model
-    [[ "$output" == *'"model":"sonnet"'* ]]
-    # Should contain tags
-    [[ "$output" == *'"tags":"test"'* ]]
+    run cmd_list "" "true"; [ "$status" -eq 0 ]; [[ "$output" == "["*"]" ]]; [[ "$output" == *'"id":"'$job_id'"'* ]]; [[ "$output" == *'"model":"sonnet"'* ]]; [[ "$output" == *'"tags":"test"'* ]]
 
     # Cleanup
     cleanup_test_job "$job_id"
@@ -1147,10 +1127,7 @@ EOF
     local job2="$LAST_CREATED_JOB_ID"
 
     # Filter by prod tag
-    run cmd_list "prod" "true"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *'"id":"'$job1'"'* ]]
-    [[ "$output" != *'"id":"'$job2'"'* ]]
+    run cmd_list "prod" "true"; [ "$status" -eq 0 ]; [[ "$output" == *'"id":"'$job1'"'* ]]; [[ "$output" != *'"id":"'$job2'"'* ]]
 
     # Cleanup
     cleanup_test_job "$job1"
@@ -1165,9 +1142,7 @@ EOF
     local crontab_content; crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
-    run cmd_list "" "true"
-    [ "$status" -eq 0 ]
-    [[ "$output" == "["$'\n'"]" ]] || [[ "$output" == "[]" ]]
+    run cmd_list "" "true"; [ "$status" -eq 0 ]; [[ "$output" == "["$'\n'"]" ]] || [[ "$output" == "[]" ]]
 }
 
 @test "cmd_status shows summary" {
