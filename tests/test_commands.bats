@@ -40,8 +40,7 @@ teardown() {
 
 @test "get_lock_file generates consistent hash" {
     run get_lock_file "/home/user/project"
-    local expected_hash; expected_hash=$(printf '%s' '/home/user/project' | md5sum | cut -d' ' -f1)
-    [ "$output" == "${LOCK_DIR}/${expected_hash}.lock" ]
+    local expected_hash; expected_hash=$(printf '%s' '/home/user/project' | md5sum | cut -d' ' -f1); [ "$output" == "${LOCK_DIR}/${expected_hash}.lock" ]
 }
 
 @test "generate_job_id produces 8 character id" {
@@ -61,9 +60,7 @@ teardown() {
     echo 'id="test0001"' > "$meta_file"
 
     # generate_job_id should still work (generate a different ID)
-    local new_id; new_id=$(generate_job_id)
-    [ "$new_id" != "$existing_id" ]
-    [[ "$new_id" =~ ^[a-z0-9]{8}$ ]]
+    local new_id; new_id=$(generate_job_id); [ "$new_id" != "$existing_id" ]; [[ "$new_id" =~ ^[a-z0-9]{8}$ ]]
 
     rm -f "$meta_file"
 }
@@ -249,8 +246,7 @@ teardown() {
     echo 'created="2024-01-01"' >> "$meta_file"
 
     # Run in a subshell to test variable setting
-    local result; result=$(load_job_meta "$job_id" && echo "$id")
-    [ "$result" == "testmeta" ]
+    local result; result=$(load_job_meta "$job_id" && echo "$id"); [ "$result" == "testmeta" ]
 
     rm -f "$meta_file"
 }
