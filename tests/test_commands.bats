@@ -44,9 +44,7 @@ teardown() {
 }
 
 @test "generate_job_id produces 8 character id" {
-    run generate_job_id
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[a-z0-9]{8}$ ]]
+    run generate_job_id; [ "$status" -eq 0 ]; [[ "$output" =~ ^[a-z0-9]{8}$ ]]
 }
 
 @test "generate_job_id produces unique ids" {
@@ -67,19 +65,15 @@ teardown() {
 
 @test "ensure_data_dir creates directories" {
     run ensure_data_dir
-    [ "$status" -eq 0 ]
-    [ -d "$LOG_DIR" ]
-    [ -d "$LOCK_DIR" ]
+    [ "$status" -eq 0 ]; [ -d "$LOG_DIR" ]; [ -d "$LOCK_DIR" ]
 }
 
 @test "validate_workdir accepts existing directory" {
-    run validate_workdir "$BATS_TEST_TMPDIR"
-    [ "$status" -eq 0 ]
+    run validate_workdir "$BATS_TEST_TMPDIR"; [ "$status" -eq 0 ]
 }
 
 @test "validate_workdir rejects non-existent directory" {
-    run validate_workdir "/nonexistent/path/12345"
-    [ "$status" -ne 0 ]
+    run validate_workdir "/nonexistent/path/12345"; [ "$status" -ne 0 ]
 }
 
 @test "crontab caching works" {
