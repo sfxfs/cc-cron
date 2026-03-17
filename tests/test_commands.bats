@@ -312,8 +312,7 @@ EOF
 
     run cmd_run "$job_id"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"Job executed successfully"* ]]
-    [[ "$output" == *"Job completed successfully"* ]]
+    [[ "$output" == *"Job executed successfully"* ]]; [[ "$output" == *"Job completed successfully"* ]]
 
     cleanup_test_job "$job_id"
 }
@@ -333,8 +332,7 @@ EOF
 
     run cmd_run "$job_id"
     [ "$status" -eq 1 ]
-    [[ "$output" == *"Job failed intentionally"* ]]
-    [[ "$output" == *"exited with code: 1"* ]]
+    [[ "$output" == *"Job failed intentionally"* ]]; [[ "$output" == *"exited with code: 1"* ]]
 
     cleanup_test_job "$job_id"
 }
@@ -367,8 +365,7 @@ EOF
 
     run cmd_next "$job_id"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"${job_id}"* ]]
-    [[ "$output" == *"Next run"* ]]
+    [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"Next run"* ]]
 
     # Cleanup
     cleanup_test_job "$job_id"
@@ -386,8 +383,7 @@ EOF
 
     run cmd_next
     [ "$status" -eq 0 ]
-    [[ "$output" == *"${job1}"* ]]
-    [[ "$output" == *"${job2}"* ]]
+    [[ "$output" == *"${job1}"* ]]; [[ "$output" == *"${job2}"* ]]
 
     # Cleanup
     cleanup_test_job "$job1"
@@ -397,8 +393,7 @@ EOF
 @test "cmd_help next shows detailed help" {
     run cmd_help "next"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron next"* ]]
-    [[ "$output" == *"upcoming scheduled runs"* ]]
+    [[ "$output" == *"cc-cron next"* ]]; [[ "$output" == *"upcoming scheduled runs"* ]]
 }
 
 @test "cmd_edit fails for non-existent job" {
