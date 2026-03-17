@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.356"
+readonly VERSION="2.4.357"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1036,9 +1036,7 @@ purge_old_files() {
         [[ -f "$file" ]] || continue
 
         # Check if file is old enough
-        local file_age; file_age=$(find "$file" -mtime +"$days" 2>/dev/null); [[ -n "$file_age" ]] || continue
-
-        local file_size; file_size=$(get_stat "$file" size || echo "0")
+        local file_age file_size; file_age=$(find "$file" -mtime +"$days" 2>/dev/null); [[ -n "$file_age" ]] || continue; file_size=$(get_stat "$file" size || echo "0")
 
         [[ "$dry_run" == "true" ]] && echo "  [dry-run] Would remove ${label}: ${file}" || { rm -f "$file"; echo "  Removed ${label}: ${file}"; }
         ((PURGE_COUNT++)) || true; ((PURGE_BYTES += file_size)) || true
