@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.302"
+readonly VERSION="2.4.303"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -98,8 +98,7 @@ get_run_script() { echo "${DATA_DIR}/run-${1}.sh"; }
 # Helper to load job metadata, returns error if not found
 load_job_meta() {
     local job_id="$1" meta_file; meta_file=$(get_meta_file "$job_id")
-    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND" || true
-    source "$meta_file"
+    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND" || true; source "$meta_file"
 }
 
 # Extract job ID from a crontab line containing CC-CRON comment
