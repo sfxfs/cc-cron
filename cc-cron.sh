@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.317"
+readonly VERSION="2.4.318"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -106,8 +106,7 @@ extract_job_id() {
 
 # Helper to validate a number is within range
 validate_range() {
-    local value="$1" min="$2" max="$3" context="$4"
-    [[ "$value" -lt "$min" || "$value" -gt "$max" ]] && error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS" || true
+    local value="$1" min="$2" max="$3" context="$4"; [[ "$value" -lt "$min" || "$value" -gt "$max" ]] && error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS" || true
 }
 
 # Helper to remove a file if it exists
