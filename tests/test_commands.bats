@@ -1538,8 +1538,7 @@ EOF
     local json_file="${BATS_TEST_TMPDIR}/invalid.json"
     echo "not valid json" > "$json_file"
 
-    run cmd_import "$json_file"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_import "$json_file"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_import handles empty jobs array" {
@@ -1547,9 +1546,7 @@ EOF
     local json_file="${BATS_TEST_TMPDIR}/empty.json"
     echo '{"version":"1.0","jobs":[]}' > "$json_file"
 
-    run cmd_import "$json_file"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"No jobs found"* ]]
+    run cmd_import "$json_file"; [ "$status" -eq 0 ]; [[ "$output" == *"No jobs found"* ]]
 }
 
 @test "cmd_import handles missing workdir" {
@@ -1559,9 +1556,7 @@ EOF
 {"version":"1.0","jobs":[{"id":"test","created":"2024-01-01","cron":"0 9 * * *","recurring":true,"prompt":"test","workdir":"/nonexistent/path/12345","model":"","permission_mode":"bypassPermissions","timeout":0,"paused":false}]}
 EOF
 
-    run cmd_import "$json_file"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Skipping job with missing workdir"* ]]
+    run cmd_import "$json_file"; [ "$status" -eq 0 ]; [[ "$output" == *"Skipping job with missing workdir"* ]]
 }
 
 @test "cmd_import handles invalid cron expression" {
@@ -1571,9 +1566,7 @@ EOF
 {"version":"1.0","jobs":[{"id":"test","created":"2024-01-01","cron":"invalid cron","recurring":true,"prompt":"test","workdir":"${BATS_TEST_TMPDIR}","model":"","permission_mode":"bypassPermissions","timeout":0,"paused":false}]}
 EOF
 
-    run cmd_import "$json_file"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Skipping invalid cron"* ]]
+    run cmd_import "$json_file"; [ "$status" -eq 0 ]; [[ "$output" == *"Skipping invalid cron"* ]]
 }
 
 @test "cmd_import preserves tags" {
@@ -1586,8 +1579,7 @@ EOF
     cmd_import "$json_file" >/dev/null
 
     # Verify the job was created with tags (use the ID from LAST_CREATED_JOB_ID)
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]
-    grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
