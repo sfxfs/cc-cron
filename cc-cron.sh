@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.342"
+readonly VERSION="2.4.343"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -598,9 +598,7 @@ calculate_next_run() {
         else
             # Every hour at specific minute
             local current_minute target_minute minutes_until; current_minute=$(date +%M); current_minute=$((10#$current_minute)); target_minute=$((10#$minute)); minutes_until=$(( (target_minute - current_minute + 60) % 60 ))
-            [[ $minutes_until -eq 0 ]] && minutes_until=60
-            next_time=$((now + minutes_until * 60))
-            schedule_desc="hourly at minute $minute"
+            [[ $minutes_until -eq 0 ]] && minutes_until=60; next_time=$((now + minutes_until * 60)); schedule_desc="hourly at minute $minute"
         fi
     elif [[ "$day" == "*" && "$month" == "*" && "$weekday" == "*" ]]; then
         # Check for hour step pattern like */2
