@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.313] - 2026-03-17
+
+### Refactor
+- Combine source and local declaration in cmd_status
+
 ## [2.4.312] - 2026-03-17
 
 ### Refactor

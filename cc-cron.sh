@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.312"
+readonly VERSION="2.4.313"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -882,8 +882,7 @@ cmd_status() {
         local status_file log_file; status_file=$(get_status_file "$id"); log_file=$(get_log_file "$id")
 
         if [[ -f "$status_file" ]]; then
-            source "$status_file"
-            local status_icon
+            source "$status_file"; local status_icon
 
             # Check if job is currently running (has start_time but no end_time, or status=running)
             if [[ "${status:-}" == "running" ]] || { [[ -n "${start_time:-}" ]] && [[ -z "${end_time:-}" ]]; }; then
