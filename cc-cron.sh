@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.341"
+readonly VERSION="2.4.342"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -590,9 +590,7 @@ calculate_next_run() {
             if [[ "$step" =~ ^[0-9]+$ ]]; then
                 # Every N minutes
                 local current_minute minutes_until; current_minute=$(date +%M); current_minute=$((10#$current_minute)); minutes_until=$(( (step - current_minute % step) % step ))
-                [[ $minutes_until -eq 0 ]] && minutes_until=$step
-                next_time=$((now + minutes_until * 60))
-                schedule_desc="every ${step} minutes"
+                [[ $minutes_until -eq 0 ]] && minutes_until=$step; next_time=$((now + minutes_until * 60)); schedule_desc="every ${step} minutes"
             else
                 # Invalid step pattern
                 schedule_desc="custom schedule (${cron})"; next_time=0
