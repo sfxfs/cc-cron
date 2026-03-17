@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.269"
+readonly VERSION="2.4.270"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -919,17 +919,14 @@ cmd_status() {
 
             # Check if job is currently running (has start_time but no end_time, or status=running)
             if [[ "${status:-}" == "running" ]] || { [[ -n "${start_time:-}" ]] && [[ -z "${end_time:-}" ]]; }; then
-                status_icon="${YELLOW}◉ RUNNING${NC}"
-                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    Workdir: ${workdir}\n"; ((running_count++)) || true
+                status_icon="${YELLOW}◉ RUNNING${NC}"; echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    Workdir: ${workdir}\n"; ((running_count++)) || true
             else
                 case "${status:-}" in
                     success) status_icon="${GREEN}✓ SUCCESS${NC}"; ((success_count++)) || true ;;
                     failed) status_icon="${RED}✗ FAILED${NC}"; ((failed_count++)) || true ;;
                     *) status_icon="${YELLOW}? UNKNOWN${NC}"; ((unknown_count++)) || true ;;
                 esac
-                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    End:   ${end_time:-unknown}"
-                [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}" || true
-                echo -e "    Workdir: ${workdir}\n"
+                echo -e "  ${id}: ${status_icon}\n    Start: ${start_time:-unknown}\n    End:   ${end_time:-unknown}"; [[ -n "${exit_code:-}" ]] && echo "    Exit code: ${exit_code}" || true; echo -e "    Workdir: ${workdir}\n"
             fi
         elif [[ -f "$log_file" ]]; then
             # Has log but no status (old format or running)
