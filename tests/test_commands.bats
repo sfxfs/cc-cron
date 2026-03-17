@@ -869,8 +869,7 @@ EOF
 }
 
 @test "get_crontab returns content or empty" {
-    _CRONTAB_CACHE=""
-    run get_crontab; [ "$status" -eq 0 ]  # Should succeed (may be empty if no crontab)
+    _CRONTAB_CACHE=""; run get_crontab; [ "$status" -eq 0 ]  # Should succeed (may be empty if no crontab)
 }
 
 @test "write_meta_file creates valid metadata" {
