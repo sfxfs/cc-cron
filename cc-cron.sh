@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.237"
+readonly VERSION="2.4.238"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1478,8 +1478,7 @@ cmd_doctor() {
 
     # Check 6: Lock files
     echo -e "\n6. Checking lock files..."
-    local lock_count; lock_count=$(find "$LOCK_DIR" -name "*.lock" 2>/dev/null | wc -l)
-    echo "   Active lock files: ${lock_count}"
+    local lock_count; lock_count=$(find "$LOCK_DIR" -name "*.lock" 2>/dev/null | wc -l); echo "   Active lock files: ${lock_count}"
     [[ "$lock_count" -gt 0 ]] && {
         echo "   ! Some jobs may be stuck or running"
         for lock_file in "$LOCK_DIR"/*.lock; do
