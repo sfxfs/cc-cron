@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.334"
+readonly VERSION="2.4.335"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1272,11 +1272,9 @@ cmd_doctor() {
 
     # Check 9: Permission issues
     echo -e "\n9. Checking permissions..."
-    local perm_issues=0
-    for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
+    local perm_issues=0; for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
         [[ -d "$dir" && ! -w "$dir" ]] && { echo "   ✗ No write permission: ${dir}"; ((perm_issues++)) || true; }
-    done
-    [[ $perm_issues -eq 0 ]] && echo "   ✓ All directories are writable" || ((issues++)) || true
+    done; [[ $perm_issues -eq 0 ]] && echo "   ✓ All directories are writable" || ((issues++)) || true
 
     # Summary
     echo -e "\n================================"
