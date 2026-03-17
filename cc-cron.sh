@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.307"
+readonly VERSION="2.4.308"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1329,10 +1329,7 @@ cmd_doctor() {
 
     # Summary
     echo -e "\n================================"
-    [[ $issues -eq 0 && $warnings -eq 0 ]] && echo -e "${GREEN}All checks passed!${NC}\n" || {
-        [[ $issues -gt 0 ]] && echo -e "${RED}Found ${issues} issue(s) that need attention${NC}"
-        [[ $warnings -gt 0 ]] && echo -e "${YELLOW}Found ${warnings} warning(s)${NC}\n"
-    }
+    [[ $issues -eq 0 && $warnings -eq 0 ]] && echo -e "${GREEN}All checks passed!${NC}\n" || { [[ $issues -gt 0 ]] && echo -e "${RED}Found ${issues} issue(s) that need attention${NC}"; [[ $warnings -gt 0 ]] && echo -e "${YELLOW}Found ${warnings} warning(s)${NC}\n"; }
 
     # Return non-zero if there are issues
     [[ $issues -eq 0 ]]
