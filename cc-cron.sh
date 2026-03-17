@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.308"
+readonly VERSION="2.4.309"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -546,11 +546,7 @@ cmd_logs() {
         [[ -f "$(get_meta_file "$job_id")" ]] && error "No logs found for job: ${job_id}. The job may not have run yet." "$EXIT_NOT_FOUND" || error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
     }
 
-    if [[ "$follow" == "true" ]]; then
-        info "Following logs for job ${job_id} (Ctrl+C to stop)..."; echo "================================="; tail -f "$log_file"
-    else
-        info "Logs for job ${job_id}:"; echo "================================="; cat "$log_file"
-    fi
+    [[ "$follow" == "true" ]] && { info "Following logs for job ${job_id} (Ctrl+C to stop)..."; echo "================================="; tail -f "$log_file"; } || { info "Logs for job ${job_id}:"; echo "================================="; cat "$log_file"; }
 }
 
 # Pause a job (comment out in crontab)
