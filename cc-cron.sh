@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.239"
+readonly VERSION="2.4.240"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -873,11 +873,7 @@ cmd_history() {
         echo -e "Recent executions:\n------------------"
         tail -n "$lines" "$history_file" | while IFS= read -r line; do
             # Parse using bash parameter expansion (more portable than grep -oP)
-            local h_start h_end h_status h_exit
-            h_start="${line#*start=\"}" && h_start="${h_start%%\"*}"
-            h_end="${line#*end=\"}" && h_end="${h_end%%\"*}"
-            h_status="${line#*status=\"}" && h_status="${h_status%%\"*}"
-            h_exit="${line#*exit_code=\"}" && h_exit="${h_exit%%\"*}"
+            local h_start h_end h_status h_exit; h_start="${line#*start=\"}" && h_start="${h_start%%\"*}"; h_end="${line#*end=\"}" && h_end="${h_end%%\"*}"; h_status="${line#*status=\"}" && h_status="${h_status%%\"*}"; h_exit="${line#*exit_code=\"}" && h_exit="${h_exit%%\"*}"
 
             case "$h_status" in
                 success) echo -e "  ${GREEN}✓${NC} ${h_start} - ${h_end}" ;;
