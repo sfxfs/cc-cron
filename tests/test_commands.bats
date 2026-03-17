@@ -1931,8 +1931,7 @@ EOF
 }
 
 @test "cmd_stats shows stats for specific job" {
-    local job_id="statsjob" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id")
-    create_test_meta "$job_id"
+    local job_id="statsjob" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id"); create_test_meta "$job_id"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="success" exit_code="0"' >> "$history_file"
     echo 'start="2024-01-03 10:00:00" end="2024-01-03 10:02:00" status="failed" exit_code="1"' >> "$history_file"
@@ -1946,8 +1945,7 @@ EOF
 
 @test "cmd_stats shows stats for all jobs" {
     local job_id1="statsjob1" job_id2="statsjob2" meta_file1 meta_file2 history_file1 history_file2
-    meta_file1=$(get_meta_file "$job_id1"); meta_file2=$(get_meta_file "$job_id2"); history_file1=$(get_history_file "$job_id1"); history_file2=$(get_history_file "$job_id2")
-    create_test_meta "$job_id1"; create_test_meta "$job_id2"
+    meta_file1=$(get_meta_file "$job_id1"); meta_file2=$(get_meta_file "$job_id2"); history_file1=$(get_history_file "$job_id1"); history_file2=$(get_history_file "$job_id2"); create_test_meta "$job_id1"; create_test_meta "$job_id2"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file1"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:05:00" status="failed" exit_code="1"' > "$history_file2"
     run cmd_stats; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id1}"* ]]; [[ "$output" == *"${job_id2}"* ]]
@@ -2001,10 +1999,7 @@ EOF
 }
 
 @test "cmd_stats handles malformed history entries gracefully" {
-    local job_id="malformedstats" meta_file; meta_file=$(get_meta_file "$job_id")
-    local history_file; history_file=$(get_history_file "$job_id")
-
-    create_test_meta "$job_id"
+    local job_id="malformedstats" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id"); create_test_meta "$job_id"
 
     # Create history with malformed entries
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
@@ -2018,10 +2013,8 @@ EOF
 
 @test "cmd_stats for all jobs resets optional fields between iterations" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    cmd_add "0 9 * * *" "tagged job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup" >/dev/null
-    local tagged_job="$LAST_CREATED_JOB_ID"
-    cmd_add "0 10 * * *" "untagged job" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null
-    local untagged_job="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "tagged job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup" >/dev/null; local tagged_job="$LAST_CREATED_JOB_ID"
+    cmd_add "0 10 * * *" "untagged job" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null; local untagged_job="$LAST_CREATED_JOB_ID"
     [ -f "$(get_meta_file "$tagged_job")" ]; [ -f "$(get_meta_file "$untagged_job")" ]
     run cmd_stats; [ "$status" -eq 0 ]; [[ "$output" == *"${tagged_job}"* ]]; [[ "$output" == *"${untagged_job}"* ]]
     rm -f "$(get_meta_file "$tagged_job")" "$(get_run_script "$tagged_job")" "$(get_meta_file "$untagged_job")" "$(get_run_script "$untagged_job")"
