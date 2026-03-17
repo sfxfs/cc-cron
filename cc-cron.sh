@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.298"
+readonly VERSION="2.4.299"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -699,11 +699,7 @@ cmd_next() {
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            local id meta_file; id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$id")
-            [[ ! -f "$meta_file" ]] && continue
-
-            # Reset optional fields to avoid persistence from previous iterations
-            local tags="" model="" modified=""
+            local id meta_file; id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$id"); [[ ! -f "$meta_file" ]] && continue; local tags="" model="" modified=""
             source "$meta_file"
 
             # Check if paused
