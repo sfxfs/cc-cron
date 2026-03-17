@@ -445,11 +445,7 @@ EOF
     local job_id="testexp"
     create_test_meta "$job_id"
 
-    run cmd_export "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *'"version":"1.0"'* ]]
-    [[ "$output" == *'"jobs":['* ]]
-    [[ "$output" == *'"id":"testexp"'* ]]
+    run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'"version":"1.0"'* ]]; [[ "$output" == *'"jobs":['* ]]; [[ "$output" == *'"id":"testexp"'* ]]
 
     rm -f "$(get_meta_file "$job_id")"
 }
@@ -458,9 +454,7 @@ EOF
     local job_id="fileexp" output_file="${BATS_TEST_TMPDIR}/export.json"
     create_test_meta "$job_id"
 
-    run cmd_export "$job_id" "$output_file"
-    [ "$status" -eq 0 ]
-    [ -f "$output_file" ]
+    run cmd_export "$job_id" "$output_file"; [ "$status" -eq 0 ]; [ -f "$output_file" ]
 
     # Verify file content
     grep -q '"id":"fileexp"' "$output_file"
@@ -469,24 +463,19 @@ EOF
 }
 
 @test "cmd_purge accepts days argument" {
-    run cmd_purge "30"
-    [ "$status" -eq 0 ]
+    run cmd_purge "30"; [ "$status" -eq 0 ]
 }
 
 @test "cmd_purge rejects invalid days argument" {
-    run cmd_purge "invalid"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_purge "invalid"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_purge rejects negative days argument" {
-    run cmd_purge "-1"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_purge "-1"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_purge dry-run mode works" {
-    run cmd_purge "30" "true"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"dry-run"* ]] || [[ "$output" == *"Purging"* ]]
+    run cmd_purge "30" "true"; [ "$status" -eq 0 ]; [[ "$output" == *"dry-run"* ]] || [[ "$output" == *"Purging"* ]]
 }
 
 @test "purge_old_files handles empty directory" {
@@ -499,8 +488,7 @@ EOF
 
     purge_old_files "$empty_dir" "log" "30" "false" "test log"
 
-    [ "$PURGE_COUNT" -eq 0 ]
-    [ "$PURGE_BYTES" -eq 0 ]
+    [ "$PURGE_COUNT" -eq 0 ]; [ "$PURGE_BYTES" -eq 0 ]
 
     rm -rf "$empty_dir"
 }
@@ -541,10 +529,7 @@ EOF
     load_config
 
     # Verify values were set
-    [ "$CC_WORKDIR" == "/tmp" ]
-    [ "$CC_MODEL" == "sonnet" ]
-    [ "$CC_PERMISSION_MODE" == "auto" ]
-    [ "$CC_TIMEOUT" == "60" ]
+    [ "$CC_WORKDIR" == "/tmp" ]; [ "$CC_MODEL" == "sonnet" ]; [ "$CC_PERMISSION_MODE" == "auto" ]; [ "$CC_TIMEOUT" == "60" ]
 
     # Restore
     CONFIG_FILE="$orig_config"
@@ -590,39 +575,31 @@ EOF
     load_config
 
     # Valid values should be set
-    [ "$CC_WORKDIR" == "/tmp" ]
-    [ "$CC_MODEL" == "sonnet" ]
+    [ "$CC_WORKDIR" == "/tmp" ]; [ "$CC_MODEL" == "sonnet" ]
 
     CONFIG_FILE="$orig_config"
 }
 
 @test "cmd_config list works" {
-    run cmd_config list
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Current configuration"* ]]
+    run cmd_config list; [ "$status" -eq 0 ]; [[ "$output" == *"Current configuration"* ]]
 }
 
 @test "cmd_config set validates workdir" {
-    run cmd_config set workdir "/nonexistent/path"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_config set workdir "/nonexistent/path"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config set validates permission_mode" {
-    run cmd_config set permission_mode invalid
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_config set permission_mode invalid; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config set validates timeout" {
-    run cmd_config set timeout "notanumber"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_config set timeout "notanumber"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config set succeeds for valid model" {
     local config_file="${DATA_DIR}/config"
 
-    run cmd_config set model "sonnet"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Set model"* ]]
+    run cmd_config set model "sonnet"; [ "$status" -eq 0 ]; [[ "$output" == *"Set model"* ]]
 
     # Verify value is set
     grep -q '^model="sonnet"' "$config_file"
@@ -633,9 +610,7 @@ EOF
 @test "cmd_config set succeeds for valid timeout" {
     local config_file="${DATA_DIR}/config"
 
-    run cmd_config set timeout "300"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Set timeout"* ]]
+    run cmd_config set timeout "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Set timeout"* ]]
 
     # Verify value is set
     grep -q '^timeout="300"' "$config_file"
@@ -644,35 +619,26 @@ EOF
 }
 
 @test "cmd_config rejects invalid key" {
-    run cmd_config set invalid_key value
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run cmd_config set invalid_key value; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config set without key returns error" {
-    run cmd_config set
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run cmd_config set; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config set without value returns error" {
-    run cmd_config set workdir
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run cmd_config set workdir; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config unset without key returns error" {
-    run cmd_config unset
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage"* ]]
+    run cmd_config unset; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_config unset removes key" {
     local config_file="${DATA_DIR}/config"
     echo 'workdir="/tmp/test"' > "$config_file"
 
-    run cmd_config unset workdir
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Unset"* ]]
+    run cmd_config unset workdir; [ "$status" -eq 0 ]; [[ "$output" == *"Unset"* ]]
 
     # Verify key is removed
     ! grep -q "^workdir=" "$config_file"
@@ -685,16 +651,13 @@ EOF
     echo 'model="sonnet"' > "$config_file"
 
     # unset should succeed even if key doesn't exist
-    run cmd_config unset workdir
-    [ "$status" -eq 0 ]
+    run cmd_config unset workdir; [ "$status" -eq 0 ]
 
     rm -f "$config_file"
 }
 
 @test "cmd_config rejects unknown action" {
-    run cmd_config unknown_action
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Unknown config action"* ]]
+    run cmd_config unknown_action; [ "$status" -eq 3 ]; [[ "$output" == *"Unknown config action"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_doctor runs without error" {
