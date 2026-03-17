@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.258"
+readonly VERSION="2.4.259"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -155,9 +155,9 @@ get_stat() {
         *)       opts=("-c %s" "-c %y" "-c %Y") ;;
     esac
     case "$format" in
-        size)        stat ${opts[0]} "$file" 2>/dev/null ;;
-        mtime)       stat ${opts[1]} "$file" 2>/dev/null ;;
-        mtime_unix)  stat ${opts[2]} "$file" 2>/dev/null ;;
+        size)       stat ${opts[0]} "$file" 2>/dev/null ;;
+        mtime)      stat ${opts[1]} "$file" 2>/dev/null ;;
+        mtime_unix) stat ${opts[2]} "$file" 2>/dev/null ;;
         *) return 1 ;;
     esac
 }
