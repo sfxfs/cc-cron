@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.248"
+readonly VERSION="2.4.249"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2103,15 +2103,9 @@ _cc_cron_completion() {
             [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}")) || \
                 COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout --tags" -- "${cur}"))
             ;;
-        --model)
-            COMPREPLY=($(compgen -W "sonnet opus haiku" -- "${cur}"))
-            ;;
-        --permission-mode)
-            COMPREPLY=($(compgen -W "bypassPermissions acceptEdits auto default" -- "${cur}"))
-            ;;
-        --workdir)
-            _filedir -d
-            ;;
+        --model) COMPREPLY=($(compgen -W "sonnet opus haiku" -- "${cur}")) ;;
+        --permission-mode) COMPREPLY=($(compgen -W "bypassPermissions acceptEdits auto default" -- "${cur}")) ;;
+        --workdir) _filedir -d ;;
         add)
             case ${#words[@]} in
                 3)
