@@ -2602,80 +2602,44 @@ EOF
 
 # Tests for write_meta_file special character escaping
 @test "write_meta_file escapes double quotes in prompt" {
-    local job_id="escquote" meta_file; meta_file=$(get_meta_file "$job_id")
-    local prompt='He said "hello world" to me'
-
+    local job_id="escquote" meta_file prompt='He said "hello world" to me'; meta_file=$(get_meta_file "$job_id")
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
-
-    # Source the meta file and verify prompt is correctly preserved
-    source "$meta_file"
-    [ "$prompt" == 'He said "hello world" to me' ]
-
+    source "$meta_file"; [ "$prompt" == 'He said "hello world" to me' ]
     rm -f "$meta_file"
 }
 
 @test "write_meta_file escapes backslashes in prompt" {
-    local job_id="escslash" meta_file; meta_file=$(get_meta_file "$job_id")
-    local prompt='Path: C:\Users\test\node_modules'
-
+    local job_id="escslash" meta_file prompt='Path: C:\Users\test\node_modules'; meta_file=$(get_meta_file "$job_id")
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
-
-    # Source the meta file and verify prompt is correctly preserved
-    source "$meta_file"
-    [ "$prompt" == 'Path: C:\Users\test\node_modules' ]
-
+    source "$meta_file"; [ "$prompt" == 'Path: C:\Users\test\node_modules' ]
     rm -f "$meta_file"
 }
 
 @test "write_meta_file escapes both quotes and backslashes in prompt" {
-    local job_id="escboth" meta_file; meta_file=$(get_meta_file "$job_id")
-    local prompt='Test "path" C:\test\folder and "more"'
-
+    local job_id="escboth" meta_file prompt='Test "path" C:\test\folder and "more"'; meta_file=$(get_meta_file "$job_id")
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
-
-    # Source the meta file and verify prompt is correctly preserved
-    source "$meta_file"
-    [ "$prompt" == 'Test "path" C:\test\folder and "more"' ]
-
+    source "$meta_file"; [ "$prompt" == 'Test "path" C:\test\folder and "more"' ]
     rm -f "$meta_file"
 }
 
 @test "write_meta_file escapes special characters in workdir" {
-    local job_id="escwork" meta_file; meta_file=$(get_meta_file "$job_id")
-    local workdir='/path/with "quotes"/and\backslashes'
-
+    local job_id="escwork" meta_file workdir='/path/with "quotes"/and\backslashes'; meta_file=$(get_meta_file "$job_id")
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "$workdir" "" "auto" "0" "/tmp/run.sh"
-
-    # Source the meta file and verify workdir is correctly preserved
-    source "$meta_file"
-    [ "$workdir" == '/path/with "quotes"/and\backslashes' ]
-
+    source "$meta_file"; [ "$workdir" == '/path/with "quotes"/and\backslashes' ]
     rm -f "$meta_file"
 }
 
 @test "write_meta_file escapes special characters in tags" {
-    local job_id="esctags" meta_file; meta_file=$(get_meta_file "$job_id")
-    local tags='tag"with"quotes,and\backslash'
-
+    local job_id="esctags" meta_file tags='tag"with"quotes,and\backslash'; meta_file=$(get_meta_file "$job_id")
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "/tmp" "" "auto" "0" "/tmp/run.sh" "" "$tags"
-
-    # Source the meta file and verify tags are correctly preserved
-    source "$meta_file"
-    [ "$tags" == 'tag"with"quotes,and\backslash' ]
-
+    source "$meta_file"; [ "$tags" == 'tag"with"quotes,and\backslash' ]
     rm -f "$meta_file"
 }
 
 @test "write_meta_file preserves JSON-like prompt" {
-    local job_id="escjson" meta_file; meta_file=$(get_meta_file "$job_id")
-    local prompt='{"key": "value", "nested": {"data": "test"}}'
-
+    local job_id="escjson" meta_file prompt='{"key": "value", "nested": {"data": "test"}}'; meta_file=$(get_meta_file "$job_id")
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
-
-    # Source the meta file and verify prompt is correctly preserved
-    source "$meta_file"
-    [ "$prompt" == '{"key": "value", "nested": {"data": "test"}}' ]
-
+    source "$meta_file"; [ "$prompt" == '{"key": "value", "nested": {"data": "test"}}' ]
     rm -f "$meta_file"
 }
 
