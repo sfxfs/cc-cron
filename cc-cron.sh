@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.301"
+readonly VERSION="2.4.302"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -467,9 +467,7 @@ cmd_list() {
             # Extract job ID from comment using helper
             local job_id meta_file; job_id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$job_id")
             if [[ -f "$meta_file" ]]; then
-                # Reset optional fields to avoid persistence from previous iterations
-                local tags="" model="" modified=""
-                source "$meta_file"
+                local tags="" model="" modified=""; source "$meta_file"
 
                 # Filter by tag if specified
                 [[ -n "$filter_tag" ]] && { [[ -n "${tags:-}" && ",${tags}," == *",${filter_tag},"* ]] || continue; }
@@ -936,9 +934,7 @@ _show_job_stats() {
 
     [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
 
-    # Reset optional fields to avoid persistence from previous iterations
-    local tags="" model="" modified=""
-    source "$meta_file"
+    local tags="" model="" modified=""; source "$meta_file"
 
     echo -e "Job: ${GREEN}${job_id}${NC}\nSchedule: ${cron}"
 
