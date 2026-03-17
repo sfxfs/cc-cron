@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.285"
+readonly VERSION="2.4.286"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -985,8 +985,7 @@ _show_job_stats() {
                 start_ts=$(date -d "$h_start" +%s 2>/dev/null) || continue
                 end_ts=$(date -d "$h_end" +%s 2>/dev/null) || continue
             fi
-            duration=$((end_ts - start_ts))
-            total_duration=$((total_duration + duration)); ((duration_count++)) || true
+            duration=$((end_ts - start_ts)); total_duration=$((total_duration + duration)); ((duration_count++)) || true
         done < "$history_file"
     fi
 
@@ -1127,7 +1126,6 @@ cmd_import() {
 # Helper to purge old files by extension (used by cmd_purge)
 # Arguments: directory, extension, days, dry_run, file_label
 # Returns: number of files purged (via global PURGE_COUNT)
-PURGE_COUNT=0; PURGE_BYTES=0
 purge_old_files() {
     local dir="$1" ext="$2" days="$3" dry_run="$4" label="$5"
 

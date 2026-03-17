@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.286] - 2026-03-17
+
+### Refactor
+- Combine duration calculation statements in _show_job_stats
+- Remove redundant global PURGE_COUNT/PURGE_BYTES initialization
+
 ## [2.4.285] - 2026-03-17
 
 ### Refactor
