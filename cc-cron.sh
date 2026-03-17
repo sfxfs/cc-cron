@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.338"
+readonly VERSION="2.4.339"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1240,8 +1240,7 @@ cmd_doctor() {
     }
 
     # Check 7: Job consistency
-    echo -e "\n7. Checking job consistency..."
-    local crontab_jobs=0 meta_files=0 orphaned=0
+    echo -e "\n7. Checking job consistency..."; local crontab_jobs=0 meta_files=0 orphaned=0
 
     # Count jobs in crontab
     while IFS= read -r line; do
@@ -1253,9 +1252,7 @@ cmd_doctor() {
     # Count meta files
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue; ((meta_files++)) || true
-    done
-
-    echo -e "   Jobs in crontab: ${crontab_jobs}\n   Metadata files:  ${meta_files}"
+    done; echo -e "   Jobs in crontab: ${crontab_jobs}\n   Metadata files:  ${meta_files}"
 
     [[ $orphaned -gt 0 ]] && { echo -e "   ! ${orphaned} orphaned crontab entries found\n     Fix: Run 'cc-cron purge' or manually clean crontab"; ((issues++)) || true; }
 
