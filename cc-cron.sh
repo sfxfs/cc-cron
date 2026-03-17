@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.262"
+readonly VERSION="2.4.263"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1000,19 +1000,18 @@ _show_job_stats() {
             esac
 
             # Calculate duration if we have both start and end
-            if [[ -n "$h_start" && -n "$h_end" ]]; then
-                local start_ts end_ts duration
-                # Handle both Linux (date -d) and macOS (date -j -f)
-                if [[ "$OSTYPE" == "darwin"* ]]; then
-                    start_ts=$(date -j -f "%Y-%m-%d %H:%M:%S" "$h_start" +%s 2>/dev/null) || continue
-                    end_ts=$(date -j -f "%Y-%m-%d %H:%M:%S" "$h_end" +%s 2>/dev/null) || continue
-                else
-                    start_ts=$(date -d "$h_start" +%s 2>/dev/null) || continue
-                    end_ts=$(date -d "$h_end" +%s 2>/dev/null) || continue
-                fi
-                duration=$((end_ts - start_ts))
-                total_duration=$((total_duration + duration)); ((duration_count++)) || true
+            [[ -n "$h_start" && -n "$h_end" ]] || continue
+            local start_ts end_ts duration
+            # Handle both Linux (date -d) and macOS (date -j -f)
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                start_ts=$(date -j -f "%Y-%m-%d %H:%M:%S" "$h_start" +%s 2>/dev/null) || continue
+                end_ts=$(date -j -f "%Y-%m-%d %H:%M:%S" "$h_end" +%s 2>/dev/null) || continue
+            else
+                start_ts=$(date -d "$h_start" +%s 2>/dev/null) || continue
+                end_ts=$(date -d "$h_end" +%s 2>/dev/null) || continue
             fi
+            duration=$((end_ts - start_ts))
+            total_duration=$((total_duration + duration)); ((duration_count++)) || true
         done < "$history_file"
     fi
 
