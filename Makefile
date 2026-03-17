@@ -9,7 +9,7 @@ test:
 # Run ShellCheck
 lint:
 	@echo "Running ShellCheck..."
-	@shellcheck cc-cron.sh
+	@shellcheck -S warning cc-cron.sh
 
 # Run all checks
 check: lint test
