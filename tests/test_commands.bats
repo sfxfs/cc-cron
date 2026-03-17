@@ -966,10 +966,7 @@ EOF
     local source_id="clonetags"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
-    cmd_clone "$source_id" >/dev/null
-
-    # Verify cloned job has tags
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    cmd_clone "$source_id" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="prod,backup"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -979,10 +976,7 @@ EOF
     local source_id="clonetags2"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
-    cmd_clone "$source_id" --tags "dev,test" >/dev/null
-
-    # Verify cloned job has overridden tags
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="dev,test"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    cmd_clone "$source_id" --tags "dev,test" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'tags="dev,test"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -992,10 +986,7 @@ EOF
     local source_id="clonetags3"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0" "prod,backup"
 
-    cmd_clone "$source_id" --tags "" >/dev/null
-
-    # Verify cloned job has no tags
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    cmd_clone "$source_id" --tags "" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; ! grep -q 'tags=' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1005,10 +996,7 @@ EOF
     local source_id="cloneprompt"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}"
 
-    cmd_clone "$source_id" --prompt "new prompt text" >/dev/null
-
-    # Verify cloned job has overridden prompt
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'prompt="new prompt text"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    cmd_clone "$source_id" --prompt "new prompt text" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'prompt="new prompt text"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1018,10 +1006,7 @@ EOF
     local source_id="cloneperm"
     create_test_meta "$source_id" "${BATS_TEST_TMPDIR}" "" "bypassPermissions" "0"
 
-    cmd_clone "$source_id" --permission-mode "auto" >/dev/null
-
-    # Verify cloned job has overridden permission mode
-    [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'permission_mode="auto"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
+    cmd_clone "$source_id" --permission-mode "auto" >/dev/null; [[ -n "${LAST_CREATED_JOB_ID:-}" ]]; grep -q 'permission_mode="auto"' "$(get_meta_file "$LAST_CREATED_JOB_ID")"
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
