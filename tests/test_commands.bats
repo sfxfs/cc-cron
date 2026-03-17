@@ -1605,10 +1605,7 @@ EOF
 }
 
 @test "cmd_pause handles already paused job" {
-    local job_id="alreadypaused" meta_file; meta_file=$(get_meta_file "$job_id")
-    local paused_file="${DATA_DIR}/${job_id}.paused"
-
-    create_test_meta "$job_id" "/tmp"
+    local job_id="alreadypaused" meta_file paused_file; meta_file=$(get_meta_file "$job_id"); paused_file="${DATA_DIR}/${job_id}.paused"; create_test_meta "$job_id" "/tmp"
 
     # Create paused file
     touch "$paused_file"
@@ -1674,8 +1671,7 @@ EOF
 }
 
 @test "cmd_status handles running jobs" {
-    local job_id="runningstatus" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
-    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'status="running"' >> "$status_file"
+    local job_id="runningstatus" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id"); echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'status="running"' >> "$status_file"
 
     run cmd_status; [ "$status" -eq 0 ]
 
@@ -1683,8 +1679,7 @@ EOF
 }
 
 @test "cmd_status handles failed jobs" {
-    local job_id="failedstatus" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
-    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"; echo 'status="failed"' >> "$status_file"; echo 'exit_code="1"' >> "$status_file"
+    local job_id="failedstatus" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id"); echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"; echo 'status="failed"' >> "$status_file"; echo 'exit_code="1"' >> "$status_file"
 
     run cmd_status; [ "$status" -eq 0 ]
 
@@ -1797,8 +1792,7 @@ EOF
 }
 
 @test "cmd_add --quiet outputs only job ID" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" "true" >/dev/null
+    local job_workdir="$BATS_TEST_TMPDIR"; cmd_add "0 9 * * *" "test prompt" "true" "$job_workdir" "" "bypassPermissions" "0" "true" >/dev/null
 
     # Verify job was created
     [[ -n "$LAST_CREATED_JOB_ID" ]]
@@ -1812,8 +1806,7 @@ EOF
 }
 
 @test "cmd_add normal output includes SUCCESS message" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 11 * * *" "normal test" "true" "$job_workdir" "" "bypassPermissions" "0" "false"; [ "$status" -eq 0 ]; [[ "$output" == *"SUCCESS"* ]]; [[ "$output" == *"Created cron job"* ]]
+    local job_workdir="$BATS_TEST_TMPDIR"; run cmd_add "0 11 * * *" "normal test" "true" "$job_workdir" "" "bypassPermissions" "0" "false"; [ "$status" -eq 0 ]; [[ "$output" == *"SUCCESS"* ]]; [[ "$output" == *"Created cron job"* ]]
 
     # Cleanup
     rm -f "$(get_meta_file "$LAST_CREATED_JOB_ID")"
@@ -1823,54 +1816,45 @@ EOF
 # Tests for set -e edge cases (ensures [[ condition ]] && command patterns don't regress)
 
 @test "cmd_edit works on a paused job" {
-    local job_id="editpaused" meta_file; meta_file=$(get_meta_file "$job_id")
-    local paused_file="${DATA_DIR}/${job_id}.paused"
-    create_test_meta "$job_id"
-    touch "$paused_file"
+    local job_id="editpaused" meta_file paused_file; meta_file=$(get_meta_file "$job_id"); paused_file="${DATA_DIR}/${job_id}.paused"; create_test_meta "$job_id"; touch "$paused_file"
     run cmd_edit "$job_id" --prompt "new prompt"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
     rm -f "$meta_file" "$paused_file"
 }
 
 @test "cmd_show without model does not show Model line" {
-    local job_id="shownomodel" meta_file; meta_file=$(get_meta_file "$job_id")
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
+    local job_id="shownomodel" meta_file; meta_file=$(get_meta_file "$job_id"); create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job Details"* ]]; [[ "$output" != *"Model:"* ]]
     rm -f "$meta_file"
 }
 
 @test "cmd_show with model shows Model line" {
-    local job_id="showmodel" meta_file; meta_file=$(get_meta_file "$job_id")
-    create_test_meta "$job_id" "/tmp" "sonnet" "bypassPermissions" "0"
+    local job_id="showmodel" meta_file; meta_file=$(get_meta_file "$job_id"); create_test_meta "$job_id" "/tmp" "sonnet" "bypassPermissions" "0"
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Model:        sonnet"* ]]
     rm -f "$meta_file"
 }
 
 @test "cmd_show with timeout shows Timeout line" {
-    local job_id="showtimeout" meta_file; meta_file=$(get_meta_file "$job_id")
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
+    local job_id="showtimeout" meta_file; meta_file=$(get_meta_file "$job_id"); create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Timeout:      300s"* ]]
     rm -f "$meta_file"
 }
 
 @test "cmd_status with exit code shows Exit code" {
-    local job_id="statusexit" meta_file status_file; meta_file=$(get_meta_file "$job_id"); status_file=$(get_status_file "$job_id")
-    create_test_meta "$job_id"
+    local job_id="statusexit" meta_file status_file; meta_file=$(get_meta_file "$job_id"); status_file=$(get_status_file "$job_id"); create_test_meta "$job_id"
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"; echo 'status="failed"' >> "$status_file"; echo 'exit_code="1"' >> "$status_file"; echo 'workdir="/tmp"' >> "$status_file"
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"Exit code: 1"* ]]
     rm -f "$meta_file" "$status_file"
 }
 
 @test "cmd_status handles unknown status" {
-    local job_id="unknownstatus" meta_file status_file; meta_file=$(get_meta_file "$job_id"); status_file=$(get_status_file "$job_id")
-    create_test_meta "$job_id"
+    local job_id="unknownstatus" meta_file status_file; meta_file=$(get_meta_file "$job_id"); status_file=$(get_status_file "$job_id"); create_test_meta "$job_id"
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"; echo 'status="weird"' >> "$status_file"
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"UNKNOWN"* ]]
     rm -f "$meta_file" "$status_file"
 }
 
 @test "cmd_status handles job with log but no status file" {
-    local job_id="logonly" meta_file log_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id")
-    create_test_meta "$job_id"; touch "$log_file"
+    local job_id="logonly" meta_file log_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); create_test_meta "$job_id"; touch "$log_file"
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"NO STATUS"* ]]
     rm -f "$meta_file" "$log_file"
 }
