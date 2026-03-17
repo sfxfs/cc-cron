@@ -2237,8 +2237,7 @@ EOF
 
 # Tests for cmd_purge actually removing files
 @test "cmd_purge removes old log files" {
-    local job_id="purgejob" meta_file log_file history_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
-    create_test_meta "$job_id"
+    local job_id="purgejob" meta_file log_file history_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id"); create_test_meta "$job_id"
     echo "test log content" > "$log_file"; echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
     touch -d "8 days ago" "$log_file" "$history_file" 2>/dev/null || touch -t "$(date -d '8 days ago' +%Y%m%d%H%M)" "$log_file" "$history_file"
     run cmd_purge "7" "false"; [ "$status" -eq 0 ]; [[ ! -f "$log_file" ]]; [[ ! -f "$history_file" ]]
@@ -2246,9 +2245,7 @@ EOF
 }
 
 @test "cmd_purge keeps recent files" {
-    local job_id="recentpurge" meta_file log_file run_script; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); run_script=$(get_run_script "$job_id")
-
-    create_test_meta "$job_id"
+    local job_id="recentpurge" meta_file log_file run_script; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); run_script=$(get_run_script "$job_id"); create_test_meta "$job_id"
 
     # Add crontab entry so job is not considered an orphan
     crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=test"
@@ -2265,8 +2262,7 @@ EOF
 }
 
 @test "cmd_config set accepts valid permission_mode" {
-    local config_file="${DATA_DIR}/config"
-    rm -f "$config_file"
+    local config_file="${DATA_DIR}/config"; rm -f "$config_file"
 
     run cmd_config "set" "permission_mode" "acceptEdits"; [ "$status" -eq 0 ]; [[ "$output" == *"Set permission_mode"* ]]; [[ -f "$config_file" ]]; grep -q "permission_mode=\"acceptEdits\"" "$config_file"
 
@@ -2278,10 +2274,9 @@ EOF
 }
 
 @test "cmd_remove fails for job without crontab entry but cleans up files" {
-    local job_id="orphanremove" meta_file log_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id")
+    local job_id="orphanremove" meta_file log_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); create_test_meta "$job_id"
 
-    # Create meta file without adding to crontab
-    create_test_meta "$job_id"
+    # Create log file
     echo "test log" > "$log_file"
 
     # Remove should fail since job is not in crontab
