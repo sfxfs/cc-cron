@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.281"
+readonly VERSION="2.4.282"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -939,9 +939,7 @@ cmd_stats() {
     local found=0
     for meta_file in "${LOG_DIR}"/*.meta; do
         [[ -f "$meta_file" ]] || continue
-        local id; id=$(basename "$meta_file" .meta)
-        _show_job_stats "$id"
-        found=$((found + 1))
+        local id; id=$(basename "$meta_file" .meta); _show_job_stats "$id"; found=$((found + 1))
     done
 
     [[ $found -eq 0 ]] && info "No jobs found." || true
