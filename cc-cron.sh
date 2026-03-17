@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.252"
+readonly VERSION="2.4.253"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -307,9 +307,7 @@ parse_job_options() {
                 PARSED_WORKDIR="$2"
                 PARSED_HAS_CHANGES=1; shift 2
                 ;;
-            --model)
-                PARSED_MODEL="${2:-}"; PARSED_MODEL_SET=1; PARSED_HAS_CHANGES=1; shift 2
-                ;;
+            --model) PARSED_MODEL="${2:-}"; PARSED_MODEL_SET=1; PARSED_HAS_CHANGES=1; shift 2 ;;
             --permission-mode)
                 [[ -z "${2:-}" ]] && error "--permission-mode requires a mode" "$EXIT_INVALID_ARGS"
                 validate_permission_mode "$2"
@@ -322,12 +320,8 @@ parse_job_options() {
                 PARSED_TIMEOUT="$2"
                 PARSED_HAS_CHANGES=1; shift 2
                 ;;
-            --tags)
-                PARSED_TAGS="${2:-}"; PARSED_TAGS_SET=1; PARSED_HAS_CHANGES=1; shift 2
-                ;;
-            *)
-                error "Unknown option: $1" "$EXIT_INVALID_ARGS"
-                ;;
+            --tags) PARSED_TAGS="${2:-}"; PARSED_TAGS_SET=1; PARSED_HAS_CHANGES=1; shift 2 ;;
+            *) error "Unknown option: $1" "$EXIT_INVALID_ARGS" ;;
         esac
     done
 }
