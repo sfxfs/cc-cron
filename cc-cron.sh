@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.268"
+readonly VERSION="2.4.269"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -801,8 +801,7 @@ cmd_history() {
         done
     else
         # Fall back to parsing log file timestamps
-        echo -e "No structured history available. Showing recent log entries:\n------------------------------------------------------------"
-        tail -n "$lines" "$log_file"
+        echo -e "No structured history available. Showing recent log entries:\n------------------------------------------------------------"; tail -n "$lines" "$log_file"
     fi
 }
 
@@ -817,10 +816,7 @@ cmd_run() {
 
     [[ ! -f "$run_script" ]] && error "Run script not found for job: ${job_id}" "$EXIT_NOT_FOUND" || true
 
-    info "Running job ${job_id} immediately..."
-    info "Workdir: ${workdir}"
-    info "Prompt: ${prompt}"
-    echo
+    info "Running job ${job_id} immediately..."; info "Workdir: ${workdir}"; info "Prompt: ${prompt}"; echo
 
     # Execute the run script
     "$run_script"
