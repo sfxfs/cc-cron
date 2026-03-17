@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.352"
+readonly VERSION="2.4.353"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1237,8 +1237,7 @@ cmd_doctor() {
     echo -e "\n8. Checking disk space..."; local data_size available_space; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0"); available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}'); echo -e "   Data directory size: ${data_size}\n   Available space: ${available_space}"
 
     # Check 9: Permission issues
-    echo -e "\n9. Checking permissions..."
-    local perm_issues=0; for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
+    echo -e "\n9. Checking permissions..."; local perm_issues=0; for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
         [[ -d "$dir" && ! -w "$dir" ]] && { echo "   ✗ No write permission: ${dir}"; ((perm_issues++)) || true; }
     done; [[ $perm_issues -eq 0 ]] && echo "   ✓ All directories are writable" || ((issues++)) || true
 
