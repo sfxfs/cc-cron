@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.260"
+readonly VERSION="2.4.261"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -428,15 +428,13 @@ cmd_add() {
     ensure_data_dir
 
     # Generate run script using helper
-    local run_script; run_script=$(generate_run_script "$job_id" "$job_workdir" "$job_model" \
-        "$job_permission" "$job_timeout" "$recurring" "$prompt")
+    local run_script; run_script=$(generate_run_script "$job_id" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$recurring" "$prompt")
 
     # Create the cron entry using helper
     crontab_add_entry "$(build_cron_entry "$job_id" "$cron_expr" "$run_script" "$recurring" "$prompt")"
 
     # Save job metadata using helper
-    write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" \
-        "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script" "" "$job_tags"
+    write_meta_file "$job_id" "$timestamp" "$cron_expr" "$recurring" "$prompt" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$run_script" "" "$job_tags"
 
     # Store job ID for programmatic use (e.g., import)
     LAST_CREATED_JOB_ID="$job_id"
@@ -866,12 +864,10 @@ cmd_edit() {
 
     # Update metadata file using helper
     local timestamp new_run_script; timestamp=$(date '+%Y-%m-%d %H:%M:%S'); new_run_script=$(get_run_script "$job_id")
-    write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" \
-        "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp" "$new_tags"
+    write_meta_file "$job_id" "$created" "$new_cron" "$recurring" "$new_prompt" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$new_run_script" "$timestamp" "$new_tags"
 
     # Generate new run script using helper
-    generate_run_script "$job_id" "$new_workdir" "$new_model" "$new_permission" \
-        "$new_timeout" "$recurring" "$new_prompt" > /dev/null
+    generate_run_script "$job_id" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "$recurring" "$new_prompt" > /dev/null
 
     # Re-add to crontab if not paused
     [[ -f "${DATA_DIR}/${job_id}.paused" ]] || crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
@@ -901,8 +897,7 @@ cmd_clone() {
     local new_tags; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
 
     # Create new job with copied settings
-    cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" \
-        "$new_model" "$new_permission" "$new_timeout" "false" "$new_tags"
+    cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "false" "$new_tags"
 
     success "Cloned job ${source_id} → ${LAST_CREATED_JOB_ID}"
 }
@@ -1148,8 +1143,7 @@ cmd_import() {
         }
 
         # Create the job
-        cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" \
-            "$job_model" "$job_permission" "$job_timeout" "false" "$job_tags"
+        cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "false" "$job_tags"
 
         # Pause if needed (use job ID from LAST_CREATED_JOB_ID)
         [[ "$job_paused" == "true" && -n "${LAST_CREATED_JOB_ID:-}" ]] && cmd_pause "$LAST_CREATED_JOB_ID"
