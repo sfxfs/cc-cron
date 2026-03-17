@@ -874,10 +874,7 @@ EOF
 
 @test "build_cron_entry truncates long prompts" {
     local long_prompt="This is a very long prompt that should be truncated to 30 characters for display in crontab"
-    run build_cron_entry "xyz789" "0 * * * *" "/tmp/run.sh" "false" "$long_prompt"
-    [ "$status" -eq 0 ]
-    # The prompt in the output should be truncated to 30 chars
-    [[ "$output" == *"prompt=This is a very long prompt tha"* ]]
+    run build_cron_entry "xyz789" "0 * * * *" "/tmp/run.sh" "false" "$long_prompt"; [ "$status" -eq 0 ]; [[ "$output" == *"prompt=This is a very long prompt tha"* ]]
 }
 
 @test "crontab_has_entry detects existing entry" {
@@ -889,16 +886,14 @@ EOF
     local test_entry="0 9 * * * /tmp/test.sh  # CC-CRON:test123:recurring=true"
     crontab_add_entry "$test_entry"
 
-    run crontab_has_entry "CC-CRON:test123"
-    [ "$status" -eq 0 ]
+    run crontab_has_entry "CC-CRON:test123"; [ "$status" -eq 0 ]
 
     # Cleanup
     crontab_remove_entry "CC-CRON:test123"
 }
 
 @test "crontab_has_entry returns false for missing entry" {
-    run crontab_has_entry "CC-CRON:nonexistent999"
-    [ "$status" -ne 0 ]
+    run crontab_has_entry "CC-CRON:nonexistent999"; [ "$status" -ne 0 ]
 }
 
 @test "crontab_remove_entry removes entry" {
@@ -914,35 +909,25 @@ EOF
     crontab_has_entry "CC-CRON:removeme"
 
     # Remove it
-    run crontab_remove_entry "CC-CRON:removeme"
-    [ "$status" -eq 0 ]
+    run crontab_remove_entry "CC-CRON:removeme"; [ "$status" -eq 0 ]
 
     # Verify it's gone
-    run crontab_has_entry "CC-CRON:removeme"
-    [ "$status" -ne 0 ]
+    run crontab_has_entry "CC-CRON:removeme"; [ "$status" -ne 0 ]
 }
 
 @test "get_crontab returns content or empty" {
     _CRONTAB_CACHE=""
-    run get_crontab
-    # Should succeed (may be empty if no crontab)
-    [ "$status" -eq 0 ]
+    run get_crontab; [ "$status" -eq 0 ]  # Should succeed (may be empty if no crontab)
 }
 
 @test "write_meta_file creates valid metadata" {
     local job_id="testwrite"
-    run write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "sonnet" "auto" "0" "/tmp/run.sh"
-    [ "$status" -eq 0 ]
+    run write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "sonnet" "auto" "0" "/tmp/run.sh"; [ "$status" -eq 0 ]
 
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    [ -f "$meta_file" ]
+    local meta_file; meta_file=$(get_meta_file "$job_id"); [ -f "$meta_file" ]
 
     # Verify content
-    source "$meta_file"
-    [ "$id" == "testwrite" ]
-    [ "$cron" == "0 9 * * *" ]
-    [ "$recurring" == "true" ]
-    [ "$prompt" == "test prompt" ]
+    source "$meta_file"; [ "$id" == "testwrite" ]; [ "$cron" == "0 9 * * *" ]; [ "$recurring" == "true" ]; [ "$prompt" == "test prompt" ]
 
     rm -f "$meta_file"
 }
@@ -951,9 +936,7 @@ EOF
     local job_id="testgen"
     generate_run_script "$job_id" "/tmp" "sonnet" "auto" "0" "true" "test prompt" >/dev/null
 
-    local run_script; run_script=$(get_run_script "$job_id")
-    [ -f "$run_script" ]
-    [ -x "$run_script" ]
+    local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; [ -x "$run_script" ]
 
     # Verify script contains expected elements
     grep -q "claude" "$run_script"
@@ -976,60 +959,42 @@ EOF
 }
 
 @test "require_job_id fails without argument" {
-    run require_job_id "testcmd"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Usage: cc-cron testcmd <job-id>"* ]]
+    run require_job_id "testcmd"; [ "$status" -eq 3 ]; [[ "$output" == *"Usage: cc-cron testcmd <job-id>"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "require_job_id succeeds with argument" {
-    run require_job_id "testcmd" "abc123"
-    [ "$status" -eq 0 ]
+    run require_job_id "testcmd" "abc123"; [ "$status" -eq 0 ]
 }
 
 @test "parse_job_options parses cron option" {
-    parse_job_options --cron "0 12 * * *"
-    [ "$PARSED_CRON" == "0 12 * * *" ]
-    [ "$PARSED_HAS_CHANGES" -eq 1 ]
+    parse_job_options --cron "0 12 * * *"; [ "$PARSED_CRON" == "0 12 * * *" ]; [ "$PARSED_HAS_CHANGES" -eq 1 ]
 }
 
 @test "parse_job_options parses prompt option" {
-    parse_job_options --prompt "new prompt"
-    [ "$PARSED_PROMPT" == "new prompt" ]
-    [ "$PARSED_HAS_CHANGES" -eq 1 ]
+    parse_job_options --prompt "new prompt"; [ "$PARSED_PROMPT" == "new prompt" ]; [ "$PARSED_HAS_CHANGES" -eq 1 ]
 }
 
 @test "parse_job_options parses multiple options" {
-    parse_job_options --cron "0 0 * * *" --prompt "test" --model "sonnet"
-    [ "$PARSED_CRON" == "0 0 * * *" ]
-    [ "$PARSED_PROMPT" == "test" ]
-    [ "$PARSED_MODEL" == "sonnet" ]
-    [ "$PARSED_HAS_CHANGES" -eq 1 ]
+    parse_job_options --cron "0 0 * * *" --prompt "test" --model "sonnet"; [ "$PARSED_CRON" == "0 0 * * *" ]; [ "$PARSED_PROMPT" == "test" ]; [ "$PARSED_MODEL" == "sonnet" ]; [ "$PARSED_HAS_CHANGES" -eq 1 ]
 }
 
 @test "parse_job_options rejects invalid cron" {
-    run parse_job_options --cron "invalid"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
+    run parse_job_options --cron "invalid"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "parse_job_options rejects missing argument" {
-    run parse_job_options --cron
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"requires"* ]]
+    run parse_job_options --cron; [ "$status" -eq 3 ]; [[ "$output" == *"requires"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_clone fails for non-existent job" {
-    run cmd_clone "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_clone "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_clone creates new job from existing" {
     local source_id="clonesrc"
     create_test_meta "$source_id" "/tmp" "sonnet" "auto" "60"
 
-    run cmd_clone "$source_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Cloned job"* ]]
-    [[ "$output" == *"Created cron job"* ]]
+    run cmd_clone "$source_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Cloned job"* ]]; [[ "$output" == *"Created cron job"* ]]
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
@@ -1040,9 +1005,7 @@ EOF
     create_test_meta "$source_id" "/tmp"
 
     # Clone with custom cron
-    run cmd_clone "$source_id" --cron "0 12 * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Cloned job"* ]]
+    run cmd_clone "$source_id" --cron "0 12 * * *"; [ "$status" -eq 0 ]; [[ "$output" == *"Cloned job"* ]]
 
     # Cleanup
     cleanup_clone_test "$source_id" "$LAST_CREATED_JOB_ID"
