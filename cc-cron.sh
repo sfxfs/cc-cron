@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.344"
+readonly VERSION="2.4.345"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -918,11 +918,7 @@ _show_job_stats() {
 
     echo -e "Total runs: ${total_runs}\n  ${GREEN}Success: ${success_count}${NC}\n  ${RED}Failed:  ${failed_count}${NC}"
 
-    # Calculate success rate
-    [[ $total_runs -gt 0 ]] && echo "  Success rate: $((success_count * 100 / total_runs))%"
-
-    # Calculate average duration
-    [[ $duration_count -gt 0 ]] && echo "  Avg duration: $(( (total_duration / duration_count) / 60 ))m $(( (total_duration / duration_count) % 60 ))s"
+    [[ $total_runs -gt 0 ]] && echo "  Success rate: $((success_count * 100 / total_runs))%" || true; [[ $duration_count -gt 0 ]] && echo "  Avg duration: $(( (total_duration / duration_count) / 60 ))m $(( (total_duration / duration_count) % 60 ))s" || true
 
     # Show last execution times
     [[ -n "$last_success" ]] && echo "  Last success: ${last_success}"; [[ -n "$last_failure" ]] && echo "  Last failure: ${last_failure}"
