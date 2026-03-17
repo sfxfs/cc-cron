@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.319"
+readonly VERSION="2.4.320"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -286,14 +286,12 @@ invalidate_crontab_cache() {
 
 # Check if crontab has entry matching pattern
 crontab_has_entry() {
-    local pattern="$1"
-    get_crontab | grep -q "$pattern"
+    local pattern="$1"; get_crontab | grep -q "$pattern"
 }
 
 # Remove entry from crontab matching pattern
 crontab_remove_entry() {
-    local pattern="$1"
-    get_crontab | { grep -v "$pattern" || true; } | crontab -; invalidate_crontab_cache
+    local pattern="$1"; get_crontab | { grep -v "$pattern" || true; } | crontab -; invalidate_crontab_cache
 }
 
 # Generate lock file path from directory path
