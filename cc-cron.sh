@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.276"
+readonly VERSION="2.4.277"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1091,9 +1091,7 @@ cmd_import() {
     # Parse JSON
     local job_count; job_count=$(jq '.jobs | length' "$input_file")
 
-    [[ "$job_count" -eq 0 ]] && { warn "No jobs found in import file"; return 0; }
-
-    info "Found ${job_count} job(s) to import"
+    [[ "$job_count" -eq 0 ]] && { warn "No jobs found in import file"; return 0; }; info "Found ${job_count} job(s) to import"
 
     local imported=0 skipped=0 i
 
