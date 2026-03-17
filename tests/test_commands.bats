@@ -1295,29 +1295,21 @@ EOF
 
 @test "cmd_add rejects invalid permission mode" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "invalid_mode" "0"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid permission mode"* ]]
+    run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "invalid_mode" "0"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add rejects invalid timeout" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "auto" "-1"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Timeout must be a non-negative number"* ]]
+    run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "auto" "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add rejects invalid cron expression" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "invalid cron" "test job" "true" "$job_workdir" "" "auto" "0"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid cron"* ]]
+    run cmd_add "invalid cron" "test job" "true" "$job_workdir" "" "auto" "0"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add rejects invalid workdir" {
-    run cmd_add "0 9 * * *" "test job" "true" "/nonexistent/path/12345" "" "auto" "0"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"not found"* ]]
+    run cmd_add "0 9 * * *" "test job" "true" "/nonexistent/path/12345" "" "auto" "0"; [ "$status" -eq 3 ]; [[ "$output" == *"not found"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add with tags" {
@@ -1351,9 +1343,7 @@ EOF
     local job_id="taggedjob"
     create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
-    run cmd_show "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Tags:         prod,backup"* ]]
+    run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Tags:         prod,backup"* ]]
 
     rm -f "$(get_meta_file "$job_id")"
 }
@@ -1370,10 +1360,7 @@ EOF
     local untagged_job="$LAST_CREATED_JOB_ID"
 
     # List jobs with prod tag
-    run cmd_list "prod"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"${prod_job}"* ]]
-    [[ "$output" != *"${untagged_job}"* ]]
+    run cmd_list "prod"; [ "$status" -eq 0 ]; [[ "$output" == *"${prod_job}"* ]]; [[ "$output" != *"${untagged_job}"* ]]
 
     # Cleanup
     cleanup_test_job "$prod_job"
