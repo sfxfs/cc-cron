@@ -314,9 +314,7 @@ EOF
     cmd_add "30 * * * *" "hourly test job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
     local job_id="$LAST_CREATED_JOB_ID"
 
-    run cmd_next "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"Next run"* ]]
+    run cmd_next "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"Next run"* ]]
 
     # Cleanup
     cleanup_test_job "$job_id"
@@ -470,29 +468,22 @@ EOF
 
 @test "purge_old_files handles empty directory" {
     # Create an empty temp directory
-    local empty_dir="${BATS_TEST_TMPDIR}/empty_purge"
-    mkdir -p "$empty_dir"
+    local empty_dir="${BATS_TEST_TMPDIR}/empty_purge"; mkdir -p "$empty_dir"
 
-    PURGE_COUNT=0
-    PURGE_BYTES=0
+    PURGE_COUNT=0; PURGE_BYTES=0
 
-    purge_old_files "$empty_dir" "log" "30" "false" "test log"
-
-    [ "$PURGE_COUNT" -eq 0 ]; [ "$PURGE_BYTES" -eq 0 ]
+    purge_old_files "$empty_dir" "log" "30" "false" "test log"; [ "$PURGE_COUNT" -eq 0 ]; [ "$PURGE_BYTES" -eq 0 ]
 
     rm -rf "$empty_dir"
 }
 
 @test "purge_old_files handles dry-run mode" {
-    local test_dir="${BATS_TEST_TMPDIR}/purge_test"
-    mkdir -p "$test_dir"
+    local test_dir="${BATS_TEST_TMPDIR}/purge_test"; mkdir -p "$test_dir"
 
     # Create a test file
-    local test_file="${test_dir}/test.log"
-    echo "test content" > "$test_file"
+    local test_file="${test_dir}/test.log"; echo "test content" > "$test_file"
 
-    PURGE_COUNT=0
-    PURGE_BYTES=0
+    PURGE_COUNT=0; PURGE_BYTES=0
 
     # Use 0 days to match any file
     purge_old_files "$test_dir" "log" "0" "true" "test log"
@@ -544,9 +535,7 @@ EOF
     local orig_config="$CONFIG_FILE"
     CONFIG_FILE="$config_file"
 
-    load_config
-
-    [ "$CC_WORKDIR" == "/tmp" ]
+    load_config; [ "$CC_WORKDIR" == "/tmp" ]
 
     CONFIG_FILE="$orig_config"
 }
