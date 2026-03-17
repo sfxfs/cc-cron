@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.325"
+readonly VERSION="2.4.326"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1213,8 +1213,7 @@ cmd_config() {
             [[ ! -f "$CONFIG_FILE" ]] && { warn "No config file exists"; return 0; }
 
             # Remove key from config
-            local temp_file; temp_file=$(mktemp)
-            grep -v "^${key}=" "$CONFIG_FILE" > "$temp_file" || true
+            local temp_file; temp_file=$(mktemp); grep -v "^${key}=" "$CONFIG_FILE" > "$temp_file" || true
             mv "$temp_file" "$CONFIG_FILE"
 
             success "Unset ${key}"
