@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.313"
+readonly VERSION="2.4.314"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -44,9 +44,7 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 
 # Error with configurable exit code
 error() {
-    local message="$1" exit_code="${2:-$EXIT_ERROR}"
-    echo -e "${RED}[ERROR]${NC} ${message}" >&2
-    exit "$exit_code"
+    local message="$1" exit_code="${2:-$EXIT_ERROR}"; echo -e "${RED}[ERROR]${NC} ${message}" >&2; exit "$exit_code"
 }
 
 # Helper to validate and get numeric value safely
