@@ -1921,34 +1921,24 @@ EOF
 }
 
 @test "cmd_status with exit code shows Exit code" {
-    local job_id="statusexit" meta_file; meta_file=$(get_meta_file "$job_id")
-    local status_file; status_file=$(get_status_file "$job_id")
+    local job_id="statusexit" meta_file status_file; meta_file=$(get_meta_file "$job_id"); status_file=$(get_status_file "$job_id")
     create_test_meta "$job_id"
-    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
-    echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
-    echo 'status="failed"' >> "$status_file"
-    echo 'exit_code="1"' >> "$status_file"
-    echo 'workdir="/tmp"' >> "$status_file"
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"; echo 'status="failed"' >> "$status_file"; echo 'exit_code="1"' >> "$status_file"; echo 'workdir="/tmp"' >> "$status_file"
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"Exit code: 1"* ]]
     rm -f "$meta_file" "$status_file"
 }
 
 @test "cmd_status handles unknown status" {
-    local job_id="unknownstatus" meta_file; meta_file=$(get_meta_file "$job_id")
-    local status_file; status_file=$(get_status_file "$job_id")
+    local job_id="unknownstatus" meta_file status_file; meta_file=$(get_meta_file "$job_id"); status_file=$(get_status_file "$job_id")
     create_test_meta "$job_id"
-    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
-    echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
-    echo 'status="weird"' >> "$status_file"
+    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"; echo 'status="weird"' >> "$status_file"
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"UNKNOWN"* ]]
     rm -f "$meta_file" "$status_file"
 }
 
 @test "cmd_status handles job with log but no status file" {
-    local job_id="logonly" meta_file; meta_file=$(get_meta_file "$job_id")
-    local log_file; log_file=$(get_log_file "$job_id")
-    create_test_meta "$job_id"
-    touch "$log_file"
+    local job_id="logonly" meta_file log_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id")
+    create_test_meta "$job_id"; touch "$log_file"
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"NO STATUS"* ]]
     rm -f "$meta_file" "$log_file"
 }
@@ -2020,26 +2010,17 @@ EOF
 
 # Tests for cmd_stats function
 @test "cmd_stats shows no jobs message when empty" {
-    # Clear any existing meta files
     rm -f "${LOG_DIR}"/*.meta 2>/dev/null || true
-
     run cmd_stats; [ "$status" -eq 0 ]; [[ "$output" == *"No jobs found"* ]]
 }
 
 @test "cmd_stats shows stats for specific job" {
-    local job_id="statsjob" meta_file; meta_file=$(get_meta_file "$job_id")
-    local history_file; history_file=$(get_history_file "$job_id")
-
-    # Create meta file
+    local job_id="statsjob" meta_file history_file; meta_file=$(get_meta_file "$job_id"); history_file=$(get_history_file "$job_id")
     create_test_meta "$job_id"
-
-    # Create history file with some entries
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:03:00" status="success" exit_code="0"' >> "$history_file"
     echo 'start="2024-01-03 10:00:00" end="2024-01-03 10:02:00" status="failed" exit_code="1"' >> "$history_file"
-
     run cmd_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id}"* ]]; [[ "$output" == *"Total runs: 3"* ]]; [[ "$output" == *"Success: 2"* ]]; [[ "$output" == *"Failed"* ]]; [[ "$output" == *"1"* ]]; [[ "$output" == *"Success rate: 66%"* ]]
-
     rm -f "$meta_file" "$history_file"
 }
 
@@ -2050,27 +2031,16 @@ EOF
 @test "cmd_stats shows stats for all jobs" {
     local job_id1="statsjob1" job_id2="statsjob2" meta_file1 meta_file2 history_file1 history_file2
     meta_file1=$(get_meta_file "$job_id1"); meta_file2=$(get_meta_file "$job_id2"); history_file1=$(get_history_file "$job_id1"); history_file2=$(get_history_file "$job_id2")
-
-    # Create meta files
-    create_test_meta "$job_id1"
-    create_test_meta "$job_id2"
-
-    # Create history files
+    create_test_meta "$job_id1"; create_test_meta "$job_id2"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file1"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:05:00" status="failed" exit_code="1"' > "$history_file2"
-
     run cmd_stats; [ "$status" -eq 0 ]; [[ "$output" == *"${job_id1}"* ]]; [[ "$output" == *"${job_id2}"* ]]
-
     rm -f "$meta_file1" "$meta_file2" "$history_file1" "$history_file2"
 }
 
 @test "cmd_stats handles job with no history" {
-    local job_id="statsnohistory" meta_file; meta_file=$(get_meta_file "$job_id")
-
-    create_test_meta "$job_id"
-
+    local job_id="statsnohistory" meta_file; meta_file=$(get_meta_file "$job_id"); create_test_meta "$job_id"
     run cmd_stats "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Total runs: 0"* ]]; [[ "$output" == *"Success: 0"* ]]; [[ "$output" == *"Failed"* ]]; [[ "$output" == *"0"* ]]
-
     rm -f "$meta_file"
 }
 
