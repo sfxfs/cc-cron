@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.337"
+readonly VERSION="2.4.338"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1260,9 +1260,7 @@ cmd_doctor() {
     [[ $orphaned -gt 0 ]] && { echo -e "   ! ${orphaned} orphaned crontab entries found\n     Fix: Run 'cc-cron purge' or manually clean crontab"; ((issues++)) || true; }
 
     # Check 8: Disk space
-    echo -e "\n8. Checking disk space..."
-    local data_size available_space; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0"); available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}')
-    echo -e "   Data directory size: ${data_size}\n   Available space: ${available_space}"
+    echo -e "\n8. Checking disk space..."; local data_size available_space; data_size=$(du -sh "$DATA_DIR" 2>/dev/null | cut -f1 || echo "0"); available_space=$(df -h "$DATA_DIR" 2>/dev/null | tail -1 | awk '{print $4}'); echo -e "   Data directory size: ${data_size}\n   Available space: ${available_space}"
 
     # Check 9: Permission issues
     echo -e "\n9. Checking permissions..."
