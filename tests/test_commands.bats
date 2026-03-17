@@ -686,8 +686,7 @@ EOF
 }
 
 @test "get_stat returns file size" {
-    local test_file="${BATS_TEST_TMPDIR}/stat_test"
-    echo "test content" > "$test_file"
+    local test_file="${BATS_TEST_TMPDIR}/stat_test"; echo "test content" > "$test_file"
 
     run get_stat "$test_file" size; [ "$status" -eq 0 ]; [[ "$output" -gt 0 ]]
 
@@ -695,8 +694,7 @@ EOF
 }
 
 @test "get_stat returns mtime" {
-    local test_file="${BATS_TEST_TMPDIR}/stat_mtime_test"
-    touch "$test_file"
+    local test_file="${BATS_TEST_TMPDIR}/stat_mtime_test"; touch "$test_file"
 
     run get_stat "$test_file" mtime; [ "$status" -eq 0 ]; [[ -n "$output" ]]
 
@@ -704,8 +702,7 @@ EOF
 }
 
 @test "get_stat returns mtime_unix" {
-    local test_file="${BATS_TEST_TMPDIR}/stat_unix_test"
-    touch "$test_file"
+    local test_file="${BATS_TEST_TMPDIR}/stat_unix_test"; touch "$test_file"
 
     run get_stat "$test_file" mtime_unix; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]+$ ]]
 
@@ -717,8 +714,7 @@ EOF
 }
 
 @test "remove_file removes existing file" {
-    local test_file="${BATS_TEST_TMPDIR}/remove_test"
-    touch "$test_file"
+    local test_file="${BATS_TEST_TMPDIR}/remove_test"; touch "$test_file"
 
     run remove_file "$test_file" "test file"; [ "$status" -eq 0 ]; [[ ! -f "$test_file" ]]
 }
@@ -728,25 +724,21 @@ EOF
 }
 
 @test "remove_file outputs message when removing" {
-    local test_file="${BATS_TEST_TMPDIR}/remove_msg_test"
-    touch "$test_file"
+    local test_file="${BATS_TEST_TMPDIR}/remove_msg_test"; touch "$test_file"
 
     run remove_file "$test_file" "test label"; [ "$status" -eq 0 ]; [[ "$output" == *"Removed test label"* ]]
 }
 
 @test "purge_single_file updates counters" {
-    local test_file="${BATS_TEST_TMPDIR}/purge_test"
-    echo "test content for purge" > "$test_file"
+    local test_file="${BATS_TEST_TMPDIR}/purge_test"; echo "test content for purge" > "$test_file"
 
-    PURGE_COUNT=0
-    PURGE_BYTES=0
+    PURGE_COUNT=0; PURGE_BYTES=0
 
     purge_single_file "$test_file" "test file" >/dev/null; [ "$PURGE_COUNT" -eq 1 ]; [ "$PURGE_BYTES" -gt 0 ]
 }
 
 @test "purge_single_file handles non-existent file" {
-    PURGE_COUNT=0
-    PURGE_BYTES=0
+    PURGE_COUNT=0; PURGE_BYTES=0
 
     purge_single_file "/nonexistent/file" "test" >/dev/null; [ "$PURGE_COUNT" -eq 1 ]; [ "$PURGE_BYTES" -eq 0 ]
 }
