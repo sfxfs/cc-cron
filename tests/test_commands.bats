@@ -14,28 +14,23 @@ teardown() {
 }
 
 @test "get_meta_file returns correct path" {
-    run get_meta_file "abc123"
-    [ "$output" == "${LOG_DIR}/abc123.meta" ]
+    run get_meta_file "abc123"; [ "$output" == "${LOG_DIR}/abc123.meta" ]
 }
 
 @test "get_log_file returns correct path" {
-    run get_log_file "testjob"
-    [ "$output" == "${LOG_DIR}/testjob.log" ]
+    run get_log_file "testjob"; [ "$output" == "${LOG_DIR}/testjob.log" ]
 }
 
 @test "get_status_file returns correct path" {
-    run get_status_file "myjob"
-    [ "$output" == "${LOG_DIR}/myjob.status" ]
+    run get_status_file "myjob"; [ "$output" == "${LOG_DIR}/myjob.status" ]
 }
 
 @test "get_run_script returns correct path" {
-    run get_run_script "testjob"
-    [ "$output" == "${DATA_DIR}/run-testjob.sh" ]
+    run get_run_script "testjob"; [ "$output" == "${DATA_DIR}/run-testjob.sh" ]
 }
 
 @test "get_history_file returns correct path" {
-    run get_history_file "myjob"
-    [ "$output" == "${LOG_DIR}/myjob.history" ]
+    run get_history_file "myjob"; [ "$output" == "${LOG_DIR}/myjob.history" ]
 }
 
 @test "get_lock_file generates consistent hash" {
@@ -64,8 +59,7 @@ teardown() {
 }
 
 @test "ensure_data_dir creates directories" {
-    run ensure_data_dir
-    [ "$status" -eq 0 ]; [ -d "$LOG_DIR" ]; [ -d "$LOCK_DIR" ]
+    run ensure_data_dir; [ "$status" -eq 0 ]; [ -d "$LOG_DIR" ]; [ -d "$LOCK_DIR" ]
 }
 
 @test "validate_workdir accepts existing directory" {
@@ -88,9 +82,7 @@ teardown() {
 }
 
 @test "invalidate_crontab_cache clears cache" {
-    _CRONTAB_CACHE="test content"
-    invalidate_crontab_cache
-    [ -z "$_CRONTAB_CACHE" ]
+    _CRONTAB_CACHE="test content"; invalidate_crontab_cache; [ -z "$_CRONTAB_CACHE" ]
 }
 
 @test "cmd_version outputs version string" {
@@ -231,9 +223,7 @@ teardown() {
 
 @test "extract_job_id parses crontab comment" {
     local line='0 9 * * * /home/user/run.sh  # CC-CRON:abc123:recurring=true:prompt=test'
-    run extract_job_id "$line"
-    [ "$status" -eq 0 ]
-    [ "$output" == "abc123" ]
+    run extract_job_id "$line"; [ "$status" -eq 0 ]; [ "$output" == "abc123" ]
 }
 
 @test "extract_job_id handles short job id" {
