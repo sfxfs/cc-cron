@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.261"
+readonly VERSION="2.4.262"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -688,8 +688,7 @@ calculate_next_run() {
                 [[ $minutes_target -le $minutes_now ]] && days_until=7
             fi
 
-            local minutes_until=$((days_until * 1440 + target_hour * 60 + target_minute
-                - current_hour * 60 - current_minute))
+            local minutes_until=$((days_until * 1440 + target_hour * 60 + target_minute - current_hour * 60 - current_minute))
             next_time=$((now + minutes_until * 60))
 
             local day_names=("Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday")
@@ -1375,9 +1374,7 @@ cmd_doctor() {
         for lock_file in "$LOCK_DIR"/*.lock; do
             [[ -f "$lock_file" ]] || continue
             local lock_age current_time age_minutes; lock_age=$(get_stat "$lock_file" mtime_unix); current_time=$(date +%s); age_minutes=$(( (current_time - lock_age) / 60 ))
-            [[ $age_minutes -gt 60 ]] && {
-                echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)"; ((warnings++)) || true
-            }
+            [[ $age_minutes -gt 60 ]] && echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)" && { ((warnings++)) || true; }
         done
     }
 
@@ -1390,9 +1387,7 @@ cmd_doctor() {
         [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]] || continue
         ((crontab_jobs++)) || true
         local job_id meta_file; job_id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$job_id")
-        [[ -f "$meta_file" ]] || {
-            echo "   ! Missing metadata for job: ${job_id}"; ((orphaned++)) || true
-        }
+        [[ -f "$meta_file" ]] || { echo "   ! Missing metadata for job: ${job_id}"; ((orphaned++)) || true; }
     done < <(get_crontab)
 
     # Count meta files
@@ -1416,9 +1411,7 @@ cmd_doctor() {
     echo -e "\n9. Checking permissions..."
     local perm_issues=0
     for dir in "$DATA_DIR" "$LOG_DIR" "$LOCK_DIR"; do
-        [[ -d "$dir" && ! -w "$dir" ]] && {
-            echo "   ✗ No write permission: ${dir}"; ((perm_issues++)) || true
-        }
+        [[ -d "$dir" && ! -w "$dir" ]] && { echo "   ✗ No write permission: ${dir}"; ((perm_issues++)) || true; }
     done
     [[ $perm_issues -eq 0 ]] && echo "   ✓ All directories are writable" || ((issues++)) || true
 
