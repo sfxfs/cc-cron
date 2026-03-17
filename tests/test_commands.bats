@@ -94,34 +94,27 @@ teardown() {
 }
 
 @test "cmd_version outputs version string" {
-    run cmd_version
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^cc-cron\ version\ [0-9]+\.[0-9]+\.[0-9]+$ ]]
+    run cmd_version; [ "$status" -eq 0 ]; [[ "$output" =~ ^cc-cron\ version\ [0-9]+\.[0-9]+\.[0-9]+$ ]]
 }
 
 @test "cmd_pause fails for non-existent job" {
-    run cmd_pause "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_pause "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_resume fails for non-existent job" {
-    run cmd_resume "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_resume "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_show fails for non-existent job" {
-    run cmd_show "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_show "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_history fails for non-existent job" {
-    run cmd_history "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_history "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_remove fails for non-existent job" {
-    run cmd_remove "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_remove "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_remove removes job and all related files" {
@@ -145,9 +138,7 @@ teardown() {
     [[ -f "$history_file" ]]
 
     # Remove the job
-    run cmd_remove "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Removed cron job"* ]]
+    run cmd_remove "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Removed cron job"* ]]
 
     # Verify all files are removed
     [[ ! -f "$(get_meta_file "$job_id")" ]]
@@ -168,9 +159,7 @@ teardown() {
     crontab_has_entry "CC-CRON:${job_id}"
 
     # Pause the job
-    run cmd_pause "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Paused job"* ]]
+    run cmd_pause "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Paused job"* ]]
 
     # Verify paused file exists
     [[ -f "${DATA_DIR}/${job_id}.paused" ]]
@@ -193,9 +182,7 @@ teardown() {
     cmd_pause "$job_id" >/dev/null
 
     # Try to pause again
-    run cmd_pause "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"already paused"* ]]
+    run cmd_pause "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"already paused"* ]]
 
     # Cleanup
     cleanup_test_job "$job_id" true
@@ -215,9 +202,7 @@ teardown() {
     ! crontab_has_entry "CC-CRON:${job_id}"
 
     # Resume the job
-    run cmd_resume "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Resumed job"* ]]
+    run cmd_resume "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Resumed job"* ]]
 
     # Verify paused file is removed
     [[ ! -f "${DATA_DIR}/${job_id}.paused" ]]
@@ -230,8 +215,7 @@ teardown() {
 }
 
 @test "load_job_meta fails for non-existent job" {
-    run load_job_meta "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run load_job_meta "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "load_job_meta loads existing job" {
@@ -254,28 +238,21 @@ teardown() {
 
 @test "extract_job_id handles short job id" {
     local line='0 9 * * * /home/user/run.sh  # CC-CRON:xyz789:recurring=false:prompt=hello'
-    run extract_job_id "$line"
-    [ "$status" -eq 0 ]
-    [ "$output" == "xyz789" ]
+    run extract_job_id "$line"; [ "$status" -eq 0 ]; [ "$output" == "xyz789" ]
 }
 
 @test "extract_job_id extracts from complex crontab line" {
     local line='*/5 * * * * /path/to/run.sh  # CC-CRON:ab12cd34:recurring=true:prompt=Test prompt with spaces'
-    run extract_job_id "$line"
-    [ "$status" -eq 0 ]
-    [ "$output" == "ab12cd34" ]
+    run extract_job_id "$line"; [ "$status" -eq 0 ]; [ "$output" == "ab12cd34" ]
 }
 
 @test "extract_job_id handles line with no colon after id" {
     local line='0 9 * * * /home/user/run.sh  # CC-CRON:onlyid'
-    run extract_job_id "$line"
-    [ "$status" -eq 0 ]
-    [ "$output" == "onlyid" ]
+    run extract_job_id "$line"; [ "$status" -eq 0 ]; [ "$output" == "onlyid" ]
 }
 
 @test "cmd_run fails for non-existent job" {
-    run cmd_run "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_run "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_run fails when run script is missing" {
@@ -284,9 +261,7 @@ teardown() {
     # Create metadata but no run script
     create_test_meta "$job_id"
 
-    run cmd_run "$job_id"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
-    [[ "$output" == *"Run script not found"* ]]
+    run cmd_run "$job_id"; [ "$status" -eq 2 ]; [[ "$output" == *"Run script not found"* ]]  # EXIT_NOT_FOUND
 
     rm -f "$(get_meta_file "$job_id")"
 }
@@ -304,9 +279,7 @@ exit 0
 EOF
     chmod +x "$run_script"
 
-    run cmd_run "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Job executed successfully"* ]]; [[ "$output" == *"Job completed successfully"* ]]
+    run cmd_run "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job executed successfully"* ]]; [[ "$output" == *"Job completed successfully"* ]]
 
     cleanup_test_job "$job_id"
 }
@@ -324,9 +297,7 @@ exit 1
 EOF
     chmod +x "$run_script"
 
-    run cmd_run "$job_id"
-    [ "$status" -eq 1 ]
-    [[ "$output" == *"Job failed intentionally"* ]]; [[ "$output" == *"exited with code: 1"* ]]
+    run cmd_run "$job_id"; [ "$status" -eq 1 ]; [[ "$output" == *"Job failed intentionally"* ]]; [[ "$output" == *"exited with code: 1"* ]]
 
     cleanup_test_job "$job_id"
 }
@@ -339,15 +310,11 @@ EOF
     local crontab_content; crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
-    run cmd_next
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"No scheduled jobs found"* ]]
+    run cmd_next; [ "$status" -eq 0 ]; [[ "$output" == *"No scheduled jobs found"* ]]
 }
 
 @test "cmd_next shows job not found for non-existent job" {
-    run cmd_next "nonexistent123"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Job not found"* ]]
+    run cmd_next "nonexistent123"; [ "$status" -eq 0 ]; [[ "$output" == *"Job not found"* ]]
 }
 
 @test "cmd_next shows next run for existing job" {
@@ -375,9 +342,7 @@ EOF
     cmd_add "30 * * * *" "job2" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "" >/dev/null
     local job2="$LAST_CREATED_JOB_ID"
 
-    run cmd_next
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"${job1}"* ]]; [[ "$output" == *"${job2}"* ]]
+    run cmd_next; [ "$status" -eq 0 ]; [[ "$output" == *"${job1}"* ]]; [[ "$output" == *"${job2}"* ]]
 
     # Cleanup
     cleanup_test_job "$job1"
@@ -385,23 +350,18 @@ EOF
 }
 
 @test "cmd_help next shows detailed help" {
-    run cmd_help "next"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron next"* ]]; [[ "$output" == *"upcoming scheduled runs"* ]]
+    run cmd_help "next"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron next"* ]]; [[ "$output" == *"upcoming scheduled runs"* ]]
 }
 
 @test "cmd_edit fails for non-existent job" {
-    run cmd_edit "nonexistent" --cron "0 0 * * *"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_edit "nonexistent" --cron "0 0 * * *"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_edit with no options shows warning" {
     local job_id="testedit"
     create_test_meta "$job_id" "/tmp"
 
-    run cmd_edit "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"No changes specified"* ]]
+    run cmd_edit "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"No changes specified"* ]]
 
     rm -f "$(get_meta_file "$job_id")"
 }
@@ -413,9 +373,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=test"
 
-    run cmd_edit "$job_id" --cron "0 10 * * *"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Updated job"* ]]
+    run cmd_edit "$job_id" --cron "0 10 * * *"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
 
     # Verify cron updated in metadata
     grep -q 'cron="0 10' "$(get_meta_file "$job_id")"
@@ -430,9 +388,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=test"
 
-    run cmd_edit "$job_id" --workdir "$BATS_TEST_TMPDIR"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Updated job"* ]]
+    run cmd_edit "$job_id" --workdir "$BATS_TEST_TMPDIR"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
 
     # Verify workdir updated in metadata
     grep -q "workdir=\"${BATS_TEST_TMPDIR}\"" "$(get_meta_file "$job_id")"
@@ -441,19 +397,15 @@ EOF
 }
 
 @test "cmd_export outputs empty array when no jobs" {
-    run cmd_export
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"No jobs to export"* ]]
+    run cmd_export; [ "$status" -eq 0 ]; [[ "$output" == *"No jobs to export"* ]]
 }
 
 @test "cmd_export fails for non-existent job" {
-    run cmd_export "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_export "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_import fails for non-existent file" {
-    run cmd_import "/nonexistent/file.json"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_import "/nonexistent/file.json"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_import fails for invalid JSON" {
@@ -462,9 +414,7 @@ EOF
 
     # Only run if jq is available
     if command -v jq &>/dev/null; then
-        run cmd_import "$tmp_file"
-        [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-        [[ "$output" == *"Invalid JSON"* ]]
+        run cmd_import "$tmp_file"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid JSON"* ]]  # EXIT_INVALID_ARGS
     fi
 }
 
