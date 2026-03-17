@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.358"
+readonly VERSION="2.4.359"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -558,8 +558,7 @@ cmd_resume() {
     load_job_meta "$job_id"
 
     # Recreate cron entry using helper
-    local run_script; run_script=$(get_run_script "$job_id")
-    crontab_add_entry "$(build_cron_entry "$job_id" "$cron" "$run_script" "$recurring" "$prompt")"; rm -f "$paused_file"
+    local run_script; run_script=$(get_run_script "$job_id"); crontab_add_entry "$(build_cron_entry "$job_id" "$cron" "$run_script" "$recurring" "$prompt")"; rm -f "$paused_file"
 
     success "Resumed job: ${job_id}"; info "Schedule: ${cron}"
 }
@@ -681,8 +680,7 @@ cmd_show() {
     local paused_file="${DATA_DIR}/${job_id}.paused"; [[ -f "$paused_file" ]] && echo -e "  Status:       ${YELLOW}PAUSED${NC}\n"
 
     # Show current status
-    local status_file; status_file=$(get_status_file "$job_id")
-    if [[ -f "$status_file" ]]; then
+    local status_file; status_file=$(get_status_file "$job_id"); if [[ -f "$status_file" ]]; then
         source "$status_file"
         echo -e "  Last Execution:\n    Start:      ${start_time:-unknown}\n    End:        ${end_time:-unknown}"
         case "${status:-}" in
@@ -695,8 +693,7 @@ cmd_show() {
     fi
 
     # Show history summary
-    local history_file; history_file=$(get_history_file "$job_id")
-    if [[ -f "$history_file" ]]; then
+    local history_file; history_file=$(get_history_file "$job_id"); if [[ -f "$history_file" ]]; then
         local total_runs success_runs failed_runs; total_runs=$(wc -l < "$history_file"); success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0"); failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
         echo -e "  Statistics:\n    Total runs:    ${total_runs}\n    Successful:    ${GREEN}${success_runs}${NC}\n    Failed:        ${RED}${failed_runs}${NC}\n"
     fi
@@ -741,9 +738,7 @@ cmd_run() {
     # Load metadata (errors if not found)
     load_job_meta "$job_id"
 
-    local run_script; run_script=$(get_run_script "$job_id")
-
-    [[ ! -f "$run_script" ]] && error "Run script not found for job: ${job_id}" "$EXIT_NOT_FOUND" || true
+    local run_script; run_script=$(get_run_script "$job_id"); [[ ! -f "$run_script" ]] && error "Run script not found for job: ${job_id}" "$EXIT_NOT_FOUND" || true
 
     info "Running job ${job_id} immediately..."; info "Workdir: ${workdir}"; info "Prompt: ${prompt}"; echo
 
