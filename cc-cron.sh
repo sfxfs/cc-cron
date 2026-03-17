@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.326"
+readonly VERSION="2.4.327"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -627,14 +627,7 @@ calculate_next_run() {
             fi
         else
             # Daily at specific time
-            local current_hour current_minute; current_hour=$(date +%H); current_minute=$(date +%M)
-            current_hour=$((10#$current_hour)) current_minute=$((10#$current_minute))
-
-            local target_hour=$((10#$hour)) target_minute=$((10#$minute))
-
-            local minutes_today=$((target_hour * 60 + target_minute)) minutes_now=$((current_hour * 60 + current_minute))
-
-            local minutes_until=$((minutes_today - minutes_now))
+            local current_hour current_minute target_hour target_minute minutes_today minutes_now minutes_until; current_hour=$(date +%H); current_minute=$(date +%M); current_hour=$((10#$current_hour)); current_minute=$((10#$current_minute)); target_hour=$((10#$hour)); target_minute=$((10#$minute)); minutes_today=$((target_hour * 60 + target_minute)); minutes_now=$((current_hour * 60 + current_minute)); minutes_until=$((minutes_today - minutes_now))
             [[ $minutes_until -le 0 ]] && minutes_until=$((minutes_until + 1440))  # Add 24 hours
             next_time=$((now + minutes_until * 60))
             schedule_desc="daily at ${hour}:${minute}"
