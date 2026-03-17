@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.235"
+readonly VERSION="2.4.236"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1404,9 +1404,7 @@ cmd_config() {
 
             # Write config file
             {
-                echo "# cc-cron configuration file"
-                echo "# Generated: $(date '+%Y-%m-%d %H:%M:%S')"
-                echo
+                echo -e "# cc-cron configuration file\n# Generated: $(date '+%Y-%m-%d %H:%M:%S')\n"
                 for k in "${!config_map[@]}"; do
                     echo "${k}=\"${config_map[$k]}\""
                 done
