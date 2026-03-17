@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.250"
+readonly VERSION="2.4.251"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -274,8 +274,7 @@ validate_workdir() {
 
 # Validate permission mode
 validate_permission_mode() {
-    [[ "$1" =~ ^(bypassPermissions|acceptEdits|auto|default)$ ]] || \
-        error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
+    [[ "$1" =~ ^(bypassPermissions|acceptEdits|auto|default)$ ]] || error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
 }
 
 # Validate timeout value
@@ -645,8 +644,7 @@ cmd_pause() {
     [[ -f "$paused_file" ]] && { warn "Job ${job_id} is already paused"; return 0; }
 
     # Check if job is in crontab (it should be if not paused)
-    crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" || \
-        error "Job ${job_id} has no crontab entry (may be orphaned)" "$EXIT_ERROR"
+    crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" || error "Job ${job_id} has no crontab entry (may be orphaned)" "$EXIT_ERROR"
 
     # Remove from crontab but keep metadata
     crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
@@ -1242,8 +1240,7 @@ purge_old_files() {
 
         local file_size; file_size=$(get_stat "$file" size || echo "0")
 
-        [[ "$dry_run" == "true" ]] && echo "  [dry-run] Would remove ${label}: ${file}" || \
-            { rm -f "$file"; echo "  Removed ${label}: ${file}"; }
+        [[ "$dry_run" == "true" ]] && echo "  [dry-run] Would remove ${label}: ${file}" || { rm -f "$file"; echo "  Removed ${label}: ${file}"; }
         ((PURGE_COUNT++)) || true; ((PURGE_BYTES += file_size)) || true
     done
 }
@@ -2087,15 +2084,13 @@ _cc_cron_completion() {
             [[ ${#words[@]} -eq 4 ]] && COMPREPLY=($(compgen -W "workdir model permission_mode timeout" -- "${cur}"))
             ;;
         edit|clone)
-            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}")) || \
-                COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout --tags" -- "${cur}"))
+            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}")) || COMPREPLY=($(compgen -W "--cron --prompt --workdir --model --permission-mode --timeout --tags" -- "${cur}"))
             ;;
         --model) COMPREPLY=($(compgen -W "sonnet opus haiku" -- "${cur}")) ;;
         --permission-mode) COMPREPLY=($(compgen -W "bypassPermissions acceptEdits auto default" -- "${cur}")) ;;
         --workdir) _filedir -d ;;
         add)
-            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W '"0 9 * * 1-5" "0 * * * *" "*/5 * * * *" "0 0 * * *"' -- "${cur}")) || \
-                COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}"))
+            [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W '"0 9 * * 1-5" "0 * * * *" "*/5 * * * *" "0 0 * * *"' -- "${cur}")) || COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}"))
             ;;
         *)
             if [[ " ${words[@]} " =~ " add " ]]; then
