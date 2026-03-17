@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.279"
+readonly VERSION="2.4.280"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -532,8 +532,7 @@ cmd_remove() {
 
     # Remove from crontab using helper function
     crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" && {
-        found=1; crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
-        success "Removed cron job: ${job_id}"
+        found=1; crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"; success "Removed cron job: ${job_id}"
     }
 
     # Remove metadata, logs, status, and run script
