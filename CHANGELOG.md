@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.324] - 2026-03-17
+
+### Refactor
+- Combine echo statement with next_run calculation in cmd_next
+
 ## [2.4.323] - 2026-03-17
 
 ### Refactor

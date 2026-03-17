@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.323"
+readonly VERSION="2.4.324"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -685,9 +685,7 @@ cmd_next() {
             # Check if paused
             local paused_file="${DATA_DIR}/${id}.paused" paused_status=""; [[ -f "$paused_file" ]] && paused_status=" (PAUSED)"
 
-            local next_run; next_run=$(calculate_next_run "$cron")
-
-            echo -e "  ${GREEN}${id}${NC}${paused_status}\n    Schedule: ${cron}"
+            local next_run; next_run=$(calculate_next_run "$cron"); echo -e "  ${GREEN}${id}${NC}${paused_status}\n    Schedule: ${cron}"
             [[ -n "$next_run" ]] && echo "    Next run: ${next_run}"
             echo -e "    Prompt:   ${prompt:0:50}${prompt:50:+...}\n"
 
