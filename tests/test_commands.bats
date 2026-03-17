@@ -2102,193 +2102,107 @@ EOF
 
 @test "cmd_stats for all jobs resets optional fields between iterations" {
     local job_workdir="$BATS_TEST_TMPDIR"
-
-    # Create job with tags
     cmd_add "0 9 * * *" "tagged job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup" >/dev/null
     local tagged_job="$LAST_CREATED_JOB_ID"
-
-    # Create job without tags
     cmd_add "0 10 * * *" "untagged job" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null
     local untagged_job="$LAST_CREATED_JOB_ID"
-
-    # Debug: check if meta files exist
-    [ -f "$(get_meta_file "$tagged_job")" ]
-    [ -f "$(get_meta_file "$untagged_job")" ]
-
-    # Run stats for all jobs - should not show tags for untagged job
+    [ -f "$(get_meta_file "$tagged_job")" ]; [ -f "$(get_meta_file "$untagged_job")" ]
     run cmd_stats; [ "$status" -eq 0 ]; [[ "$output" == *"${tagged_job}"* ]]; [[ "$output" == *"${untagged_job}"* ]]
-
-    # Cleanup
-    rm -f "$(get_meta_file "$tagged_job")" "$(get_run_script "$tagged_job")"
-    rm -f "$(get_meta_file "$untagged_job")" "$(get_run_script "$untagged_job")"
-    crontab_remove_entry "CC-CRON:${tagged_job}" 2>/dev/null || true
-    crontab_remove_entry "CC-CRON:${untagged_job}" 2>/dev/null || true
+    rm -f "$(get_meta_file "$tagged_job")" "$(get_run_script "$tagged_job")" "$(get_meta_file "$untagged_job")" "$(get_run_script "$untagged_job")"
+    crontab_remove_entry "CC-CRON:${tagged_job}" 2>/dev/null || true; crontab_remove_entry "CC-CRON:${untagged_job}" 2>/dev/null || true
 }
 
 # Integration tests for main() argument parsing
 # These tests run the script directly to test command-line argument handling
 
 @test "main add --model without argument returns error" {
-    # Unset test mode to allow main() to run
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --model; [ "$status" -eq 3 ]; [[ "$output" == *"--model requires"* ]]
 }
 
 @test "main add --tags without argument returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --tags; [ "$status" -eq 3 ]; [[ "$output" == *"--tags requires"* ]]
 }
 
 @test "main add --model with empty string is allowed" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --model ""; [ "$status" -eq 0 ]; [[ "$output" == *"Created cron job"* ]]
 }
 
 @test "main add --tags with empty string is allowed" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --tags ""; [ "$status" -eq 0 ]; [[ "$output" == *"Created cron job"* ]]
 }
 
 @test "main add --workdir without argument returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --workdir; [ "$status" -eq 3 ]; [[ "$output" == *"--workdir requires a path"* ]]
 }
 
 @test "main add --timeout without argument returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --timeout; [ "$status" -eq 3 ]; [[ "$output" == *"--timeout requires"* ]]
 }
 
 @test "main add --permission-mode without argument returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --permission-mode; [ "$status" -eq 3 ]; [[ "$output" == *"--permission-mode requires"* ]]
 }
 
 @test "main unknown command returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" nonexistentcmd; [ "$status" -eq 3 ]; [[ "$output" == *"Unknown command"* ]]
 }
 
 @test "main add unknown option returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" add "0 0 * * *" "test" --unknown-option; [ "$status" -eq 3 ]; [[ "$output" == *"Unknown option"* ]]
 }
 
 # Tests for main function command argument validation
 @test "main remove without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" remove; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main pause without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" pause; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main resume without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" resume; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main show without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" show; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main logs without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" logs; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main history without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" history; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main run without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" run; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main edit without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" edit; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
 @test "main clone without job-id returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" clone; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
