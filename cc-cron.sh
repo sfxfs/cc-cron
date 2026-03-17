@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.351"
+readonly VERSION="2.4.352"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -769,9 +769,8 @@ cmd_edit() {
 
     # Apply parsed options (fall back to current values)
     local new_cron="${PARSED_CRON:-$cron}" new_prompt="${PARSED_PROMPT:-$prompt}" new_workdir="${PARSED_WORKDIR:-$workdir}"
-    local new_model; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"
+    local new_model new_tags; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
     local new_permission="${PARSED_PERMISSION:-$permission_mode}" new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}" has_changes="$PARSED_HAS_CHANGES"
-    local new_tags; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
 
     [[ "$has_changes" -eq 0 ]] && { warn "No changes specified. Use --cron, --prompt, --workdir, --model, --permission-mode, --timeout, or --tags"; return 0; }
 
@@ -804,9 +803,8 @@ cmd_clone() {
 
     # Apply parsed options (fall back to source values)
     local new_cron="${PARSED_CRON:-$cron}" new_prompt="${PARSED_PROMPT:-$prompt}" new_workdir="${PARSED_WORKDIR:-$workdir}"
-    local new_model; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"
+    local new_model new_tags; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
     local new_permission="${PARSED_PERMISSION:-$permission_mode}" new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
-    local new_tags; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
 
     # Create new job with copied settings
     cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "false" "$new_tags"
