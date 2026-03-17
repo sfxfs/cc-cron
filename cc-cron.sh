@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.290"
+readonly VERSION="2.4.291"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -817,8 +817,7 @@ cmd_run() {
 
 # Edit a job's schedule or prompt
 cmd_edit() {
-    local job_id="$1"
-    shift || true
+    local job_id="$1"; shift || true
 
     # Load current metadata (errors if not found)
     load_job_meta "$job_id"
@@ -856,8 +855,7 @@ cmd_edit() {
 
 # Clone an existing job with a new ID
 cmd_clone() {
-    local source_id="$1"
-    shift || true
+    local source_id="$1"; shift || true
 
     # Load source job metadata
     load_job_meta "$source_id"
