@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.267"
+readonly VERSION="2.4.268"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -558,13 +558,9 @@ cmd_logs() {
     }
 
     if [[ "$follow" == "true" ]]; then
-        info "Following logs for job ${job_id} (Ctrl+C to stop)..."
-        echo "================================="
-        tail -f "$log_file"
+        info "Following logs for job ${job_id} (Ctrl+C to stop)..."; echo "================================="; tail -f "$log_file"
     else
-        info "Logs for job ${job_id}:"
-        echo "================================="
-        cat "$log_file"
+        info "Logs for job ${job_id}:"; echo "================================="; cat "$log_file"
     fi
 }
 
