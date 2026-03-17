@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.303"
+readonly VERSION="2.4.304"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1078,16 +1078,10 @@ cmd_import() {
         job_tags=$(jq -r '.tags // ""' <<< "$job_json")
 
         # Validate cron expression
-        is_valid_cron "$job_cron" || {
-            warn "Skipping invalid cron expression: ${job_cron}"; ((skipped++)) || true
-            continue
-        }
+        is_valid_cron "$job_cron" || { warn "Skipping invalid cron expression: ${job_cron}"; ((skipped++)) || true; continue; }
 
         # Validate workdir
-        [[ -d "$job_workdir" ]] || {
-            warn "Skipping job with missing workdir: ${job_workdir}"; ((skipped++)) || true
-            continue
-        }
+        [[ -d "$job_workdir" ]] || { warn "Skipping job with missing workdir: ${job_workdir}"; ((skipped++)) || true; continue; }
 
         # Create the job
         cmd_add "$job_cron" "$job_prompt" "$job_recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "false" "$job_tags"
