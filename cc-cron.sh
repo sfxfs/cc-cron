@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.331"
+readonly VERSION="2.4.332"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -306,9 +306,7 @@ generate_run_script() {
     local log_file status_file lock_file run_script; log_file=$(get_log_file "$job_id"); status_file=$(get_status_file "$job_id"); lock_file=$(get_lock_file "$job_workdir"); run_script=$(get_run_script "$job_id")
 
     # Build claude options
-    local claude_opts="-p"
-    [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"
-    [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
+    local claude_opts="-p"; [[ -n "$job_model" ]] && claude_opts="$claude_opts --model $job_model"; [[ "$job_permission" != "default" ]] && claude_opts="$claude_opts --permission-mode $job_permission"
 
     # Sanitize prompt for safe shell embedding
     local safe_prompt="${prompt//\'/\'\\\'\'}" current_path="$PATH"
