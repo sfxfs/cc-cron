@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.332"
+readonly VERSION="2.4.333"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -943,8 +943,7 @@ _show_job_stats() {
     [[ $duration_count -gt 0 ]] && echo "  Avg duration: $(( (total_duration / duration_count) / 60 ))m $(( (total_duration / duration_count) % 60 ))s"
 
     # Show last execution times
-    [[ -n "$last_success" ]] && echo "  Last success: ${last_success}"
-    [[ -n "$last_failure" ]] && echo "  Last failure: ${last_failure}"
+    [[ -n "$last_success" ]] && echo "  Last success: ${last_success}"; [[ -n "$last_failure" ]] && echo "  Last failure: ${last_failure}"
 
     echo
 }
