@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.340"
+readonly VERSION="2.4.341"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -582,8 +582,7 @@ calculate_next_run() {
     # Handle common patterns
     if [[ "$minute" == "*" && "$hour" == "*" ]]; then
         # Every minute
-        next_time=$((now + 60))
-        schedule_desc="every minute"
+        next_time=$((now + 60)); schedule_desc="every minute"
     elif [[ "$hour" == "*" && "$minute" != "*" ]]; then
         # Check for step pattern like */5
         if [[ "$minute" == */* ]]; then
