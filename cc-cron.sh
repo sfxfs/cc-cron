@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.284"
+readonly VERSION="2.4.285"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -574,8 +574,7 @@ cmd_pause() {
     crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" || error "Job ${job_id} has no crontab entry (may be orphaned)" "$EXIT_ERROR"
 
     # Remove from crontab but keep metadata
-    crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"
-    touch "$paused_file"
+    crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"; touch "$paused_file"
 
     success "Paused job: ${job_id}"; info "Run 'cc-cron resume ${job_id}' to resume"
 }
