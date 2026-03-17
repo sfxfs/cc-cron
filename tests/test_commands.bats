@@ -1499,8 +1499,7 @@ EOF
 }
 
 @test "cmd_show displays model when set" {
-    local job_id="showmodel"
-    create_test_meta "$job_id" "/tmp" "sonnet"
+    local job_id="showmodel"; create_test_meta "$job_id" "/tmp" "sonnet"
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Model:"* ]]; [[ "$output" == *"sonnet"* ]]
 
@@ -1508,9 +1507,7 @@ EOF
 }
 
 @test "cmd_show displays paused status" {
-    local job_id="showpaused"
-    create_test_meta "$job_id"
-    touch "${DATA_DIR}/${job_id}.paused"
+    local job_id="showpaused"; create_test_meta "$job_id"; touch "${DATA_DIR}/${job_id}.paused"
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"PAUSED"* ]]
 
@@ -1518,9 +1515,7 @@ EOF
 }
 
 @test "cmd_show displays execution statistics" {
-    local job_id="showstats"
-    create_test_meta "$job_id"
-    local history_file; history_file=$(get_history_file "$job_id")
+    local job_id="showstats" history_file; create_test_meta "$job_id"; history_file=$(get_history_file "$job_id")
 
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
     echo 'start="2024-01-02 10:00:00" end="2024-01-02 10:05:00" status="failed" exit_code="1"' >> "$history_file"
@@ -1531,8 +1526,7 @@ EOF
 }
 
 @test "cmd_show handles missing history gracefully" {
-    local job_id="showmissinghist"
-    create_test_meta "$job_id"
+    local job_id="showmissinghist"; create_test_meta "$job_id"
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job Details"* ]]; [[ "$output" != *"Statistics:"* ]]
 
@@ -1540,9 +1534,7 @@ EOF
 }
 
 @test "cmd_show shows running status" {
-    local job_id="showrunning"
-    create_test_meta "$job_id"
-    local status_file; status_file=$(get_status_file "$job_id")
+    local job_id="showrunning" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
 
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'status="running"' >> "$status_file"
@@ -1553,9 +1545,7 @@ EOF
 }
 
 @test "cmd_show shows success status" {
-    local job_id="showsuccess"
-    create_test_meta "$job_id"
-    local status_file; status_file=$(get_status_file "$job_id")
+    local job_id="showsuccess" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
 
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
@@ -1568,9 +1558,7 @@ EOF
 }
 
 @test "cmd_show shows failed status with exit code" {
-    local job_id="showfailed"
-    create_test_meta "$job_id"
-    local status_file; status_file=$(get_status_file "$job_id")
+    local job_id="showfailed" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
 
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
@@ -1583,10 +1571,7 @@ EOF
 }
 
 @test "cmd_status handles no jobs gracefully" {
-    # Clear any existing jobs first
     local crontab_content; crontab_content=$(crontab -l 2>/dev/null) || crontab_content=""
-
-    # Skip if there are existing cc-cron jobs
     [[ "$crontab_content" == *"CC-CRON:"* ]] && skip "crontab has existing cc-cron jobs"
 
     run cmd_status; [ "$status" -eq 0 ]; [[ "$output" == *"Total scheduled jobs: 0"* ]]
@@ -1630,8 +1615,7 @@ EOF
 }
 
 @test "generate_run_script includes timeout when set" {
-    local job_id="timeoutjob"
-    generate_run_script "$job_id" "/tmp" "sonnet" "auto" "300" "true" "test prompt" >/dev/null
+    local job_id="timeoutjob"; generate_run_script "$job_id" "/tmp" "sonnet" "auto" "300" "true" "test prompt" >/dev/null
 
     local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; grep -q 'timeout "\${TIMEOUT}"' "$run_script"; grep -q 'TIMEOUT="300"' "$run_script"
 
@@ -1639,8 +1623,7 @@ EOF
 }
 
 @test "generate_run_script without timeout has no timeout command" {
-    local job_id="notimeout"
-    generate_run_script "$job_id" "/tmp" "" "bypassPermissions" "0" "true" "test prompt" >/dev/null
+    local job_id="notimeout"; generate_run_script "$job_id" "/tmp" "" "bypassPermissions" "0" "true" "test prompt" >/dev/null
 
     local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; ! grep -q "timeout " "$run_script"
 
@@ -1648,25 +1631,19 @@ EOF
 }
 
 @test "write_meta_file includes modified field when provided" {
-    local job_id="modifiedjob"
-    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "" "auto" "0" "/tmp/run.sh" "2024-01-02 12:00:00"
+    local job_id="modifiedjob"; write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "" "auto" "0" "/tmp/run.sh" "2024-01-02 12:00:00"
 
     local meta_file; meta_file=$(get_meta_file "$job_id"); [ -f "$meta_file" ]
 
-    source "$meta_file"
-    [ "$modified" == "2024-01-02 12:00:00" ]
+    source "$meta_file"; [ "$modified" == "2024-01-02 12:00:00" ]
 
     rm -f "$meta_file"
 }
 
 @test "write_meta_file without modified field omits it" {
-    local job_id="nomodified"
-    write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
+    local job_id="nomodified"; write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
 
-    local meta_file; meta_file=$(get_meta_file "$job_id"); [ -f "$meta_file" ]
-
-    # Should not contain modified field
-    ! grep -q "modified=" "$meta_file"
+    local meta_file; meta_file=$(get_meta_file "$job_id"); [ -f "$meta_file" ]; ! grep -q "modified=" "$meta_file"
 
     rm -f "$meta_file"
 }
