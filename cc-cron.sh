@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.353"
+readonly VERSION="2.4.354"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1197,8 +1197,7 @@ cmd_doctor() {
     command -v claude &>/dev/null && { echo "   ✓ Claude CLI found: $(command -v claude)"; claude --version &>/dev/null && echo "     Version: $(claude --version 2>&1 | head -1)"; } || { echo -e "   ✗ Claude CLI not found in PATH\n     Fix: Install Claude CLI from https://claude.ai/code"; ((issues++)) || true; }
 
     # Check 4: Required tools
-    echo -e "\n4. Checking required tools..."
-    local missing_tools=()
+    echo -e "\n4. Checking required tools..."; local missing_tools=()
     for tool in flock md5sum; do
         command -v "$tool" &>/dev/null && echo "   ✓ ${tool} available" || { echo "   ✗ ${tool} not found"; missing_tools+=("$tool"); ((issues++)) || true; }
     done
