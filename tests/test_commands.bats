@@ -1375,9 +1375,7 @@ EOF
     local prod_job="$LAST_CREATED_JOB_ID"
 
     # List jobs with non-existent tag
-    run cmd_list "nonexistent"
-    [ "$status" -eq 0 ]
-    [[ "$output" != *"${prod_job}"* ]]
+    run cmd_list "nonexistent"; [ "$status" -eq 0 ]; [[ "$output" != *"${prod_job}"* ]]
 
     # Cleanup
     cleanup_test_job "$prod_job"
@@ -1391,24 +1389,16 @@ EOF
     local multi_job="$LAST_CREATED_JOB_ID"
 
     # Filter by first tag
-    run cmd_list "prod"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"${multi_job}"* ]]
+    run cmd_list "prod"; [ "$status" -eq 0 ]; [[ "$output" == *"${multi_job}"* ]]
 
     # Filter by middle tag
-    run cmd_list "backup"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"${multi_job}"* ]]
+    run cmd_list "backup"; [ "$status" -eq 0 ]; [[ "$output" == *"${multi_job}"* ]]
 
     # Filter by last tag
-    run cmd_list "daily"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"${multi_job}"* ]]
+    run cmd_list "daily"; [ "$status" -eq 0 ]; [[ "$output" == *"${multi_job}"* ]]
 
     # Filter by non-matching tag
-    run cmd_list "staging"
-    [ "$status" -eq 0 ]
-    [[ "$output" != *"${multi_job}"* ]]
+    run cmd_list "staging"; [ "$status" -eq 0 ]; [[ "$output" != *"${multi_job}"* ]]
 
     # Cleanup
     cleanup_test_job "$multi_job"
@@ -1421,9 +1411,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --tags "newtag"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Tags: none"* ]]
+    run cmd_edit "$job_id" --tags "newtag"; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: none"* ]]
 
     # Verify tags updated
     grep -q 'tags="newtag"' "$(get_meta_file "$job_id")"
@@ -1438,9 +1426,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --tags ""
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Tags: prod,backup → none"* ]]
+    run cmd_edit "$job_id" --tags ""; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: prod,backup → none"* ]]
 
     # Verify tags removed from metadata
     ! grep -q 'tags=' "$(get_meta_file "$job_id")"
@@ -1455,9 +1441,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --timeout "300"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Updated job"* ]]
+    run cmd_edit "$job_id" --timeout "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]
 
     # Verify timeout updated in metadata
     grep -q 'timeout="300"' "$(get_meta_file "$job_id")"
@@ -1472,9 +1456,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --cron "invalid cron"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid cron"* ]]
+    run cmd_edit "$job_id" --cron "invalid cron"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
 
     cleanup_test_job "$job_id"
 }
@@ -1486,9 +1468,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --workdir "/nonexistent/path/12345"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"not found"* ]]
+    run cmd_edit "$job_id" --workdir "/nonexistent/path/12345"; [ "$status" -eq 3 ]; [[ "$output" == *"not found"* ]]  # EXIT_INVALID_ARGS
 
     cleanup_test_job "$job_id"
 }
@@ -1500,9 +1480,7 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --permission-mode "invalid_mode"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Invalid permission mode"* ]]
+    run cmd_edit "$job_id" --permission-mode "invalid_mode"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
 
     cleanup_test_job "$job_id"
 }
@@ -1514,29 +1492,17 @@ EOF
     # Add crontab entry
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
-    run cmd_edit "$job_id" --timeout "-1"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"Timeout must be a non-negative number"* ]]
+    run cmd_edit "$job_id" --timeout "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
 
     cleanup_test_job "$job_id"
 }
 
 @test "cmd_help shows command list" {
-    run cmd_help
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"COMMANDS:"* ]]
-    [[ "$output" == *"add"* ]]
-    [[ "$output" == *"list"* ]]
-    [[ "$output" == *"remove"* ]]
+    run cmd_help; [ "$status" -eq 0 ]; [[ "$output" == *"COMMANDS:"* ]]; [[ "$output" == *"add"* ]]; [[ "$output" == *"list"* ]]; [[ "$output" == *"remove"* ]]
 }
 
 @test "cmd_help add shows detailed help" {
-    run cmd_help "add"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron add"* ]]
-    [[ "$output" == *"--once"* ]]
-    [[ "$output" == *"--workdir"* ]]
-    [[ "$output" == *"--model"* ]]
+    run cmd_help "add"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron add"* ]]; [[ "$output" == *"--once"* ]]; [[ "$output" == *"--workdir"* ]]; [[ "$output" == *"--model"* ]]
 }
 
 @test "cmd_help config shows detailed help" {
