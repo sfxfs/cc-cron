@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.271"
+readonly VERSION="2.4.272"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1285,8 +1285,7 @@ cmd_config() {
                 done
             } > "$CONFIG_FILE"
 
-            success "Set ${key}=\"${value}\""
-            info "Config saved to: ${CONFIG_FILE}"
+            success "Set ${key}=\"${value}\""; info "Config saved to: ${CONFIG_FILE}"
             ;;
         unset)
             local key="${2:-}"
