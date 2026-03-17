@@ -807,9 +807,7 @@ EOF
     echo "Log entry" > "$log_file"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="failed" exit_code="1"' > "$history_file"
 
-    run cmd_history "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"exit: 1"* ]]
+    run cmd_history "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"exit: 1"* ]]
 
     rm -f "$log_file" "$history_file"
 }
@@ -820,10 +818,7 @@ EOF
     echo "Log entry line 1" > "$log_file"
     echo "Log entry line 2" >> "$log_file"
 
-    run cmd_history "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"No structured history available"* ]]
-    [[ "$output" == *"Log entry line 1"* ]]
+    run cmd_history "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"No structured history available"* ]]; [[ "$output" == *"Log entry line 1"* ]]
 
     rm -f "$log_file"
 }
@@ -838,63 +833,43 @@ EOF
     done
 
     # Request only 2 lines
-    run cmd_history "$job_id" 2
-    [ "$status" -eq 0 ]
+    run cmd_history "$job_id" 2; [ "$status" -eq 0 ]
     # Should only show 2 entries (last 2 lines of history)
-    local success_count; success_count=$(echo "$output" | grep -c "✓" || echo "0")
-    [ "$success_count" -eq 2 ]
+    local success_count; success_count=$(echo "$output" | grep -c "✓" || echo "0"); [ "$success_count" -eq 2 ]
 
     rm -f "$log_file" "$history_file"
 }
 
 @test "safe_numeric returns numeric value" {
-    run safe_numeric "123" "0"
-    [ "$status" -eq 0 ]
-    [ "$output" == "123" ]
+    run safe_numeric "123" "0"; [ "$status" -eq 0 ]; [ "$output" == "123" ]
 }
 
 @test "safe_numeric returns default for non-numeric" {
-    run safe_numeric "abc" "0"
-    [ "$status" -eq 0 ]
-    [ "$output" == "0" ]
+    run safe_numeric "abc" "0"; [ "$status" -eq 0 ]; [ "$output" == "0" ]
 }
 
 @test "safe_numeric returns default for empty string" {
-    run safe_numeric "" "10"
-    [ "$status" -eq 0 ]
-    [ "$output" == "10" ]
+    run safe_numeric "" "10"; [ "$status" -eq 0 ]; [ "$output" == "10" ]
 }
 
 @test "safe_numeric handles zero correctly" {
-    run safe_numeric "0" "10"
-    [ "$status" -eq 0 ]
-    [ "$output" == "0" ]
+    run safe_numeric "0" "10"; [ "$status" -eq 0 ]; [ "$output" == "0" ]
 }
 
 @test "safe_numeric handles negative as non-numeric" {
-    run safe_numeric "-5" "10"
-    [ "$status" -eq 0 ]
-    [ "$output" == "10" ]
+    run safe_numeric "-5" "10"; [ "$status" -eq 0 ]; [ "$output" == "10" ]
 }
 
 @test "safe_numeric handles floating point as non-numeric" {
-    run safe_numeric "1.5" "10"
-    [ "$status" -eq 0 ]
-    [ "$output" == "10" ]
+    run safe_numeric "1.5" "10"; [ "$status" -eq 0 ]; [ "$output" == "10" ]
 }
 
 @test "safe_numeric handles large numbers" {
-    run safe_numeric "999999999" "0"
-    [ "$status" -eq 0 ]
-    [ "$output" == "999999999" ]
+    run safe_numeric "999999999" "0"; [ "$status" -eq 0 ]; [ "$output" == "999999999" ]
 }
 
 @test "build_cron_entry creates correct format" {
-    run build_cron_entry "abc123" "0 9 * * *" "/tmp/run.sh" "true" "Test prompt"
-    [ "$status" -eq 0 ]
-    [[ "$output" == "0 9 * * * /tmp/run.sh  # CC-CRON:abc123:"* ]]
-    [[ "$output" == *"recurring=true"* ]]
-    [[ "$output" == *"prompt=Test prompt"* ]]
+    run build_cron_entry "abc123" "0 9 * * *" "/tmp/run.sh" "true" "Test prompt"; [ "$status" -eq 0 ]; [[ "$output" == "0 9 * * * /tmp/run.sh  # CC-CRON:abc123:"* ]]; [[ "$output" == *"recurring=true"* ]]; [[ "$output" == *"prompt=Test prompt"* ]]
 }
 
 @test "build_cron_entry truncates long prompts" {
