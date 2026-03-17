@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.263"
+readonly VERSION="2.4.264"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -477,9 +477,7 @@ cmd_list() {
                 source "$meta_file"
 
                 # Filter by tag if specified
-                if [[ -n "$filter_tag" ]]; then
-                    [[ -n "${tags:-}" && ",${tags}," == *",${filter_tag},"* ]] || continue
-                fi
+                [[ -n "$filter_tag" ]] && { [[ -n "${tags:-}" && ",${tags}," == *",${filter_tag},"* ]] || continue; }
 
                 found=1
 
