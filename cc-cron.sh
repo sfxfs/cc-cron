@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.297"
+readonly VERSION="2.4.298"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -889,9 +889,7 @@ cmd_status() {
     local success_count=0 failed_count=0 running_count=0 unknown_count=0
 
     for meta_file in "${LOG_DIR}"/*.meta; do
-        [[ -f "$meta_file" ]] || continue
-        # Reset optional fields to avoid persistence from previous iterations
-        local tags="" model="" modified=""
+        [[ -f "$meta_file" ]] || continue; local tags="" model="" modified=""
         source "$meta_file"
 
         local status_file log_file; status_file=$(get_status_file "$id"); log_file=$(get_log_file "$id")
@@ -930,8 +928,7 @@ cmd_stats() {
     # Show stats for all jobs
     local found=0
     for meta_file in "${LOG_DIR}"/*.meta; do
-        [[ -f "$meta_file" ]] || continue
-        local id; id=$(basename "$meta_file" .meta); _show_job_stats "$id"; found=$((found + 1))
+        [[ -f "$meta_file" ]] || continue; local id; id=$(basename "$meta_file" .meta); _show_job_stats "$id"; found=$((found + 1))
     done
 
     [[ $found -eq 0 ]] && info "No jobs found." || true
