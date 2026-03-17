@@ -1765,45 +1765,26 @@ EOF
 }
 
 @test "cmd_completion outputs bash completion script" {
-    run cmd_completion
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"_cc_cron_completion"* ]]
-    [[ "$output" == *"complete -F"* ]]
+    run cmd_completion; [ "$status" -eq 0 ]; [[ "$output" == *"_cc_cron_completion"* ]]; [[ "$output" == *"complete -F"* ]]
 }
 
 @test "cmd_completion includes main commands" {
-    run cmd_completion
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"add"* ]]
-    [[ "$output" == *"list"* ]]
-    [[ "$output" == *"remove"* ]]
-    [[ "$output" == *"status"* ]]
-    [[ "$output" == *"edit"* ]]
+    run cmd_completion; [ "$status" -eq 0 ]; [[ "$output" == *"add"* ]]; [[ "$output" == *"list"* ]]; [[ "$output" == *"remove"* ]]; [[ "$output" == *"status"* ]]; [[ "$output" == *"edit"* ]]
 }
 
 @test "cmd_completion includes model options" {
-    run cmd_completion
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"sonnet"* ]]
-    [[ "$output" == *"opus"* ]]
-    [[ "$output" == *"haiku"* ]]
+    run cmd_completion; [ "$status" -eq 0 ]; [[ "$output" == *"sonnet"* ]]; [[ "$output" == *"opus"* ]]; [[ "$output" == *"haiku"* ]]
 }
 
 @test "cmd_completion includes permission modes" {
-    run cmd_completion
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"bypassPermissions"* ]]
-    [[ "$output" == *"acceptEdits"* ]]
+    run cmd_completion; [ "$status" -eq 0 ]; [[ "$output" == *"bypassPermissions"* ]]; [[ "$output" == *"acceptEdits"* ]]
 }
 
 @test "generate_run_script includes timeout when set" {
     local job_id="timeoutjob"
     generate_run_script "$job_id" "/tmp" "sonnet" "auto" "300" "true" "test prompt" >/dev/null
 
-    local run_script; run_script=$(get_run_script "$job_id")
-    [ -f "$run_script" ]
-    grep -q 'timeout "\${TIMEOUT}"' "$run_script"
-    grep -q 'TIMEOUT="300"' "$run_script"
+    local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; grep -q 'timeout "\${TIMEOUT}"' "$run_script"; grep -q 'TIMEOUT="300"' "$run_script"
 
     rm -f "$run_script"
 }
@@ -1812,9 +1793,7 @@ EOF
     local job_id="notimeout"
     generate_run_script "$job_id" "/tmp" "" "bypassPermissions" "0" "true" "test prompt" >/dev/null
 
-    local run_script; run_script=$(get_run_script "$job_id")
-    [ -f "$run_script" ]
-    ! grep -q "timeout " "$run_script"
+    local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]; ! grep -q "timeout " "$run_script"
 
     rm -f "$run_script"
 }
@@ -1823,8 +1802,7 @@ EOF
     local job_id="modifiedjob"
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "" "auto" "0" "/tmp/run.sh" "2024-01-02 12:00:00"
 
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    [ -f "$meta_file" ]
+    local meta_file; meta_file=$(get_meta_file "$job_id"); [ -f "$meta_file" ]
 
     source "$meta_file"
     [ "$modified" == "2024-01-02 12:00:00" ]
@@ -1836,8 +1814,7 @@ EOF
     local job_id="nomodified"
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
 
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    [ -f "$meta_file" ]
+    local meta_file; meta_file=$(get_meta_file "$job_id"); [ -f "$meta_file" ]
 
     # Should not contain modified field
     ! grep -q "modified=" "$meta_file"
@@ -2050,8 +2027,7 @@ EOF
     local job_id="fullmeta"
     write_meta_file "$job_id" "2024-01-01 10:00:00" "*/5 * * * *" "false" "complex prompt with 'quotes'" "/home/user" "opus" "auto" "3600" "/tmp/run-fullmeta.sh"
 
-    local meta_file; meta_file=$(get_meta_file "$job_id")
-    [ -f "$meta_file" ]
+    local meta_file; meta_file=$(get_meta_file "$job_id"); [ -f "$meta_file" ]
 
     source "$meta_file"
     [ "$id" == "fullmeta" ]
