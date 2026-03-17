@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.277"
+readonly VERSION="2.4.278"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1164,8 +1164,7 @@ cmd_purge() {
     # Validate days argument
     [[ "$days" =~ ^[0-9]+$ ]] || error "Invalid days argument: ${days}" "$EXIT_INVALID_ARGS"
 
-    info "Purging files older than ${days} days..."
-    [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"
+    info "Purging files older than ${days} days..."; [[ "$dry_run" == "true" ]] && info "(dry-run mode - no files will be deleted)"
     echo
 
     # Get list of active job IDs from crontab
@@ -1222,8 +1221,7 @@ cmd_purge() {
 
     # Summary
     local freed_mb_int=$((freed_bytes * 100 / 1048576)) freed_mb; [[ $freed_mb_int -lt 100 ]] && freed_mb="0.${freed_mb_int}" || freed_mb="${freed_mb_int:0:-2}.${freed_mb_int: -2}"
-    echo
-    [[ "$dry_run" == "true" ]] && info "Dry-run summary:" || success "Purge complete:"
+    echo; [[ "$dry_run" == "true" ]] && info "Dry-run summary:" || success "Purge complete:"
     echo -e "  Logs purged:     ${purged_logs}\n  History purged:  ${purged_history}\n  Orphans removed: ${purged_orphans}\n  Space freed:     ${freed_mb} MB"
 }
 
