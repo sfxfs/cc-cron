@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.254"
+readonly VERSION="2.4.255"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -79,22 +79,11 @@ load_config() {
         value="${value#\"}"; value="${value%\"}"
 
         case "$key" in
-            workdir|CC_WORKDIR)
-                CC_WORKDIR="$value"
-                ;;
-            model|CC_MODEL)
-                CC_MODEL="$value"
-                ;;
-            permission_mode|CC_PERMISSION_MODE)
-                CC_PERMISSION_MODE="$value"
-                ;;
-            timeout|CC_TIMEOUT)
-                CC_TIMEOUT="$value"
-                ;;
-            data_dir|DATA_DIR)
-                # DATA_DIR can only be set before other dirs are created
-                warn "DATA_DIR must be set via environment variable, ignoring in config file"
-                ;;
+            workdir|CC_WORKDIR) CC_WORKDIR="$value" ;;
+            model|CC_MODEL) CC_MODEL="$value" ;;
+            permission_mode|CC_PERMISSION_MODE) CC_PERMISSION_MODE="$value" ;;
+            timeout|CC_TIMEOUT) CC_TIMEOUT="$value" ;;
+            data_dir|DATA_DIR) warn "DATA_DIR must be set via environment variable, ignoring in config file" ;;
         esac
     done < "$CONFIG_FILE"
 }
