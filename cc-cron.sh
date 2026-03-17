@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.253"
+readonly VERSION="2.4.254"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2115,9 +2115,7 @@ Options:
 
             while [[ $# -gt 0 ]]; do
                 case "$1" in
-                    --once)
-                        recurring="false"; shift
-                        ;;
+                    --once) recurring="false"; shift ;;
                     --workdir)
                         [[ -z "${2:-}" ]] && error "--workdir requires a path" "$EXIT_INVALID_ARGS"
                         validate_workdir "$2"
@@ -2141,12 +2139,8 @@ Options:
                         [[ $# -lt 2 ]] && error "--tags requires a value (use empty string to set none)" "$EXIT_INVALID_ARGS"
                         job_tags="$2"; shift 2
                         ;;
-                    --quiet|-q)
-                        quiet="true"; shift
-                        ;;
-                    *)
-                        error "Unknown option: $1" "$EXIT_INVALID_ARGS"
-                        ;;
+                    --quiet|-q) quiet="true"; shift ;;
+                    *) error "Unknown option: $1" "$EXIT_INVALID_ARGS" ;;
                 esac
             done
 
@@ -2158,20 +2152,10 @@ Options:
             # Support both positional argument and --tag flag
             while [[ $# -gt 0 ]]; do
                 case "$1" in
-                    --tag)
-                        filter_tag="${2:-}"
-                        shift 2
-                        ;;
-                    --json)
-                        json_output="true"; shift
-                        ;;
-                    -*)
-                        shift
-                        ;;
-                    *)
-                        # Positional argument (tag name)
-                        filter_tag="$1"; shift
-                        ;;
+                    --tag) filter_tag="${2:-}"; shift 2 ;;
+                    --json) json_output="true"; shift ;;
+                    -*) shift ;;
+                    *) filter_tag="$1"; shift ;; # Positional argument (tag name)
                 esac
             done
             cmd_list "$filter_tag" "$json_output"
@@ -2194,12 +2178,8 @@ Options:
             ensure_data_dir; local purge_days="7" dry_run="false"
             while [[ $# -gt 0 ]]; do
                 case "$1" in
-                    --dry-run)
-                        dry_run="true"; shift
-                        ;;
-                    *)
-                        purge_days="$1"; shift
-                        ;;
+                    --dry-run) dry_run="true"; shift ;;
+                    *) purge_days="$1"; shift ;;
                 esac
             done
             cmd_purge "$purge_days" "$dry_run"
