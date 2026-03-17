@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.266"
+readonly VERSION="2.4.267"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1975,9 +1975,7 @@ _cc_cron_completion() {
 
     case ${prev} in
         cc-cron)
-            COMPREPLY=($(compgen -W \
-                "add list remove logs status pause resume enable disable show history stats run next edit clone export import purge config doctor version completion help" \
-                -- "${cur}"))
+            COMPREPLY=($(compgen -W "add list remove logs status pause resume enable disable show history stats run next edit clone export import purge config doctor version completion help" -- "${cur}"))
             ;;
         remove|pause|resume|enable|disable|show|history|run|next|stats)
             COMPREPLY=($(compgen -W "$(_get_job_ids)" -- "${cur}"))
@@ -2006,11 +2004,7 @@ _cc_cron_completion() {
             [[ ${#words[@]} -eq 3 ]] && COMPREPLY=($(compgen -W '"0 9 * * 1-5" "0 * * * *" "*/5 * * * *" "0 0 * * *"' -- "${cur}")) || COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}"))
             ;;
         *)
-            if [[ " ${words[@]} " =~ " add " ]]; then
-                COMPREPLY=($(compgen -W \
-                    "--once --workdir --model --permission-mode --timeout --tags --quiet -q" \
-                    -- "${cur}"))
-            fi
+            [[ " ${words[@]} " =~ " add " ]] && COMPREPLY=($(compgen -W "--once --workdir --model --permission-mode --timeout --tags --quiet -q" -- "${cur}")) || true
             ;;
     esac
 }

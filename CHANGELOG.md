@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.267] - 2026-03-17
+
+### Refactor
+- Combine multi-line COMPREPLY commands into single lines in cmd_completion
+- Convert if-then-fi to single-line pattern in add command completion
+
 ## [2.4.266] - 2026-03-17
 
 ### Refactor
