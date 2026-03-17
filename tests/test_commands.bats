@@ -1156,26 +1156,22 @@ EOF
 }
 
 @test "cmd_add with model and timeout" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 9 * * *" "with model" "true" "$job_workdir" "sonnet" "auto" "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Model: sonnet"* ]]; [[ "$output" == *"Timeout: 300s"* ]]
+    local job_workdir="$BATS_TEST_TMPDIR"; run cmd_add "0 9 * * *" "with model" "true" "$job_workdir" "sonnet" "auto" "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Model: sonnet"* ]]; [[ "$output" == *"Timeout: 300s"* ]]
 
     # Cleanup
     cleanup_test_job "$LAST_CREATED_JOB_ID"
 }
 
 @test "cmd_add rejects invalid permission mode" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "invalid_mode" "0"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
+    local job_workdir="$BATS_TEST_TMPDIR"; run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "invalid_mode" "0"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add rejects invalid timeout" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "auto" "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
+    local job_workdir="$BATS_TEST_TMPDIR"; run cmd_add "0 9 * * *" "test job" "true" "$job_workdir" "" "auto" "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add rejects invalid cron expression" {
-    local job_workdir="$BATS_TEST_TMPDIR"
-    run cmd_add "invalid cron" "test job" "true" "$job_workdir" "" "auto" "0"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
+    local job_workdir="$BATS_TEST_TMPDIR"; run cmd_add "invalid cron" "test job" "true" "$job_workdir" "" "auto" "0"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_add rejects invalid workdir" {
@@ -1197,8 +1193,7 @@ EOF
 }
 
 @test "cmd_show displays tags when set" {
-    local job_id="taggedjob"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
+    local job_id="taggedjob"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Tags:         prod,backup"* ]]
 
@@ -1207,10 +1202,8 @@ EOF
 
 @test "cmd_list filters by tag" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    cmd_add "0 9 * * *" "prod job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null
-    local prod_job="$LAST_CREATED_JOB_ID"
-    cmd_add "0 10 * * *" "untagged job" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null
-    local untagged_job="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "prod job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null; local prod_job="$LAST_CREATED_JOB_ID"
+    cmd_add "0 10 * * *" "untagged job" "true" "$job_workdir" "" "bypassPermissions" "0" >/dev/null; local untagged_job="$LAST_CREATED_JOB_ID"
 
     run cmd_list "prod"; [ "$status" -eq 0 ]; [[ "$output" == *"${prod_job}"* ]]; [[ "$output" != *"${untagged_job}"* ]]
 
@@ -1219,8 +1212,7 @@ EOF
 
 @test "cmd_list filters by non-existent tag shows no jobs" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    cmd_add "0 9 * * *" "prod job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null
-    local prod_job="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "prod job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod" >/dev/null; local prod_job="$LAST_CREATED_JOB_ID"
 
     run cmd_list "nonexistent"; [ "$status" -eq 0 ]; [[ "$output" != *"${prod_job}"* ]]
 
@@ -1229,8 +1221,7 @@ EOF
 
 @test "cmd_list filters by tag with multiple tags on job" {
     local job_workdir="$BATS_TEST_TMPDIR"
-    cmd_add "0 9 * * *" "multi-tag job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup,daily" >/dev/null
-    local multi_job="$LAST_CREATED_JOB_ID"
+    cmd_add "0 9 * * *" "multi-tag job" "true" "$job_workdir" "" "bypassPermissions" "0" "false" "prod,backup,daily" >/dev/null; local multi_job="$LAST_CREATED_JOB_ID"
 
     run cmd_list "prod"; [ "$status" -eq 0 ]; [[ "$output" == *"${multi_job}"* ]]
     run cmd_list "backup"; [ "$status" -eq 0 ]; [[ "$output" == *"${multi_job}"* ]]
@@ -1241,8 +1232,7 @@ EOF
 }
 
 @test "cmd_edit updates tags" {
-    local job_id="edittagjob"; create_test_meta "$job_id" "/tmp"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="edittagjob"; create_test_meta "$job_id" "/tmp"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --tags "newtag"; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: none"* ]]; grep -q 'tags="newtag"' "$(get_meta_file "$job_id")"
 
@@ -1250,8 +1240,7 @@ EOF
 }
 
 @test "cmd_edit clears tags with empty string" {
-    local job_id="edittagjob2"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="edittagjob2"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --tags ""; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: prod,backup → none"* ]]; ! grep -q 'tags=' "$(get_meta_file "$job_id")"
 
@@ -1259,8 +1248,7 @@ EOF
 }
 
 @test "cmd_edit updates timeout" {
-    local job_id="edittimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "60"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="edittimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "60"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --timeout "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]; grep -q 'timeout="300"' "$(get_meta_file "$job_id")"
 
@@ -1268,8 +1256,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid cron expression" {
-    local job_id="editinvalid"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="editinvalid"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --cron "invalid cron"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
 
@@ -1277,8 +1264,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid workdir" {
-    local job_id="editworkdir"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="editworkdir"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --workdir "/nonexistent/path/12345"; [ "$status" -eq 3 ]; [[ "$output" == *"not found"* ]]  # EXIT_INVALID_ARGS
 
@@ -1286,8 +1272,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid permission mode" {
-    local job_id="editperm"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="editperm"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --permission-mode "invalid_mode"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
 
@@ -1295,8 +1280,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid timeout" {
-    local job_id="edittimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="edittimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 
     run cmd_edit "$job_id" --timeout "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
 
@@ -1341,16 +1325,14 @@ EOF
 
 @test "cmd_import handles invalid JSON" {
     command -v jq &>/dev/null || skip "jq not installed"
-    local json_file="${BATS_TEST_TMPDIR}/invalid.json"
-    echo "not valid json" > "$json_file"
+    local json_file="${BATS_TEST_TMPDIR}/invalid.json"; echo "not valid json" > "$json_file"
 
     run cmd_import "$json_file"; [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
 }
 
 @test "cmd_import handles empty jobs array" {
     command -v jq &>/dev/null || skip "jq not installed"
-    local json_file="${BATS_TEST_TMPDIR}/empty.json"
-    echo '{"version":"1.0","jobs":[]}' > "$json_file"
+    local json_file="${BATS_TEST_TMPDIR}/empty.json"; echo '{"version":"1.0","jobs":[]}' > "$json_file"
 
     run cmd_import "$json_file"; [ "$status" -eq 0 ]; [[ "$output" == *"No jobs found"* ]]
 }
@@ -1410,8 +1392,7 @@ EOF
 }
 
 @test "cmd_export includes tags in JSON output" {
-    local job_id="exportags"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
+    local job_id="exportags"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'"tags":"prod,backup"'* ]]  # Check that tags are included in JSON output
 
@@ -1447,8 +1428,7 @@ EOF
 }
 
 @test "cmd_show displays timeout when set" {
-    local job_id="showtimeout"
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
+    local job_id="showtimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "300"
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Timeout:"* ]]; [[ "$output" == *"300s"* ]]
 
@@ -1491,10 +1471,7 @@ EOF
 }
 
 @test "cmd_show shows running status" {
-    local job_id="showrunning" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
-
-    echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
-    echo 'status="running"' >> "$status_file"
+    local job_id="showrunning" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id"); echo 'start_time="2024-01-01 10:00:00"' > "$status_file"; echo 'status="running"' >> "$status_file"
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"RUNNING"* ]]
 
@@ -1503,7 +1480,6 @@ EOF
 
 @test "cmd_show shows success status" {
     local job_id="showsuccess" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
-
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
     echo 'status="success"' >> "$status_file"
@@ -1516,7 +1492,6 @@ EOF
 
 @test "cmd_show shows failed status with exit code" {
     local job_id="showfailed" status_file; create_test_meta "$job_id"; status_file=$(get_status_file "$job_id")
-
     echo 'start_time="2024-01-01 10:00:00"' > "$status_file"
     echo 'end_time="2024-01-01 10:05:00"' >> "$status_file"
     echo 'status="failed"' >> "$status_file"
