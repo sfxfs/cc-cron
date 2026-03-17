@@ -902,8 +902,7 @@ EOF
     local job_id="testnomodel"
     generate_run_script "$job_id" "/tmp" "" "bypassPermissions" "0" "true" "prompt" >/dev/null
 
-    local run_script; run_script=$(get_run_script "$job_id")
-    [ -f "$run_script" ]
+    local run_script; run_script=$(get_run_script "$job_id"); [ -f "$run_script" ]
 
     # Should not contain --model flag
     ! grep -q "\-\-model" "$run_script"
