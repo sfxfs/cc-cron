@@ -1506,52 +1506,31 @@ EOF
 }
 
 @test "cmd_help config shows detailed help" {
-    run cmd_help "config"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron config"* ]]
-    [[ "$output" == *"workdir"* ]]
-    [[ "$output" == *"model"* ]]
+    run cmd_help "config"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron config"* ]]; [[ "$output" == *"workdir"* ]]; [[ "$output" == *"model"* ]]
 }
 
 @test "cmd_help edit shows detailed help" {
-    run cmd_help "edit"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron edit"* ]]
-    [[ "$output" == *"--cron"* ]]
-    [[ "$output" == *"--prompt"* ]]
+    run cmd_help "edit"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron edit"* ]]; [[ "$output" == *"--cron"* ]]; [[ "$output" == *"--prompt"* ]]
 }
 
 @test "cmd_help clone shows detailed help" {
-    run cmd_help "clone"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron clone"* ]]
-    [[ "$output" == *"Override"* ]]
+    run cmd_help "clone"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron clone"* ]]; [[ "$output" == *"Override"* ]]
 }
 
 @test "cmd_help purge shows detailed help" {
-    run cmd_help "purge"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron purge"* ]]
-    [[ "$output" == *"--dry-run"* ]]
+    run cmd_help "purge"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron purge"* ]]; [[ "$output" == *"--dry-run"* ]]
 }
 
 @test "cmd_help list shows detailed help" {
-    run cmd_help "list"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron list"* ]]
-    [[ "$output" == *"tag"* ]]
+    run cmd_help "list"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron list"* ]]; [[ "$output" == *"tag"* ]]
 }
 
 @test "cmd_help status shows detailed help" {
-    run cmd_help "status"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"cc-cron status"* ]]
+    run cmd_help "status"; [ "$status" -eq 0 ]; [[ "$output" == *"cc-cron status"* ]]
 }
 
 @test "cmd_help unknown topic returns error" {
-    run cmd_help "unknowncommand"
-    [ "$status" -eq 1 ]  # General error
-    [[ "$output" == *"Unknown help topic"* ]]
+    run cmd_help "unknowncommand"; [ "$status" -eq 1 ]; [[ "$output" == *"Unknown help topic"* ]]  # General error
 }
 
 @test "cmd_import handles invalid JSON" {
