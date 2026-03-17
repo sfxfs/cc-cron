@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.293"
+readonly VERSION="2.4.294"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1157,8 +1157,7 @@ cmd_purge() {
 
     # Also check paused jobs
     for paused_file in "${DATA_DIR}"/*.paused; do
-        [[ -f "$paused_file" ]] || continue
-        local job_id; job_id=$(basename "$paused_file" .paused); active_jobs["$job_id"]=1
+        [[ -f "$paused_file" ]] || continue; local job_id; job_id=$(basename "$paused_file" .paused); active_jobs["$job_id"]=1
     done
 
     # Clean up log files
