@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.355"
+readonly VERSION="2.4.356"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -488,8 +488,7 @@ cmd_list() {
     done <<< "$crontab_content"
 
     if [[ "$json_output" == "true" ]]; then
-        echo "["
-        local comma=""
+        echo "["; local comma=""
         for job in "${jobs[@]}"; do
             echo "  ${comma}${job}"
             comma=","
