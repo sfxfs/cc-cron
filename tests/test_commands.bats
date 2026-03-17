@@ -692,17 +692,14 @@ EOF
 }
 
 @test "cmd_logs fails for non-existent job" {
-    run cmd_logs "nonexistent"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
+    run cmd_logs "nonexistent"; [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
 }
 
 @test "cmd_logs shows log content" {
     local job_id="testlog" log_file; log_file=$(get_log_file "$job_id")
     echo "Test log entry" > "$log_file"
 
-    run cmd_logs "$job_id" "false"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Test log entry"* ]]
+    run cmd_logs "$job_id" "false"; [ "$status" -eq 0 ]; [[ "$output" == *"Test log entry"* ]]
 
     rm -f "$log_file"
 }
@@ -711,10 +708,7 @@ EOF
     local job_id="testcat" log_file; log_file=$(get_log_file "$job_id")
     echo "Log content" > "$log_file"
 
-    run cmd_logs "$job_id" "false"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Logs for job"* ]]
-    [[ "$output" != *"Following logs"* ]]
+    run cmd_logs "$job_id" "false"; [ "$status" -eq 0 ]; [[ "$output" == *"Logs for job"* ]]; [[ "$output" != *"Following logs"* ]]
 
     rm -f "$log_file"
 }
@@ -725,9 +719,7 @@ EOF
     # Create metadata but no log file
     create_test_meta "$job_id"
 
-    run cmd_logs "$job_id" "false"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
-    [[ "$output" == *"No logs found"* ]]
+    run cmd_logs "$job_id" "false"; [ "$status" -eq 2 ]; [[ "$output" == *"No logs found"* ]]  # EXIT_NOT_FOUND
 
     rm -f "$(get_meta_file "$job_id")"
 }
@@ -736,9 +728,7 @@ EOF
     local test_file="${BATS_TEST_TMPDIR}/stat_test"
     echo "test content" > "$test_file"
 
-    run get_stat "$test_file" size
-    [ "$status" -eq 0 ]
-    [[ "$output" -gt 0 ]]
+    run get_stat "$test_file" size; [ "$status" -eq 0 ]; [[ "$output" -gt 0 ]]
 
     rm -f "$test_file"
 }
@@ -747,9 +737,7 @@ EOF
     local test_file="${BATS_TEST_TMPDIR}/stat_mtime_test"
     touch "$test_file"
 
-    run get_stat "$test_file" mtime
-    [ "$status" -eq 0 ]
-    [[ -n "$output" ]]
+    run get_stat "$test_file" mtime; [ "$status" -eq 0 ]; [[ -n "$output" ]]
 
     rm -f "$test_file"
 }
@@ -758,39 +746,31 @@ EOF
     local test_file="${BATS_TEST_TMPDIR}/stat_unix_test"
     touch "$test_file"
 
-    run get_stat "$test_file" mtime_unix
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ ^[0-9]+$ ]]
+    run get_stat "$test_file" mtime_unix; [ "$status" -eq 0 ]; [[ "$output" =~ ^[0-9]+$ ]]
 
     rm -f "$test_file"
 }
 
 @test "get_stat fails for non-existent file" {
-    run get_stat "/nonexistent/file" size
-    [ "$status" -ne 0 ]
+    run get_stat "/nonexistent/file" size; [ "$status" -ne 0 ]
 }
 
 @test "remove_file removes existing file" {
     local test_file="${BATS_TEST_TMPDIR}/remove_test"
     touch "$test_file"
 
-    run remove_file "$test_file" "test file"
-    [ "$status" -eq 0 ]
-    [[ ! -f "$test_file" ]]
+    run remove_file "$test_file" "test file"; [ "$status" -eq 0 ]; [[ ! -f "$test_file" ]]
 }
 
 @test "remove_file handles non-existent file gracefully" {
-    run remove_file "/nonexistent/file" "test file"
-    [ "$status" -eq 0 ]
+    run remove_file "/nonexistent/file" "test file"; [ "$status" -eq 0 ]
 }
 
 @test "remove_file outputs message when removing" {
     local test_file="${BATS_TEST_TMPDIR}/remove_msg_test"
     touch "$test_file"
 
-    run remove_file "$test_file" "test label"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Removed test label"* ]]
+    run remove_file "$test_file" "test label"; [ "$status" -eq 0 ]; [[ "$output" == *"Removed test label"* ]]
 }
 
 @test "purge_single_file updates counters" {
@@ -800,18 +780,14 @@ EOF
     PURGE_COUNT=0
     PURGE_BYTES=0
 
-    purge_single_file "$test_file" "test file" >/dev/null
-    [ "$PURGE_COUNT" -eq 1 ]
-    [ "$PURGE_BYTES" -gt 0 ]
+    purge_single_file "$test_file" "test file" >/dev/null; [ "$PURGE_COUNT" -eq 1 ]; [ "$PURGE_BYTES" -gt 0 ]
 }
 
 @test "purge_single_file handles non-existent file" {
     PURGE_COUNT=0
     PURGE_BYTES=0
 
-    purge_single_file "/nonexistent/file" "test" >/dev/null
-    [ "$PURGE_COUNT" -eq 1 ]
-    [ "$PURGE_BYTES" -eq 0 ]
+    purge_single_file "/nonexistent/file" "test" >/dev/null; [ "$PURGE_COUNT" -eq 1 ]; [ "$PURGE_BYTES" -eq 0 ]
 }
 
 @test "cmd_history parses structured history" {
@@ -820,10 +796,7 @@ EOF
     echo "Some log entry" > "$log_file"
     echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
 
-    run cmd_history "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"2024-01-01 10:00:00"* ]]
-    [[ "$output" == *"✓"* ]]
+    run cmd_history "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"2024-01-01 10:00:00"* ]]; [[ "$output" == *"✓"* ]]
 
     rm -f "$log_file" "$history_file"
 }
