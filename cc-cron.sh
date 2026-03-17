@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.329"
+readonly VERSION="2.4.330"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1033,14 +1033,10 @@ cmd_import() {
         local job_json; job_json=$(jq -c ".jobs[$i]" "$input_file")
 
         local job_cron job_prompt job_recurring job_workdir job_model job_permission job_timeout job_paused job_tags
-        job_cron=$(jq -r '.cron' <<< "$job_json")
-        job_prompt=$(jq -r '.prompt' <<< "$job_json")
-        job_recurring=$(jq -r '.recurring' <<< "$job_json")
-        job_workdir=$(jq -r '.workdir' <<< "$job_json")
-        job_model=$(jq -r '.model' <<< "$job_json")
-        job_permission=$(jq -r '.permission_mode' <<< "$job_json")
-        job_timeout=$(jq -r '.timeout' <<< "$job_json")
-        job_paused=$(jq -r '.paused' <<< "$job_json")
+        job_cron=$(jq -r '.cron' <<< "$job_json"); job_prompt=$(jq -r '.prompt' <<< "$job_json")
+        job_recurring=$(jq -r '.recurring' <<< "$job_json"); job_workdir=$(jq -r '.workdir' <<< "$job_json")
+        job_model=$(jq -r '.model' <<< "$job_json"); job_permission=$(jq -r '.permission_mode' <<< "$job_json")
+        job_timeout=$(jq -r '.timeout' <<< "$job_json"); job_paused=$(jq -r '.paused' <<< "$job_json")
         job_tags=$(jq -r '.tags // ""' <<< "$job_json")
 
         # Validate cron expression
