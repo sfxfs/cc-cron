@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.300"
+readonly VERSION="2.4.301"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1015,9 +1015,7 @@ cmd_export() {
     json_output='{"version":"1.0","exported_at":"'"${timestamp}"'","jobs":['
 
     for job_id in "${jobs[@]}"; do
-        local meta_file; meta_file=$(get_meta_file "$job_id"); [[ -f "$meta_file" ]] || continue
-        # Reset optional fields to avoid persistence from previous iterations
-        local tags="" model="" modified=""
+        local meta_file; meta_file=$(get_meta_file "$job_id"); [[ -f "$meta_file" ]] || continue; local tags="" model="" modified=""
         source "$meta_file"
 
         # Check if paused
