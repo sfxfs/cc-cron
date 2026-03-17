@@ -1823,37 +1823,27 @@ EOF
 }
 
 @test "error function outputs to stderr" {
-    run error "Test error message"
-    [ "$status" -eq 1 ]  # EXIT_ERROR (default)
-    [[ "$output" == *"Test error message"* ]]
+    run error "Test error message"; [ "$status" -eq 1 ]; [[ "$output" == *"Test error message"* ]]  # EXIT_ERROR (default)
 }
 
 @test "error function uses custom exit code" {
-    run error "Custom exit" 42
-    [ "$status" -eq 42 ]
+    run error "Custom exit" 42; [ "$status" -eq 42 ]
 }
 
 @test "error function defaults to EXIT_ERROR" {
-    run error "Default exit"
-    [ "$status" -eq 1 ]
+    run error "Default exit"; [ "$status" -eq 1 ]
 }
 
 @test "info function outputs message" {
-    run info "Test info"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Test info"* ]]
+    run info "Test info"; [ "$status" -eq 0 ]; [[ "$output" == *"Test info"* ]]
 }
 
 @test "success function outputs message" {
-    run success "Test success"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Test success"* ]]
+    run success "Test success"; [ "$status" -eq 0 ]; [[ "$output" == *"Test success"* ]]
 }
 
 @test "warn function outputs message" {
-    run warn "Test warning"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"Test warning"* ]]
+    run warn "Test warning"; [ "$status" -eq 0 ]; [[ "$output" == *"Test warning"* ]]
 }
 
 @test "cmd_pause handles already paused job" {
@@ -1868,9 +1858,7 @@ EOF
     # Add entry to crontab (so we can check)
     crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:alreadypaused:recurring=true" 2>/dev/null || true
 
-    run cmd_pause "$job_id"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"already paused"* ]]
+    run cmd_pause "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"already paused"* ]]
 
     rm -f "$meta_file" "$paused_file"
 }
@@ -1881,9 +1869,7 @@ EOF
     # Create paused file without metadata
     touch "${DATA_DIR}/${job_id}.paused"
 
-    run cmd_resume "$job_id"
-    [ "$status" -eq 2 ]  # EXIT_NOT_FOUND
-    [[ "$output" == *"not found"* ]]
+    run cmd_resume "$job_id"; [ "$status" -eq 2 ]; [[ "$output" == *"not found"* ]]  # EXIT_NOT_FOUND
 
     rm -f "${DATA_DIR}/${job_id}.paused"
 }
@@ -1892,9 +1878,7 @@ EOF
     local job_id="notpaused"
     create_test_meta "$job_id"
 
-    run cmd_resume "$job_id"
-    [ "$status" -eq 3 ]  # EXIT_INVALID_ARGS
-    [[ "$output" == *"is not paused"* ]]
+    run cmd_resume "$job_id"; [ "$status" -eq 3 ]; [[ "$output" == *"is not paused"* ]]  # EXIT_INVALID_ARGS
 
     rm -f "$(get_meta_file "$job_id")"
 }
