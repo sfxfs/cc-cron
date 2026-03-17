@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.287"
+readonly VERSION="2.4.288"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -591,8 +591,7 @@ cmd_resume() {
 
     # Recreate cron entry using helper
     local run_script; run_script=$(get_run_script "$job_id")
-    crontab_add_entry "$(build_cron_entry "$job_id" "$cron" "$run_script" "$recurring" "$prompt")"
-    rm -f "$paused_file"
+    crontab_add_entry "$(build_cron_entry "$job_id" "$cron" "$run_script" "$recurring" "$prompt")"; rm -f "$paused_file"
 
     success "Resumed job: ${job_id}"; info "Schedule: ${cron}"
 }
