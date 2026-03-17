@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.236"
+readonly VERSION="2.4.237"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -2263,8 +2263,7 @@ Options:
                 "$job_model" "$job_permission" "$job_timeout" "$quiet" "$job_tags"
             ;;
         list)
-            ensure_data_dir
-            local filter_tag="" json_output="false"
+            ensure_data_dir; local filter_tag="" json_output="false"
             # Support both positional argument and --tag flag
             while [[ $# -gt 0 ]]; do
                 case "$1" in
