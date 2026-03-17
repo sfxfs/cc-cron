@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.272"
+readonly VERSION="2.4.273"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -602,8 +602,7 @@ cmd_resume() {
     crontab_add_entry "$(build_cron_entry "$job_id" "$cron" "$run_script" "$recurring" "$prompt")"
     rm -f "$paused_file"
 
-    success "Resumed job: ${job_id}"
-    info "Schedule: ${cron}"
+    success "Resumed job: ${job_id}"; info "Schedule: ${cron}"
 }
 
 # Calculate next run time from cron expression
