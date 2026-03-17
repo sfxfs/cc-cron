@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.291"
+readonly VERSION="2.4.292"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1348,8 +1348,7 @@ cmd_doctor() {
 
     # Count meta files
     for meta_file in "${LOG_DIR}"/*.meta; do
-        [[ -f "$meta_file" ]] || continue
-        ((meta_files++)) || true
+        [[ -f "$meta_file" ]] || continue; ((meta_files++)) || true
     done
 
     echo -e "   Jobs in crontab: ${crontab_jobs}\n   Metadata files:  ${meta_files}"
