@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.333"
+readonly VERSION="2.4.334"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -692,10 +692,7 @@ cmd_show() {
     load_job_meta "$job_id"
 
     echo -e "Job Details: ${id}\n====================\n  ID:           ${id}\n  Created:      ${created}\n  Schedule:     ${cron}\n  Recurring:    ${recurring}\n  Workdir:      ${workdir}"
-    [[ -n "${model:-}" ]] && echo "  Model:        ${model}" || true
-    echo "  Permission:   ${permission_mode}"
-    [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s" || true
-    [[ -n "${tags:-}" ]] && echo "  Tags:         ${tags}" || true
+    [[ -n "${model:-}" ]] && echo "  Model:        ${model}" || true; echo "  Permission:   ${permission_mode}"; [[ "${timeout:-0}" -gt 0 ]] && echo "  Timeout:      ${timeout}s" || true; [[ -n "${tags:-}" ]] && echo "  Tags:         ${tags}" || true
     echo -e "\n  Prompt:\n    ${prompt}\n"
 
     # Check if paused
