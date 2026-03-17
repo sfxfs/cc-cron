@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.305"
+readonly VERSION="2.4.306"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -526,9 +526,7 @@ cmd_remove() {
     local job_id="$1" found=0
 
     # Remove from crontab using helper function
-    crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" && {
-        found=1; crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"; success "Removed cron job: ${job_id}"
-    }
+    crontab_has_entry "${CRON_COMMENT_PREFIX}${job_id}" && { found=1; crontab_remove_entry "${CRON_COMMENT_PREFIX}${job_id}"; success "Removed cron job: ${job_id}"; }
 
     # Remove metadata, logs, status, and run script
     remove_file "$(get_meta_file "$job_id")" "metadata"
@@ -1317,9 +1315,7 @@ cmd_doctor() {
 
     echo -e "   Jobs in crontab: ${crontab_jobs}\n   Metadata files:  ${meta_files}"
 
-    [[ $orphaned -gt 0 ]] && {
-        echo -e "   ! ${orphaned} orphaned crontab entries found\n     Fix: Run 'cc-cron purge' or manually clean crontab"; ((issues++)) || true
-    }
+    [[ $orphaned -gt 0 ]] && { echo -e "   ! ${orphaned} orphaned crontab entries found\n     Fix: Run 'cc-cron purge' or manually clean crontab"; ((issues++)) || true; }
 
     # Check 8: Disk space
     echo -e "\n8. Checking disk space..."
