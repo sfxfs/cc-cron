@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.245"
+readonly VERSION="2.4.246"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -1980,66 +1980,26 @@ cmd_help() {
 
     # Show detailed help for specific command
     case "$topic" in
-        add)
-            help_add; return 0
-            ;;
-        edit)
-            help_edit; return 0
-            ;;
-        clone)
-            help_clone; return 0
-            ;;
-        config)
-            help_config; return 0
-            ;;
-        purge)
-            help_purge; return 0
-            ;;
-        logs)
-            help_logs; return 0
-            ;;
-        run)
-            help_run; return 0
-            ;;
-        show)
-            help_show; return 0
-            ;;
-        history)
-            help_history; return 0
-            ;;
-        list)
-            help_list; return 0
-            ;;
-        next)
-            help_next; return 0
-            ;;
-        stats)
-            help_stats; return 0
-            ;;
-        status)
-            help_status; return 0
-            ;;
-        pause|disable)
-            help_pause; return 0
-            ;;
-        resume|enable)
-            help_resume; return 0
-            ;;
-        export)
-            help_export; return 0
-            ;;
-        import)
-            help_import; return 0
-            ;;
-        remove)
-            help_remove; return 0
-            ;;
-        doctor)
-            help_doctor; return 0
-            ;;
-        version)
-            help_version; return 0
-            ;;
+        add) help_add; return 0 ;;
+        edit) help_edit; return 0 ;;
+        clone) help_clone; return 0 ;;
+        config) help_config; return 0 ;;
+        purge) help_purge; return 0 ;;
+        logs) help_logs; return 0 ;;
+        run) help_run; return 0 ;;
+        show) help_show; return 0 ;;
+        history) help_history; return 0 ;;
+        list) help_list; return 0 ;;
+        next) help_next; return 0 ;;
+        stats) help_stats; return 0 ;;
+        status) help_status; return 0 ;;
+        pause|disable) help_pause; return 0 ;;
+        resume|enable) help_resume; return 0 ;;
+        export) help_export; return 0 ;;
+        import) help_import; return 0 ;;
+        remove) help_remove; return 0 ;;
+        doctor) help_doctor; return 0 ;;
+        version) help_version; return 0 ;;
         "")
             # No argument - show general help
             ;;
