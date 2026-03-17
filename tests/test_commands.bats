@@ -2207,11 +2207,7 @@ EOF
 }
 
 @test "main import without file returns error" {
-    unset CC_CRON_TEST_MODE
-    export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron"
-    export LOG_DIR="${DATA_DIR}/logs"
-    export LOCK_DIR="${DATA_DIR}/locks"
-    mkdir -p "$LOG_DIR" "$LOCK_DIR"
+    unset CC_CRON_TEST_MODE; export DATA_DIR="${BATS_TEST_TMPDIR}/.cc-cron" LOG_DIR="${DATA_DIR}/logs" LOCK_DIR="${DATA_DIR}/locks"; mkdir -p "$LOG_DIR" "$LOCK_DIR"
     run "${BATS_TEST_DIRNAME}/../cc-cron.sh" import; [ "$status" -eq 3 ]; [[ "$output" == *"Usage"* ]]
 }
 
@@ -2302,72 +2298,41 @@ EOF
 
 @test "write_meta_file handles consecutive backslashes" {
     local job_id="escmultislash" meta_file prompt='UNC path: \\server\share\folder'; meta_file=$(get_meta_file "$job_id")
-
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "$prompt" "/tmp" "" "auto" "0" "/tmp/run.sh"
-
-    # Source the meta file and verify prompt is correctly preserved
     source "$meta_file"; [ "$prompt" == 'UNC path: \\server\share\folder' ]
-
     rm -f "$meta_file"
 }
 
 @test "write_meta_file escapes special characters in model name" {
     local job_id="escmodel" meta_file model='model"with"quotes'; meta_file=$(get_meta_file "$job_id")
-
     write_meta_file "$job_id" "2024-01-01 10:00:00" "0 9 * * *" "true" "test" "/tmp" "$model" "auto" "0" "/tmp/run.sh"
-
-    # Source the meta file and verify model is correctly preserved
     source "$meta_file"; [ "$model" == 'model"with"quotes' ]
-
     rm -f "$meta_file"
 }
 
 # Tests for JSON output with special characters
 @test "cmd_list --json escapes backslashes in prompt" {
     local job_id="jsonbackslash" meta_file run_script; meta_file=$(get_meta_file "$job_id"); run_script=$(get_run_script "$job_id")
-
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-    # Override prompt with backslash-containing value
-    echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
-
-    # Add crontab entry so the job is listed
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
     crontab_add_entry "0 9 * * * ${run_script}  # ${CRON_COMMENT_PREFIX}${job_id}:recurring=true:prompt=Path: C"
-
     run cmd_list "" "true"; [ "$status" -eq 0 ]; [[ "$output" == *'Path: C:\\Users\\test'* ]]
-
-    rm -f "$meta_file" "$run_script"
-    crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
+    rm -f "$meta_file" "$run_script"; crontab_remove_entry "CC-CRON:${job_id}" 2>/dev/null || true
 }
 
 @test "cmd_export escapes backslashes in prompt" {
     local job_id="exportback" meta_file; meta_file=$(get_meta_file "$job_id")
-
-    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"
-    # Override prompt with backslash-containing value
-    echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
-
+    create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; echo 'prompt="Path: C:\Users\test"' >> "$meta_file"
     run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'C:\\Users\\test'* ]]
-
     rm -f "$meta_file"
 }
 
 # Tests for cmd_purge actually removing files
 @test "cmd_purge removes old log files" {
     local job_id="purgejob" meta_file log_file history_file; meta_file=$(get_meta_file "$job_id"); log_file=$(get_log_file "$job_id"); history_file=$(get_history_file "$job_id")
-
     create_test_meta "$job_id"
-
-    # Create log file and history file with old timestamp (8 days ago)
-    echo "test log content" > "$log_file"
-    echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
-
-    # Make files old (modify timestamp to be 8 days ago)
+    echo "test log content" > "$log_file"; echo 'start="2024-01-01 10:00:00" end="2024-01-01 10:05:00" status="success" exit_code="0"' > "$history_file"
     touch -d "8 days ago" "$log_file" "$history_file" 2>/dev/null || touch -t "$(date -d '8 days ago' +%Y%m%d%H%M)" "$log_file" "$history_file"
-
-    # Run purge with 7 days threshold
     run cmd_purge "7" "false"; [ "$status" -eq 0 ]; [[ ! -f "$log_file" ]]; [[ ! -f "$history_file" ]]
-
-    # Cleanup
     rm -f "$meta_file"
 }
 
