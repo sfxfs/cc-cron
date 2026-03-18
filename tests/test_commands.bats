@@ -1605,7 +1605,8 @@ EOF
 @test "crontab_add_entry and remove work together" {
     if ! crontab -l &>/dev/null; then skip "crontab not available"; fi
 
-    local test_marker="CC-CRON:testaddremove123" test_entry="0 9 * * * /tmp/test.sh  # ${test_marker}:recurring=true"
+    local test_marker="CC-CRON:testaddremove123"
+    local test_entry="0 9 * * * /tmp/test.sh  # ${test_marker}:recurring=true"
     crontab_add_entry "$test_entry"; crontab_has_entry "$test_marker"; [ "$?" -eq 0 ]
     crontab_remove_entry "$test_marker"; run crontab_has_entry "$test_marker"; [ "$status" -ne 0 ]
 }

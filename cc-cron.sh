@@ -12,7 +12,7 @@ readonly EXIT_NOT_FOUND=2
 readonly EXIT_INVALID_ARGS=3
 
 # Version
-readonly VERSION="2.4.403"
+readonly VERSION="2.4.404"
 
 # Configuration
 DATA_DIR="${DATA_DIR:-${HOME}/.cc-cron}"
@@ -692,9 +692,9 @@ cmd_show() {
         echo
     fi
 
-    # Show history summary
+    # Show history summary (single awk pass for efficiency)
     local history_file; history_file=$(get_history_file "$job_id"); if [[ -f "$history_file" ]]; then
-        local total_runs success_runs failed_runs; total_runs=$(wc -l < "$history_file"); success_runs=$(grep -c "status=success" "$history_file" 2>/dev/null || echo "0"); failed_runs=$(grep -c "status=failed" "$history_file" 2>/dev/null || echo "0")
+        local total_runs success_runs failed_runs; read -r total_runs success_runs failed_runs < <(awk '/status=success/{s++} /status=failed/{f++} END{print NR, s+0, f+0}' "$history_file")
         echo -e "  Statistics:\n    Total runs:    ${total_runs}\n    Successful:    ${GREEN}${success_runs}${NC}\n    Failed:        ${RED}${failed_runs}${NC}\n"
     fi
 
@@ -989,14 +989,9 @@ cmd_import() {
     local imported=0 skipped=0 i
 
     for ((i = 0; i < job_count; i++)); do
-        local job_json; job_json=$(jq -c ".jobs[$i]" "$input_file")
-
+        # Extract all fields in a single jq call (avoid 9 subprocess spawns per job)
         local job_cron job_prompt job_recurring job_workdir job_model job_permission job_timeout job_paused job_tags
-        job_cron=$(jq -r '.cron' <<< "$job_json"); job_prompt=$(jq -r '.prompt' <<< "$job_json")
-        job_recurring=$(jq -r '.recurring' <<< "$job_json"); job_workdir=$(jq -r '.workdir' <<< "$job_json")
-        job_model=$(jq -r '.model' <<< "$job_json"); job_permission=$(jq -r '.permission_mode' <<< "$job_json")
-        job_timeout=$(jq -r '.timeout' <<< "$job_json"); job_paused=$(jq -r '.paused' <<< "$job_json")
-        job_tags=$(jq -r '.tags // ""' <<< "$job_json")
+        eval "$(jq -r --argjson i "$i" '.jobs[$i] | "job_cron=\(.cron|@sh) job_prompt=\(.prompt|@sh) job_recurring=\(.recurring) job_workdir=\(.workdir|@sh) job_model=\(.model|@sh) job_permission=\(.permission_mode|@sh) job_timeout=\(.timeout) job_paused=\(.paused) job_tags=\(.tags|@sh)"' "$input_file")" 2>/dev/null || { warn "Skipping malformed job at index ${i}"; ((skipped++)) || true; continue; }
 
         # Validate cron expression
         is_valid_cron "$job_cron" || { warn "Skipping invalid cron expression: ${job_cron}"; ((skipped++)) || true; continue; }
@@ -1024,12 +1019,18 @@ purge_old_files() {
 
     PURGE_COUNT=0; PURGE_BYTES=0
 
+    # Get current time once for efficiency
+    local current_time; current_time=$(date +%s)
+    local age_threshold=$((days * 86400))
+
     # shellcheck disable=SC2231
     for file in "${dir}"/*.${ext}; do
         [[ -f "$file" ]] || continue
 
-        # Check if file is old enough
-        local file_age file_size; file_age=$(find "$file" -mtime +"$days" 2>/dev/null); [[ -n "$file_age" ]] || continue; file_size=$(get_stat "$file" size || echo "0")
+        # Check if file is old enough using stat (avoids spawning find per file)
+        local file_mtime file_size; file_mtime=$(get_stat "$file" mtime_unix 2>/dev/null) || continue
+        (( current_time - file_mtime < age_threshold )) && continue
+        file_size=$(get_stat "$file" size || echo "0")
 
         [[ "$dry_run" == "true" ]] && echo "  [dry-run] Would remove ${label}: ${file}" || { rm -f "$file"; echo "  Removed ${label}: ${file}"; }
         ((PURGE_COUNT++)) || true; ((PURGE_BYTES += file_size)) || true
@@ -1826,9 +1827,14 @@ main() {
     local command="${1:-help}"
     shift || true
 
+    # Ensure data directory for commands that need it (skip for version/help/completion)
+    case "$command" in
+        version|--version|-v|help|--help|-h|completion) ;;
+        *) ensure_data_dir ;;
+    esac
+
     case "$command" in
         add)
-            ensure_data_dir
             [[ $# -lt 2 ]] && error "Usage: cc-cron add <cron-expression> <prompt> [options]
 
 Options:
@@ -1861,32 +1867,32 @@ Options:
             cmd_add "$cron_expr" "$prompt" "$recurring" "$job_workdir" "$job_model" "$job_permission" "$job_timeout" "$quiet" "$job_tags"
             ;;
         list)
-            ensure_data_dir; local filter_tag="" json_output="false"
+            local filter_tag="" json_output="false"
             # Support both positional argument and --tag flag
             while [[ $# -gt 0 ]]; do case "$1" in --tag) filter_tag="${2:-}"; shift 2 ;; --json) json_output="true"; shift ;; -*) shift ;; *) filter_tag="$1"; shift ;; esac; done
             cmd_list "$filter_tag" "$json_output"
             ;;
-        remove) ensure_data_dir; require_job_id "$command" "$@"; cmd_remove "$1" ;;
-        logs) ensure_data_dir; require_job_id "$command" "$@"; cmd_logs "$1" "$([[ "${2:-}" == "--tail" || "${2:-}" == "-f" ]] && echo true || echo false)" ;;
-        status) ensure_data_dir; cmd_status ;;
-        next) ensure_data_dir; cmd_next "${1:-}" "${2:-}" ;;
-        pause|disable) ensure_data_dir; require_job_id "$command" "$@"; cmd_pause "$1" ;;
-        resume|enable) ensure_data_dir; require_job_id "$command" "$@"; cmd_resume "$1" ;;
-        show) ensure_data_dir; require_job_id "$command" "$@"; cmd_show "$1" ;;
-        history) ensure_data_dir; require_job_id "$command" "$@"; cmd_history "$1" "${2:-20}" ;;
-        stats) ensure_data_dir; cmd_stats "${1:-}" ;;
-        run) ensure_data_dir; require_job_id "$command" "$@"; cmd_run "$1" ;;
-        edit) ensure_data_dir; require_job_id "$command" "$@"; cmd_edit "$1" "${@:2}" ;;
-        clone) ensure_data_dir; require_job_id "$command" "$@"; cmd_clone "$1" "${@:2}" ;;
-        export) ensure_data_dir; cmd_export "${1:-}" "${2:-}" ;;
-        import) ensure_data_dir; [[ $# -lt 1 ]] && error "Usage: cc-cron import <file>" "$EXIT_INVALID_ARGS"; cmd_import "$1" ;;
+        remove) require_job_id "$command" "$@"; cmd_remove "$1" ;;
+        logs) require_job_id "$command" "$@"; cmd_logs "$1" "$([[ "${2:-}" == "--tail" || "${2:-}" == "-f" ]] && echo true || echo false)" ;;
+        status) cmd_status ;;
+        next) cmd_next "${1:-}" "${2:-}" ;;
+        pause|disable) require_job_id "$command" "$@"; cmd_pause "$1" ;;
+        resume|enable) require_job_id "$command" "$@"; cmd_resume "$1" ;;
+        show) require_job_id "$command" "$@"; cmd_show "$1" ;;
+        history) require_job_id "$command" "$@"; cmd_history "$1" "${2:-20}" ;;
+        stats) cmd_stats "${1:-}" ;;
+        run) require_job_id "$command" "$@"; cmd_run "$1" ;;
+        edit) require_job_id "$command" "$@"; cmd_edit "$1" "${@:2}" ;;
+        clone) require_job_id "$command" "$@"; cmd_clone "$1" "${@:2}" ;;
+        export) cmd_export "${1:-}" "${2:-}" ;;
+        import) [[ $# -lt 1 ]] && error "Usage: cc-cron import <file>" "$EXIT_INVALID_ARGS"; cmd_import "$1" ;;
         purge)
-            ensure_data_dir; local purge_days="7" dry_run="false"
+            local purge_days="7" dry_run="false"
             while [[ $# -gt 0 ]]; do case "$1" in --dry-run) dry_run="true"; shift ;; *) purge_days="$1"; shift ;; esac; done
             cmd_purge "$purge_days" "$dry_run"
             ;;
-        config) ensure_data_dir; load_config; cmd_config "${1:-list}" "${2:-}" "${3:-}" ;;
-        doctor) ensure_data_dir; cmd_doctor ;;
+        config) load_config; cmd_config "${1:-list}" "${2:-}" "${3:-}" ;;
+        doctor) cmd_doctor ;;
         version|--version|-v) cmd_version ;;
         completion) cmd_completion ;;
         help|--help|-h) cmd_help "${1:-}" ;;
