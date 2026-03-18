@@ -30,6 +30,12 @@ LAST_CREATED_JOB_ID=""
 # Store file size from remove_file (for tracking)
 REMOVE_FILE_SIZE=0
 
+# Permission mode constants
+readonly PERM_BYPASS="bypassPermissions"
+readonly PERM_ACCEPT="acceptEdits"
+readonly PERM_AUTO="auto"
+readonly PERM_DEFAULT="default"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -44,12 +50,17 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 
 # Error with configurable exit code
 error() {
-    local message="$1" exit_code="${2:-$EXIT_ERROR}"; echo -e "${RED}[ERROR]${NC} ${message}" >&2; exit "$exit_code"
+    local message="$1"
+    local exit_code="${2:-$EXIT_ERROR}"
+    echo -e "${RED}[ERROR]${NC} ${message}" >&2
+    exit "$exit_code"
 }
 
 # Helper to validate and get numeric value safely
 safe_numeric() {
-    local value="$1" default="$2"; [[ "$value" =~ ^[0-9]+$ ]] && echo "$value" || echo "$default"
+    local value="$1"
+    local default="$2"
+    [[ "$value" =~ ^[0-9]+$ ]] && echo "$value" || echo "$default"
 }
 
 # Environment configuration (can be overridden by config file)
@@ -94,8 +105,11 @@ get_run_script() { echo "${DATA_DIR}/run-${1}.sh"; }
 
 # Helper to load job metadata, returns error if not found
 load_job_meta() {
-    local job_id="$1" meta_file; meta_file=$(get_meta_file "$job_id")
-    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND" || true; source "$meta_file"
+    local job_id="$1"
+    local meta_file
+    meta_file=$(get_meta_file "$job_id")
+    [[ ! -f "$meta_file" ]] && error "Job not found: ${job_id}" "$EXIT_NOT_FOUND"
+    source "$meta_file"
 }
 
 # Extract job ID from a crontab line containing CC-CRON comment
@@ -106,7 +120,13 @@ extract_job_id() {
 
 # Helper to validate a number is within range
 validate_range() {
-    local value="$1" min="$2" max="$3" context="$4"; [[ "$value" -lt "$min" || "$value" -gt "$max" ]] && error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS" || true
+    local value="$1"
+    local min="$2"
+    local max="$3"
+    local context="$4"
+    [[ "$value" -lt "$min" || "$value" -gt "$max" ]] && \
+        error "Invalid value '$value' for $context (must be $min-$max)" "$EXIT_INVALID_ARGS"
+    :
 }
 
 # Helper to remove a file if it exists
@@ -141,6 +161,7 @@ require_job_id() {
 # Portable stat helper (supports both Linux and macOS)
 # Usage: get_stat <file> <format>
 # Formats: size, mtime, mtime_unix
+# shellcheck disable=SC2086
 get_stat() {
     local file="$1" format="$2" opts
     case "$OSTYPE" in
@@ -234,7 +255,8 @@ validate_workdir() {
 
 # Validate permission mode
 validate_permission_mode() {
-    [[ "$1" =~ ^(bypassPermissions|acceptEdits|auto|default)$ ]] || error "Invalid permission mode: $1. Valid: bypassPermissions, acceptEdits, auto, default" "$EXIT_INVALID_ARGS"
+    [[ "$1" =~ ^(${PERM_BYPASS}|${PERM_ACCEPT}|${PERM_AUTO}|${PERM_DEFAULT})$ ]] || \
+        error "Invalid permission mode: $1. Valid: ${PERM_BYPASS}, ${PERM_ACCEPT}, ${PERM_AUTO}, ${PERM_DEFAULT}" "$EXIT_INVALID_ARGS"
 }
 
 # Validate timeout value
@@ -472,7 +494,11 @@ cmd_list() {
                     job_json+="}"
                     jobs+=("$job_json")
                 else
-                    echo -e "Job ID: ${id}\n  Created: ${created}\n  Schedule: ${cron}\n  Recurring: ${recurring}\n  Workdir: ${workdir:-$CC_WORKDIR}"; [[ -n "${model:-}" ]] && echo "  Model: ${model}" || true; echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"; [[ -n "${tags:-}" ]] && echo "  Tags: ${tags}" || true; echo -e "  Prompt: ${prompt}\n"
+                    echo -e "Job ID: ${id}\n  Created: ${created}\n  Schedule: ${cron}\n  Recurring: ${recurring}\n  Workdir: ${workdir:-$CC_WORKDIR}"
+                    [[ -n "${model:-}" ]] && echo "  Model: ${model}"
+                    echo "  Permission: ${permission_mode:-$CC_PERMISSION_MODE}"
+                    [[ -n "${tags:-}" ]] && echo "  Tags: ${tags}"
+                    echo -e "  Prompt: ${prompt}\n"
                 fi
             else
                 # Skip jobs without metadata when filtering
@@ -651,12 +677,21 @@ cmd_next() {
 
     while IFS= read -r line; do
         if [[ "$line" == *"${CRON_COMMENT_PREFIX}"* ]]; then
-            local id meta_file; id=$(extract_job_id "$line"); meta_file=$(get_meta_file "$id"); [[ ! -f "$meta_file" ]] && continue; local tags="" model="" modified=""
+            local id meta_file
+            id=$(extract_job_id "$line")
+            meta_file=$(get_meta_file "$id")
+            [[ ! -f "$meta_file" ]] && continue
+            local tags="" model="" modified=""
             source "$meta_file"
 
             # Check if paused
-            local paused_file="${DATA_DIR}/${id}.paused" paused_status=""; [[ -f "$paused_file" ]] && paused_status=" (PAUSED)"
-            local next_run; next_run=$(calculate_next_run "$cron"); echo -e "  ${GREEN}${id}${NC}${paused_status}\n    Schedule: ${cron}"; [[ -n "$next_run" ]] && echo "    Next run: ${next_run}"; echo -e "    Prompt:   ${prompt:0:50}${prompt:50:+...}\n"
+            local paused_file="${DATA_DIR}/${id}.paused" paused_status=""
+            [[ -f "$paused_file" ]] && paused_status=" (PAUSED)"
+            local next_run
+            next_run=$(calculate_next_run "$cron")
+            echo -e "  ${GREEN}${id}${NC}${paused_status}\n    Schedule: ${cron}"
+            [[ -n "$next_run" ]] && echo "    Next run: ${next_run}"
+            echo -e "    Prompt:   ${prompt:0:50}${prompt:50:+...}\n"
 
             found=$((found + 1))
         fi
@@ -761,9 +796,23 @@ cmd_edit() {
     parse_job_options "$@"
 
     # Apply parsed options (fall back to current values)
-    local new_cron="${PARSED_CRON:-$cron}" new_prompt="${PARSED_PROMPT:-$prompt}" new_workdir="${PARSED_WORKDIR:-$workdir}"
-    local new_model new_tags; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
-    local new_permission="${PARSED_PERMISSION:-$permission_mode}" new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}" has_changes="$PARSED_HAS_CHANGES"
+    local new_cron="${PARSED_CRON:-$cron}"
+    local new_prompt="${PARSED_PROMPT:-$prompt}"
+    local new_workdir="${PARSED_WORKDIR:-$workdir}"
+    local new_model new_tags
+    if [[ "$PARSED_MODEL_SET" -eq 1 ]]; then
+        new_model="$PARSED_MODEL"
+    else
+        new_model="${model:-}"
+    fi
+    if [[ "$PARSED_TAGS_SET" -eq 1 ]]; then
+        new_tags="$PARSED_TAGS"
+    else
+        new_tags="${tags:-}"
+    fi
+    local new_permission="${PARSED_PERMISSION:-$permission_mode}"
+    local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
+    local has_changes="$PARSED_HAS_CHANGES"
 
     [[ "$has_changes" -eq 0 ]] && { warn "No changes specified. Use --cron, --prompt, --workdir, --model, --permission-mode, --timeout, or --tags"; return 0; }
 
@@ -780,8 +829,12 @@ cmd_edit() {
     # Re-add to crontab if not paused
     [[ -f "${DATA_DIR}/${job_id}.paused" ]] || crontab_add_entry "$(build_cron_entry "$job_id" "$new_cron" "$new_run_script" "$recurring" "$new_prompt")"
 
-    success "Updated job: ${job_id}"; [[ "$cron" != "$new_cron" ]] && info "Schedule: ${cron} → ${new_cron}" || true
-    [[ "$prompt" != "$new_prompt" ]] && info "Prompt updated" || true; [[ "$workdir" != "$new_workdir" ]] && info "Workdir: ${workdir} → ${new_workdir}" || true; [[ "${tags:-}" != "$new_tags" ]] && info "Tags: ${tags:-none} → ${new_tags:-none}" || true
+    success "Updated job: ${job_id}"
+    [[ "$cron" != "$new_cron" ]] && info "Schedule: ${cron} → ${new_cron}"
+    [[ "$prompt" != "$new_prompt" ]] && info "Prompt updated"
+    [[ "$workdir" != "$new_workdir" ]] && info "Workdir: ${workdir} → ${new_workdir}"
+    [[ "${tags:-}" != "$new_tags" ]] && info "Tags: ${tags:-none} → ${new_tags:-none}"
+    :
 }
 
 # Clone an existing job with a new ID
@@ -795,9 +848,22 @@ cmd_clone() {
     parse_job_options "$@"
 
     # Apply parsed options (fall back to source values)
-    local new_cron="${PARSED_CRON:-$cron}" new_prompt="${PARSED_PROMPT:-$prompt}" new_workdir="${PARSED_WORKDIR:-$workdir}"
-    local new_model new_tags; new_model="$([[ "$PARSED_MODEL_SET" -eq 1 ]] && echo "$PARSED_MODEL" || echo "${model:-}")"; new_tags="$([[ "$PARSED_TAGS_SET" -eq 1 ]] && echo "$PARSED_TAGS" || echo "${tags:-}")"
-    local new_permission="${PARSED_PERMISSION:-$permission_mode}" new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
+    local new_cron="${PARSED_CRON:-$cron}"
+    local new_prompt="${PARSED_PROMPT:-$prompt}"
+    local new_workdir="${PARSED_WORKDIR:-$workdir}"
+    local new_model new_tags
+    if [[ "$PARSED_MODEL_SET" -eq 1 ]]; then
+        new_model="$PARSED_MODEL"
+    else
+        new_model="${model:-}"
+    fi
+    if [[ "$PARSED_TAGS_SET" -eq 1 ]]; then
+        new_tags="$PARSED_TAGS"
+    else
+        new_tags="${tags:-}"
+    fi
+    local new_permission="${PARSED_PERMISSION:-$permission_mode}"
+    local new_timeout="${PARSED_TIMEOUT:-${timeout:-0}}"
 
     # Create new job with copied settings
     cmd_add "$new_cron" "$new_prompt" "$recurring" "$new_workdir" "$new_model" "$new_permission" "$new_timeout" "false" "$new_tags"
@@ -1198,12 +1264,21 @@ cmd_doctor() {
     command -v jq &>/dev/null && echo "   ✓ jq available (for import/export)" || { echo -e "   ! jq not found (needed for import command)\n     Install: apt-get install jq or brew install jq"; ((warnings++)) || true; }
 
     # Check 6: Lock files
-    echo -e "\n6. Checking lock files..."; local lock_count; lock_count=$(find "$LOCK_DIR" -name "*.lock" 2>/dev/null | wc -l); echo "   Active lock files: ${lock_count}"
+    echo -e "\n6. Checking lock files..."
+    local lock_count=0
+    for lock_file in "$LOCK_DIR"/*.lock; do
+        [[ -f "$lock_file" ]] && ((lock_count++)) || true
+    done
+    echo "   Active lock files: ${lock_count}"
     [[ "$lock_count" -gt 0 ]] && {
         echo "   ! Some jobs may be stuck or running"
         for lock_file in "$LOCK_DIR"/*.lock; do
-            [[ -f "$lock_file" ]] || continue; local lock_age current_time age_minutes; lock_age=$(get_stat "$lock_file" mtime_unix); current_time=$(date +%s); age_minutes=$(( (current_time - lock_age) / 60 ))
-            [[ $age_minutes -gt 60 ]] && echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)" && { ((warnings++)) || true; }
+            [[ -f "$lock_file" ]] || continue
+            local lock_age current_time age_minutes
+            lock_age=$(get_stat "$lock_file" mtime_unix)
+            current_time=$(date +%s)
+            age_minutes=$(( (current_time - lock_age) / 60 ))
+            [[ $age_minutes -gt 60 ]] && echo "     ! Old lock: ${lock_file} (${age_minutes} minutes old)" && ((warnings++)) || true
         done
     }
 
