@@ -233,7 +233,9 @@ teardown() {
     # Create metadata but no run script
     create_test_meta "$job_id"
 
-    run cmd_run "$job_id"; [ "$status" -eq 2 ]; [[ "$output" == *"Run script not found"* ]]; rm -f "$(get_meta_file "$job_id")"  # EXIT_NOT_FOUND
+    run cmd_run "$job_id"; [ "$status" -eq 2 ]; [[ "$output" == *"Run script not found"* ]]  # EXIT_NOT_FOUND
+
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_run executes job successfully" {
@@ -313,7 +315,9 @@ EOF
 @test "cmd_edit with no options shows warning" {
     local job_id="testedit"; create_test_meta "$job_id" "/tmp"
 
-    run cmd_edit "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"No changes specified"* ]]; rm -f "$(get_meta_file "$job_id")"
+    run cmd_edit "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"No changes specified"* ]]
+
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_edit updates cron expression" {
@@ -390,7 +394,7 @@ EOF
 
     run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'"version":"1.0"'* ]]; [[ "$output" == *'"jobs":['* ]]; [[ "$output" == *'"id":"testexp"'* ]]
 
-    rm -f "$(get_meta_file "$job_id")"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_export writes to file" {
@@ -401,7 +405,8 @@ EOF
     # Verify file content
     grep -q '"id":"fileexp"' "$output_file"
 
-    rm -f "$(get_meta_file "$job_id")" "$output_file"
+    cleanup_test_job "$job_id"
+    rm -f "$output_file"
 }
 
 @test "cmd_purge accepts days argument" {
@@ -632,7 +637,7 @@ EOF
 
     run cmd_logs "$job_id" "false"; [ "$status" -eq 2 ]; [[ "$output" == *"No logs found"* ]]  # EXIT_NOT_FOUND
 
-    rm -f "$(get_meta_file "$job_id")"
+    cleanup_test_job "$job_id"
 }
 
 @test "get_stat returns file size" {
@@ -1043,8 +1048,7 @@ EOF
 }
 
 @test "cmd_edit clears model with empty string" {
-    local job_id="editmodel"; create_test_meta "$job_id" "/tmp" "sonnet"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="editmodel"; create_test_job "$job_id" "/tmp" "sonnet"
 
     run cmd_edit "$job_id" --model ""; [ "$status" -eq 0 ]
     local meta_content; meta_content=$(cat "$(get_meta_file "$job_id")"); [[ "$meta_content" != *'model='* ]] || [[ "$meta_content" == *'model=""'* ]]
@@ -1053,8 +1057,7 @@ EOF
 }
 
 @test "cmd_edit updates model" {
-    local job_id="editmodel2"; create_test_meta "$job_id" "/tmp" "sonnet"
-    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="editmodel2"; create_test_job "$job_id" "/tmp" "sonnet"
 
     run cmd_edit "$job_id" --model "opus"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]; grep -q 'model="opus"' "$(get_meta_file "$job_id")"
 
@@ -1162,7 +1165,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Tags:         prod,backup"* ]]
 
-    rm -f "$(get_meta_file "$job_id")"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_list filters by tag" {
@@ -1197,7 +1200,7 @@ EOF
 }
 
 @test "cmd_edit updates tags" {
-    local job_id="edittagjob"; create_test_meta "$job_id" "/tmp"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="edittagjob"; create_test_job "$job_id" "/tmp"
 
     run cmd_edit "$job_id" --tags "newtag"; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: none"* ]]; grep -q 'tags="newtag"' "$(get_meta_file "$job_id")"
 
@@ -1205,7 +1208,7 @@ EOF
 }
 
 @test "cmd_edit clears tags with empty string" {
-    local job_id="edittagjob2"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="edittagjob2"; create_test_job "$job_id" "/tmp" "" "bypassPermissions" "0" "prod,backup"
 
     run cmd_edit "$job_id" --tags ""; [ "$status" -eq 0 ]; [[ "$output" == *"Tags: prod,backup → none"* ]]; ! grep -q 'tags=' "$(get_meta_file "$job_id")"
 
@@ -1213,7 +1216,7 @@ EOF
 }
 
 @test "cmd_edit updates timeout" {
-    local job_id="edittimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "60"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="edittimeout"; create_test_job "$job_id" "/tmp" "" "bypassPermissions" "60"
 
     run cmd_edit "$job_id" --timeout "300"; [ "$status" -eq 0 ]; [[ "$output" == *"Updated job"* ]]; grep -q 'timeout="300"' "$(get_meta_file "$job_id")"
 
@@ -1221,7 +1224,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid cron expression" {
-    local job_id="editinvalid"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="editinvalid"; create_test_job "$job_id" "/tmp"
 
     run cmd_edit "$job_id" --cron "invalid cron"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid cron"* ]]  # EXIT_INVALID_ARGS
 
@@ -1229,7 +1232,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid workdir" {
-    local job_id="editworkdir"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="editworkdir"; create_test_job "$job_id" "/tmp"
 
     run cmd_edit "$job_id" --workdir "/nonexistent/path/12345"; [ "$status" -eq 3 ]; [[ "$output" == *"not found"* ]]  # EXIT_INVALID_ARGS
 
@@ -1237,7 +1240,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid permission mode" {
-    local job_id="editperm"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="editperm"; create_test_job "$job_id" "/tmp"
 
     run cmd_edit "$job_id" --permission-mode "invalid_mode"; [ "$status" -eq 3 ]; [[ "$output" == *"Invalid permission mode"* ]]  # EXIT_INVALID_ARGS
 
@@ -1245,7 +1248,7 @@ EOF
 }
 
 @test "cmd_edit rejects invalid timeout" {
-    local job_id="edittimeout"; create_test_meta "$job_id" "/tmp" "" "bypassPermissions" "0"; crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
+    local job_id="edittimeout"; create_test_job "$job_id" "/tmp"
 
     run cmd_edit "$job_id" --timeout "-1"; [ "$status" -eq 3 ]; [[ "$output" == *"Timeout must be a non-negative number"* ]]  # EXIT_INVALID_ARGS
 
@@ -1353,7 +1356,7 @@ EOF
 
     run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'\"quotes\"'* ]]  # Check that quotes are escaped in JSON output
 
-    rm -f "$meta_file"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_export includes tags in JSON output" {
@@ -1361,7 +1364,7 @@ EOF
 
     run cmd_export "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *'"tags":"prod,backup"'* ]]  # Check that tags are included in JSON output
 
-    rm -f "$(get_meta_file "$job_id")"
+    cleanup_test_job "$job_id"
 }
 
 @test "parse_job_options validates permission-mode" {
@@ -1397,7 +1400,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Timeout:"* ]]; [[ "$output" == *"300s"* ]]
 
-    rm -f "$(get_meta_file "$job_id")"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_show displays model when set" {
@@ -1405,7 +1408,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Model:"* ]]; [[ "$output" == *"sonnet"* ]]
 
-    rm -f "$(get_meta_file "$job_id")"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_show displays paused status" {
@@ -1413,7 +1416,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"PAUSED"* ]]
 
-    rm -f "$(get_meta_file "$job_id")" "${DATA_DIR}/${job_id}.paused"
+    cleanup_test_job "$job_id" true
 }
 
 @test "cmd_show displays execution statistics" {
@@ -1424,7 +1427,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Statistics:"* ]]; [[ "$output" == *"Total runs:"* ]]; [[ "$output" == *"2"* ]]
 
-    rm -f "$(get_meta_file "$job_id")" "$history_file"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_show handles missing history gracefully" {
@@ -1432,7 +1435,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"Job Details"* ]]; [[ "$output" != *"Statistics:"* ]]
 
-    rm -f "$(get_meta_file "$job_id")"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_show shows running status" {
@@ -1440,7 +1443,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"RUNNING"* ]]
 
-    rm -f "$(get_meta_file "$job_id")" "$status_file"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_show shows success status" {
@@ -1452,7 +1455,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"SUCCESS"* ]]
 
-    rm -f "$(get_meta_file "$job_id")" "$status_file"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_show shows failed status with exit code" {
@@ -1464,7 +1467,7 @@ EOF
 
     run cmd_show "$job_id"; [ "$status" -eq 0 ]; [[ "$output" == *"FAILED"* ]]; [[ "$output" == *"42"* ]]
 
-    rm -f "$(get_meta_file "$job_id")" "$status_file"
+    cleanup_test_job "$job_id"
 }
 
 @test "cmd_status handles no jobs gracefully" {

@@ -48,5 +48,14 @@ cleanup_test_job() {
 # Cleanup source and cloned job from clone tests
 # Usage: cleanup_clone_test <source_id> <cloned_id>
 cleanup_clone_test() {
-    rm -f "$(get_meta_file "$1")" 2>/dev/null || true; cleanup_test_job "$2"
+    rm -f "$(get_meta_file "$1")" 2>/dev/null || true
+    cleanup_test_job "$2"
+}
+
+# Create a test job with both meta file and crontab entry
+# Usage: create_test_job <job_id> [workdir] [model] [permission_mode] [timeout] [tags]
+create_test_job() {
+    local job_id="$1" workdir="${2:-/tmp}" model="${3:-}" permission="${4:-bypassPermissions}" timeout="${5:-0}" tags="${6:-}"
+    create_test_meta "$job_id" "$workdir" "$model" "$permission" "$timeout" "$tags"
+    crontab_add_entry "0 9 * * * /tmp/run.sh  # CC-CRON:${job_id}:recurring=true" 2>/dev/null || true
 }
