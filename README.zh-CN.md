@@ -457,3 +457,9 @@ make check
 ```bash
 make install
 ```
+
+### 格式化代码
+
+```bash
+make format
+```

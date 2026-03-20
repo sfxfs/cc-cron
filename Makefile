@@ -14,6 +14,11 @@ lint:
 # Run all checks
 check: lint test
 
+# Format code
+format:
+	@echo "Formatting code with shfmt..."
+	@shfmt -w cc-cron.sh
+
 # Clean test artifacts
 clean:
 	@rm -rf test-results/ *.tap
